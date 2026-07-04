@@ -1,0 +1,30 @@
+spring:
+  datasource:
+    url: ${DB_URL} # 예: jdbc:postgresql://<RDS 엔드포인트>:5432/delivery
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: validate
+    show-sql: false
+
+springdoc:
+  swagger-ui:
+    enabled: false # 운영 환경에서는 Swagger UI 비활성화 (또는 접근 제한 후 활성화)
+  api-docs:
+    enabled: false
+
+app:
+  jwt:
+    secret: ${JWT_SECRET} # 기본값 없음: 운영에 값 안 넣으면 기동 자체가 실패하도록 함
+  ai:
+    gemini:
+      api-key: ${GEMINI_API_KEY}
+
+logging:
+  level:
+    root: WARN
+    com.example.delivery: INFO
+  file:
+    name: /var/log/delivery-platform/app.log
