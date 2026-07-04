@@ -38,3 +38,6 @@ out/
 .DS_Store
 
 CLAUDE.md
+
+### 로컬 시크릿 ###
+.env
