@@ -5,15 +5,8 @@ import java.util.UUID;
 
 import com.example.delivery.global.common.entity.BaseEntity;
 
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import com.example.delivery.order.entity.Order;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -30,8 +23,9 @@ public class Payment extends BaseEntity {
     @Column(name = "payment_id")
     private UUID paymentId;
 
-    @Column(name = "order_id", nullable = false)
-    private UUID orderId;
+    @OneToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "order_id", nullable = false, unique = true) // FK 지정 및 1:1 보장을 위한 유니크 제약
+    private Order order;
 
     @Column(name = "payment_method", length = 30, nullable = false)
     private String paymentMethod;
@@ -49,8 +43,8 @@ public class Payment extends BaseEntity {
     @Column(name = "approved_at")
     private LocalDateTime approvedAt;
 
-    public Payment(UUID orderId, String paymentMethod, String cardCompany, Integer amount) {
-        this.orderId = orderId;
+    public Payment(Order order, String paymentMethod, String cardCompany, Integer amount) {
+        this.order = order;
         this.paymentMethod = paymentMethod;
         this.cardCompany = cardCompany;
         this.amount = amount;
