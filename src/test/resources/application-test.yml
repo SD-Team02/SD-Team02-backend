@@ -1,0 +1,22 @@
+spring:
+  datasource:
+    url: jdbc:h2:mem:delivery_test;MODE=PostgreSQL;DB_CLOSE_DELAY=-1
+    username: sa
+    password:
+    driver-class-name: org.h2.Driver
+  jpa:
+    hibernate:
+      ddl-auto: create-drop
+    show-sql: true
+
+app:
+  jwt:
+    secret: test-secret-key-for-junit-only-not-for-production-use
+    access-token-expire-ms: 3600000
+    refresh-token-expire-ms: 1209600000
+  ai:
+    gemini:
+      api-key: test-key
+      model: gemini-2.5-flash-lite
+      base-url: https://generativelanguage.googleapis.com/v1beta
+      max-input-length: 300
