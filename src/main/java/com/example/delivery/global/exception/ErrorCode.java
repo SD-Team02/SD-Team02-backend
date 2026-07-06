@@ -29,6 +29,7 @@ public enum ErrorCode {
 
     // User (인증 담당 참고용 예시)
     DUPLICATE_USERNAME(HttpStatus.CONFLICT, "USER_409_1", "이미 사용중인 아이디입니다."),
+    DUPLICATE_NICKNAME(HttpStatus.CONFLICT, "USER_409_2", "이미 사용중인 닉네임입니다."),
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_1", "사용자를 찾을 수 없습니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "USER_400_1", "비밀번호 형식이 올바르지 않습니다."),
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "USER_401_1", "아이디 또는 비밀번호가 일치하지 않습니다."),
