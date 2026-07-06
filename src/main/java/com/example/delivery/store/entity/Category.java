@@ -42,7 +42,7 @@ public class Category extends BaseEntity {
 
     public Category(String name) {
         this.name = name;
-        this.status = CategoryStatus.USED;
+        this.status = CategoryStatus.ACTIVE;
     }
 
     public void rename(String name) {
