@@ -4,6 +4,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,8 +18,11 @@ import com.example.delivery.order.dto.request.ReqCreateOrderDto;
 import com.example.delivery.order.dto.request.ReqCreateOrderMenuDto;
 import com.example.delivery.order.dto.response.ResCreateOrderDto;
 import com.example.delivery.order.dto.response.ResOrderDto;
+import com.example.delivery.order.dto.response.ResOrderListDto;
+import com.example.delivery.order.dto.response.ResOrderPageDto;
 import com.example.delivery.order.entity.Order;
 import com.example.delivery.order.entity.OrderItem;
+import com.example.delivery.order.entity.OrderStatus;
 import com.example.delivery.order.repository.OrderItemRepository;
 import com.example.delivery.order.repository.OrderRepository;
 import com.example.delivery.store.entity.Store;
@@ -127,4 +132,52 @@ public class OrderService {
 	// TODO : 고객은 자신의 주문만 조회 가능 -> 검증 메서드 들어가야 함
 
 
+	@Transactional(readOnly = true)
+	public ResOrderPageDto getOrders(String status, Pageable pageable) {
+
+		Page<Order> orderPage;
+
+		// status == ALL 이면 전체 조회
+		if ("ALL".equalsIgnoreCase(status)) {
+			orderPage = orderRepository.findAll(pageable);
+		} else {
+
+			OrderStatus orderStatus;
+
+			try {
+				orderStatus = OrderStatus.valueOf(status.toUpperCase());
+			} catch (IllegalArgumentException e) {
+				throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS);
+			}
+
+			orderPage = orderRepository.findAllByStatus(orderStatus, pageable);
+		}
+
+		List<ResOrderListDto> orders = orderPage.getContent().stream()
+			.map(order -> {
+
+				Store store = storeRepository.findById(order.getStoreId())
+					.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+				return ResOrderListDto.builder()
+					.orderId(order.getOrderId())
+					.storeName(store.getName())
+					.totalPrice(order.getTotalPrice())
+					.status(order.getStatus())
+					.orderedAt(order.getCreatedAt())
+					.build();
+			})
+			.toList();
+
+		return ResOrderPageDto.builder()
+			.orders(orders)
+			.page(orderPage.getNumber())
+			.size(orderPage.getSize())
+			.totalElements(orderPage.getTotalElements())
+			.totalPages(orderPage.getTotalPages())
+			.build();
+	}
+
+	// TODO QueryDSL 적용 후 startDate/endDate 조건 검색 추가
+	// TODO Authentication 연동 후 권한별(고객/사장/관리자) 조회 추가
 }
