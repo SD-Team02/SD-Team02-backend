@@ -239,4 +239,25 @@ public class OrderService {
 
 		// TODO : 사장/관리자 권한 검증 추가 (본인 가게 주문인지 등)
 	}
+
+
+	@Transactional
+	public ResOrderStatusDto cancelOrder(Long userId, UUID orderId) {
+
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+		// 고객은 본인 주문만 취소 가능
+		if (!order.getUserId().equals(userId)) {
+			throw new BusinessException(ErrorCode.ACCESS_DENIED);
+		}
+
+		// 5분 제한 및 상태 전이 검증은 Order 엔티티의 cancel()에서 처리
+		order.cancel();
+
+		return ResOrderStatusDto.builder()
+			.orderId(order.getOrderId())
+			.status(order.getStatus())
+			.build();
+	}
 }
