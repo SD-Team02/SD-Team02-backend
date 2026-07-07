@@ -14,6 +14,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class CategoryService {
@@ -47,5 +49,13 @@ public class CategoryService {
     public Page<ResGetCategoryDto> getAllCategories(CategoryStatus status, Pageable pageable) {
         return categoryRepository.findAllByStatus(status, pageable)
                 .map(ResGetCategoryDto::from);
+    }
+
+    //카테고리 상세 조회
+    @Transactional(readOnly = true)
+    public ResGetCategoryDto getCategory(UUID categoryId) {
+        return categoryRepository.findById(categoryId)
+                .map(ResGetCategoryDto::from)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 }

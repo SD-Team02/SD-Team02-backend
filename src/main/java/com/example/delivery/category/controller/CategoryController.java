@@ -8,6 +8,8 @@ import com.example.delivery.category.service.CategoryService;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.common.util.PageableFactory;
+import com.example.delivery.global.exception.BusinessException;
+import com.example.delivery.global.exception.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -18,6 +20,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/categories")
@@ -60,5 +63,18 @@ public class CategoryController {
 
         return ResponseEntity
                 .ok(ApiResponse.success("전체 카테고리 목록 조회 성공", PageResponse.from(categories)));
+    }
+
+    @Operation(summary = "카테고리 상세 조회")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 상세 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @GetMapping("/{categoryId}")
+    public ResponseEntity<ApiResponse<ResGetCategoryDto>> getCategory(@PathVariable UUID categoryId) {
+        ResGetCategoryDto category = categoryService.getCategory(categoryId);
+        return ResponseEntity.ok(ApiResponse.success("카테고리 상세 조회 성공", category));
     }
 }

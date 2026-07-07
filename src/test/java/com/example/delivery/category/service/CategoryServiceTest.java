@@ -20,6 +20,7 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -87,5 +88,36 @@ class CategoryServiceTest {
         // then
         assertThat(result.getContent()).hasSize(1);
         assertThat(result.getContent().get(0).getName()).isEqualTo("한식");
+    }
+
+    @Test
+    @DisplayName("카테고리 상세 조회 - 성공")
+    void getCategory_success() {
+        // given
+        Category category = new Category("한식");
+        UUID categoryId = UUID.randomUUID();
+        ReflectionTestUtils.setField(category, "categoryId", categoryId);
+        
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+        // when
+        ResGetCategoryDto result = categoryService.getCategory(categoryId);
+
+        // then
+        assertThat(result.getCategoryId()).isEqualTo(categoryId);
+        assertThat(result.getName()).isEqualTo("한식");
+    }
+
+    @Test
+    @DisplayName("카테고리 상세 조회 - 존재하지 않을 때 예외 발생")
+    void getCategory_notFound_throwsException() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.getCategory(categoryId))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_NOT_FOUND.getMessage());
     }
 }
