@@ -9,6 +9,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.menu.entity.Menu;
@@ -21,7 +22,6 @@ import com.example.delivery.order.dto.response.ResOrderDto;
 import com.example.delivery.order.dto.response.ResOrderItemDto;
 import com.example.delivery.order.dto.response.ResOrderItemsDto;
 import com.example.delivery.order.dto.response.ResOrderListDto;
-import com.example.delivery.order.dto.response.ResOrderPageDto;
 import com.example.delivery.order.dto.response.ResOrderStatusDto;
 import com.example.delivery.order.entity.Order;
 import com.example.delivery.order.entity.OrderItem;
@@ -169,7 +169,7 @@ public class OrderService {
 
 
 	@Transactional(readOnly = true)
-	public ResOrderPageDto getOrders(String status, Pageable pageable) {
+	public PageResponse<ResOrderListDto> getOrders(String status, Pageable pageable) {
 
 		Page<Order> orderPage;
 
@@ -189,29 +189,21 @@ public class OrderService {
 			orderPage = orderRepository.findAllByStatus(orderStatus, pageable);
 		}
 
-		List<ResOrderListDto> orders = orderPage.getContent().stream()
-			.map(order -> {
+		Page<ResOrderListDto> responsePage = orderPage.map(order -> {
 
-				Store store = storeRepository.findById(order.getStoreId())
-					.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+			Store store = storeRepository.findById(order.getStoreId())
+				.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-				return ResOrderListDto.builder()
-					.orderId(order.getOrderId())
-					.storeName(store.getName())
-					.totalPrice(order.getTotalPrice())
-					.status(order.getStatus())
-					.orderedAt(order.getCreatedAt())
-					.build();
-			})
-			.toList();
+			return ResOrderListDto.builder()
+				.orderId(order.getOrderId())
+				.storeName(store.getName())
+				.totalPrice(order.getTotalPrice())
+				.status(order.getStatus())
+				.orderedAt(order.getCreatedAt())
+				.build();
+		});
 
-		return ResOrderPageDto.builder()
-			.orders(orders)
-			.page(orderPage.getNumber())
-			.size(orderPage.getSize())
-			.totalElements(orderPage.getTotalElements())
-			.totalPages(orderPage.getTotalPages())
-			.build();
+		return PageResponse.from(responsePage);
 	}
 
 	// TODO QueryDSL 적용 후 startDate/endDate 조건 검색 추가
