@@ -1,4 +1,4 @@
-package com.example.delivery.store.entity;
+package com.example.delivery.category.entity;
 
 import java.util.UUID;
 
@@ -18,35 +18,34 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 
 /**
- * 지역 분류. parent_region_id로 계층 구조(예: 서울 > 종로구 > 광화문)를 표현한다.
- * 다른 도메인과의 규칙과 동일하게 상위 Region은 객체 참조 대신 ID만 저장한다.
- * parent_region_id는 최상위 지역의 경우 없을 수 있어 nullable로 둔다.
+ * 음식점 카테고리(한식/중식/분식/치킨/피자 등). 추가/수정이 가능해야 하는 요구사항이라
+ * 코드에 하드코딩된 enum이 아니라 테이블로 관리한다.
  */
 @Getter
 @Entity
-@Table(name = "p_region")
+@Table(name = "p_category")
 @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", nullable = false, updatable = false))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-public class Region extends BaseEntity {
+public class Category extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
-    @Column(name = "region_id")
-    private UUID regionId;
+    @Column(name = "category_id")
+    private UUID categoryId;
 
     @Column(name = "name", length = 100, nullable = false)
     private String name;
 
-    @Column(name = "parent_region_id")
-    private UUID parentRegionId;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false)
-    private RegionStatus status;
+    private CategoryStatus status;
 
-    public Region(String name, UUID parentRegionId) {
+    public Category(String name) {
         this.name = name;
-        this.parentRegionId = parentRegionId;
-        this.status = RegionStatus.ACTIVE;
+        this.status = CategoryStatus.ACTIVE;
+    }
+
+    public void rename(String name) {
+        this.name = name;
     }
 }
