@@ -1,0 +1,64 @@
+package com.example.delivery.category.service;
+
+import com.example.delivery.category.dto.ReqCreateCategoryDto;
+import com.example.delivery.category.dto.ResCreateCategoryDto;
+import com.example.delivery.category.entity.Category;
+import com.example.delivery.category.repository.CategoryRepository;
+import com.example.delivery.global.exception.BusinessException;
+import com.example.delivery.global.exception.ErrorCode;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.test.util.ReflectionTestUtils;
+
+import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.Mockito.when;
+
+@ExtendWith(MockitoExtension.class)
+class CategoryServiceTest {
+
+    @Mock
+    private CategoryRepository categoryRepository;
+
+    @InjectMocks
+    private CategoryService categoryService;
+
+    @Test
+    @DisplayName("카테고리 생성 - 성공")
+    void createCategory_success() {
+        // given
+        ReqCreateCategoryDto dto = new ReqCreateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "한식");
+        
+        Category category = new Category("한식");
+        
+        when(categoryRepository.existsByName(any())).thenReturn(false);
+        when(categoryRepository.save(any())).thenReturn(category);
+
+        // when
+        ResCreateCategoryDto result = categoryService.createCategory(dto);
+
+        // then
+        assertThat(result.getName()).isEqualTo("한식");
+    }
+
+    @Test
+    @DisplayName("카테고리 생성 - 중복 시 예외 발생")
+    void createCategory_duplicate_throwsException() {
+        // given
+        ReqCreateCategoryDto dto = new ReqCreateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "한식");
+        
+        when(categoryRepository.existsByName(any())).thenReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.createCategory(dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_ALREADY_EXISTS.getMessage());
+    }
+}

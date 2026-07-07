@@ -23,8 +23,11 @@ public class CategoryController {
     @Operation(summary = "카테고리 생성")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "카테고리 생성 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 존재하는 카테고리입니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+//            ##TO-DO : SecurityConfig에서 전역적으로 인증을 처리한다면, 개별 컨트롤러에서 401 응답을 정의하는 것이 다소 중복일 수 있음
+//                      모든 인증이 필요한 API에 공통으로 적용되는 어노테이션을 별도로 생성하거나, 전역 필터 단에서 처리되도록 구조화하는 방식을 고려할 필요 있어보임
     })
     @PostMapping
     public ResponseEntity<?> createCategory(@Valid @RequestBody ReqCreateCategoryDto reqCreateCategoryDto){
@@ -32,6 +35,8 @@ public class CategoryController {
 
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(ApiResponse.success(resCreateCategoryDto));
+                .body(ApiResponse.success("카테고리 생성 성공",resCreateCategoryDto));
+
+//        #TO-DO : 성공 메세지 하드코딩 대신 별도의 `SuccessCode` 메시지 관리 Enum 클래스를 만들어 관리하는 것 고려
     }
 }
