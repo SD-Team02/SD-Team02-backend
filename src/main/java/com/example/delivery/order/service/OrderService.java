@@ -22,6 +22,7 @@ import com.example.delivery.order.dto.response.ResOrderItemDto;
 import com.example.delivery.order.dto.response.ResOrderItemsDto;
 import com.example.delivery.order.dto.response.ResOrderListDto;
 import com.example.delivery.order.dto.response.ResOrderPageDto;
+import com.example.delivery.order.dto.response.ResOrderStatusDto;
 import com.example.delivery.order.entity.Order;
 import com.example.delivery.order.entity.OrderItem;
 import com.example.delivery.order.entity.OrderStatus;
@@ -215,4 +216,27 @@ public class OrderService {
 
 	// TODO QueryDSL 적용 후 startDate/endDate 조건 검색 추가
 	// TODO Authentication 연동 후 권한별(고객/사장/관리자) 조회 추가
+
+
+	@Transactional
+	public ResOrderStatusDto changeStatus(UUID orderId, OrderStatus status) {
+
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+		// 취소(CANCELED)는 5분 제한 등 별도 규칙이 있는 '주문 취소' API로만 처리한다.
+		if (status == OrderStatus.CANCELED) {
+			throw new BusinessException(ErrorCode.ORDER_STATUS_TRANSITION_INVALID);
+		}
+
+		// 상태 전이 유효성은 Order 엔티티에서 검증 (변경분은 dirty checking으로 반영)
+		order.changeStatus(status);
+
+		return ResOrderStatusDto.builder()
+			.orderId(order.getOrderId())
+			.status(order.getStatus())
+			.build();
+
+		// TODO : 사장/관리자 권한 검증 추가 (본인 가게 주문인지 등)
+	}
 }
