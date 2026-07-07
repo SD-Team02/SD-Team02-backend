@@ -1,12 +1,16 @@
 package com.example.delivery.category.service;
 
 import com.example.delivery.category.dto.ReqCreateCategoryDto;
+import com.example.delivery.category.dto.ResGetCategoryDto;
 import com.example.delivery.category.dto.ResCreateCategoryDto;
 import com.example.delivery.category.entity.Category;
+import com.example.delivery.category.entity.CategoryStatus;
 import com.example.delivery.category.repository.CategoryRepository;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -36,5 +40,12 @@ public class CategoryService {
                 .status(savedCategory.getStatus())
                 .createdAt(savedCategory.getCreatedAt())
                 .build();
+    }
+
+    //전체 카테고리 조회
+    @Transactional(readOnly = true)
+    public Page<ResGetCategoryDto> getAllCategories(CategoryStatus status, Pageable pageable) {
+        return categoryRepository.findAllByStatus(status, pageable)
+                .map(ResGetCategoryDto::from);
     }
 }

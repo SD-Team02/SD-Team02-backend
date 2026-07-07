@@ -1,8 +1,10 @@
 package com.example.delivery.category.service;
 
 import com.example.delivery.category.dto.ReqCreateCategoryDto;
+import com.example.delivery.category.dto.ResGetCategoryDto;
 import com.example.delivery.category.dto.ResCreateCategoryDto;
 import com.example.delivery.category.entity.Category;
+import com.example.delivery.category.entity.CategoryStatus;
 import com.example.delivery.category.repository.CategoryRepository;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
@@ -12,7 +14,13 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.test.util.ReflectionTestUtils;
+
+import java.util.List;
+import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -60,5 +68,24 @@ class CategoryServiceTest {
         assertThatThrownBy(() -> categoryService.createCategory(dto))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.CATEGORY_ALREADY_EXISTS.getMessage());
+    }
+
+    @Test
+    @DisplayName("전체 카테고리 조회 - 성공")
+    void getCategories_success() {
+        // given
+        Category category = new Category("한식");
+        ReflectionTestUtils.setField(category, "categoryId", UUID.randomUUID());
+        
+        Page<Category> categoryPage = new PageImpl<>(List.of(category), PageRequest.of(0, 10), 1);
+        
+        when(categoryRepository.findAllByStatus(any(), any())).thenReturn(categoryPage);
+
+        // when
+        Page<ResGetCategoryDto> result = categoryService.getAllCategories(CategoryStatus.ACTIVE, PageRequest.of(0, 10));
+
+        // then
+        assertThat(result.getContent()).hasSize(1);
+        assertThat(result.getContent().get(0).getName()).isEqualTo("한식");
     }
 }
