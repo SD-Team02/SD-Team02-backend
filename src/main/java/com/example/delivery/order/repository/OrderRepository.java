@@ -11,8 +11,6 @@ import com.example.delivery.order.entity.OrderStatus;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
-	Page<Order> findAll(Pageable pageable);
-
 	Page<Order> findAllByStatus(OrderStatus status, Pageable pageable);
 
 }
