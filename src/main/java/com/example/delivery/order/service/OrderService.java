@@ -260,4 +260,17 @@ public class OrderService {
 			.status(order.getStatus())
 			.build();
 	}
+
+
+	@Transactional
+	public void deleteOrder(Long userId, UUID orderId) {
+
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+		// 실제 삭제가 아닌 soft delete (deletedAt/deletedBy 기록)
+		order.softDelete(userId);
+
+		// TODO : 관리자(MANAGER/MASTER) 권한 검증 추가
+	}
 }
