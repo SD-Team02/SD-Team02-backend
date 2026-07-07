@@ -11,6 +11,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 import jakarta.persistence.Column;
 import jakarta.persistence.EntityListeners;
 import jakarta.persistence.MappedSuperclass;
+import jakarta.persistence.PrePersist;
 import lombok.Getter;
 
 /**
@@ -47,6 +48,18 @@ public abstract class BaseEntity {
 
     @Column(name = "deleted_by")
     private Long deletedBy;
+
+    /**
+     * Spring Data JPA의 @LastModifiedDate/@LastModifiedBy는 스펙상 생성 시점에도 자동으로 채워진다.
+     * 하지만 "진짜 수정이 일어나기 전까지는 null이어야 한다"는 요구사항이 있어,
+     * AuditingEntityListener(@PrePersist)가 먼저 채운 값을 저장 직전에 다시 비운다.
+     * (JPA 콜백 순서상 @EntityListeners가 엔티티 자신의 @PrePersist보다 먼저 실행됨)
+     */
+    @PrePersist
+    private void clearUpdatedAuditOnCreate() {
+        this.updatedAt = null;
+        this.updatedBy = null;
+    }
 
     /**
      * Soft Delete 처리. 실제 row는 삭제하지 않는다.
