@@ -2,6 +2,7 @@ package com.example.delivery.order.service;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.UUID;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -14,6 +15,7 @@ import com.example.delivery.menu.repository.MenuRepository;
 import com.example.delivery.order.dto.request.ReqCreateOrderDto;
 import com.example.delivery.order.dto.request.ReqCreateOrderMenuDto;
 import com.example.delivery.order.dto.response.ResCreateOrderDto;
+import com.example.delivery.order.dto.response.ResOrderDto;
 import com.example.delivery.order.entity.Order;
 import com.example.delivery.order.entity.OrderItem;
 import com.example.delivery.order.repository.OrderItemRepository;
@@ -101,6 +103,28 @@ public class OrderService {
 		// TODO : Menu 2회 조회 -> 1회 조회로 최적화
 		// TODO : 메서드 분리
 	}
+
+
+	@Transactional(readOnly = true)
+	public ResOrderDto getOrder(UUID orderId) {
+
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+		Store store = storeRepository.findById(order.getStoreId())
+			.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+		return ResOrderDto.builder()
+			.orderId(order.getOrderId())
+			.storeName(store.getName())
+			.address(order.getAddress())
+			.totalPrice(order.getTotalPrice())
+			.status(order.getStatus())
+			.orderedAt(order.getCreatedAt())
+			.build();
+	}
+
+	// TODO : 고객은 자신의 주문만 조회 가능 -> 검증 메서드 들어가야 함
 
 
 }
