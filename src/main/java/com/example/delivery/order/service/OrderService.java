@@ -18,6 +18,8 @@ import com.example.delivery.order.dto.request.ReqCreateOrderDto;
 import com.example.delivery.order.dto.request.ReqCreateOrderMenuDto;
 import com.example.delivery.order.dto.response.ResCreateOrderDto;
 import com.example.delivery.order.dto.response.ResOrderDto;
+import com.example.delivery.order.dto.response.ResOrderItemDto;
+import com.example.delivery.order.dto.response.ResOrderItemsDto;
 import com.example.delivery.order.dto.response.ResOrderListDto;
 import com.example.delivery.order.dto.response.ResOrderPageDto;
 import com.example.delivery.order.entity.Order;
@@ -130,6 +132,39 @@ public class OrderService {
 	}
 
 	// TODO : 고객은 자신의 주문만 조회 가능 -> 검증 메서드 들어가야 함
+
+
+	@Transactional(readOnly = true)
+	public ResOrderItemsDto getOrderItems(UUID orderId) {
+
+		Order order = orderRepository.findById(orderId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+		List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(order.getOrderId());
+
+		List<ResOrderItemDto> items = orderItems.stream()
+			.map(orderItem -> {
+
+				Menu menu = menuRepository.findById(orderItem.getMenuId())
+					.orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+
+				return ResOrderItemDto.builder()
+					.menuId(orderItem.getMenuId())
+					.menuName(menu.getMenuName())
+					.quantity(orderItem.getQuantity())
+					.price(orderItem.getPrice())
+					.build();
+			})
+			.toList();
+
+		return ResOrderItemsDto.builder()
+			.orderId(order.getOrderId())
+			.items(items)
+			.build();
+
+		// TODO : Menu N+1 조회 -> findAllById 배치 조회로 최적화 or QueryDSL
+		// TODO : 고객은 자신의 주문만 조회 가능 -> 권한 검증 추가
+	}
 
 
 	@Transactional(readOnly = true)
