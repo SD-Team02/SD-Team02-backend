@@ -73,7 +73,7 @@ public class PaymentController {
     @GetMapping("/customer")
     @Operation(summary = "본인 결제 내역 기간 페이징 조회", description = "프론트가 준 시작일과 종료일 범위 안에서 로그인 고객 본인의 영수증 리스트를 최신순 목록 조회합니다.")
     @ApiResponses({
-            @ApiResponse(responseCode = "200", description = "본인 결제 내역 목록 조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "본인 결제 내역 목록 조회 성공")
     })
     public ResponseEntity<com.example.delivery.global.common.response.ApiResponse<PageResponse<ResPaymentDto>>> getMyPayments(
             @Valid @ModelAttribute ReqPaymentSearchDto searchDto,
