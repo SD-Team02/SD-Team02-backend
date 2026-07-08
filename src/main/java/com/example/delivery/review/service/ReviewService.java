@@ -136,4 +136,16 @@ public class ReviewService {
 
 		return new ResUpdateReviewDto(review.getReviewId());
 	}
+
+
+	@Transactional
+	public void deleteReview(Long userId, UUID reviewId) {
+
+		Review review = reviewRepository.findById(reviewId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+		review.softDelete(userId);
+
+		// TODO : JWT 연동 후 권한 검증 (CUSTOMER는 본인 리뷰만 / MANAGER·MASTER는 전체)
+	}
 }
