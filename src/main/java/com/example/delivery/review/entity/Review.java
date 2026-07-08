@@ -2,6 +2,8 @@ package com.example.delivery.review.entity;
 
 import java.util.UUID;
 
+import org.hibernate.annotations.Check;
+
 import com.example.delivery.global.common.entity.BaseEntity;
 
 import jakarta.persistence.AttributeOverride;
@@ -14,7 +16,6 @@ import jakarta.persistence.Table;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import org.hibernate.annotations.Check;
 
 /** rating은 요구사항상 1~5 범위만 허용 (DB CHECK 제약 + 요청 DTO의 Bean Validation으로 이중 검증). */
 @Getter
@@ -49,6 +50,11 @@ public class Review extends BaseEntity {
         this.storeId = storeId;
         this.orderId = orderId;
         this.userId = userId;
+        this.rating = rating;
+        this.content = content;
+    }
+
+    public void update(Integer rating, String content) {
         this.rating = rating;
         this.content = content;
     }

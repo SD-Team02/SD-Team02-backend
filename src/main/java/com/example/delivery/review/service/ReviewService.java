@@ -14,9 +14,11 @@ import com.example.delivery.order.entity.Order;
 import com.example.delivery.order.entity.OrderStatus;
 import com.example.delivery.order.repository.OrderRepository;
 import com.example.delivery.review.dto.request.ReqCreateReviewDto;
+import com.example.delivery.review.dto.request.ReqUpdateReviewDto;
 import com.example.delivery.review.dto.response.ResCreateReviewDto;
 import com.example.delivery.review.dto.response.ResReviewDto;
 import com.example.delivery.review.dto.response.ResReviewListDto;
+import com.example.delivery.review.dto.response.ResUpdateReviewDto;
 import com.example.delivery.review.entity.Review;
 import com.example.delivery.review.repository.ReviewRepository;
 import com.example.delivery.store.repository.StoreRepository;
@@ -115,5 +117,23 @@ public class ReviewService {
 			.content(review.getContent())
 			.createdAt(review.getCreatedAt())
 			.build();
+	}
+
+
+	@Transactional
+	public ResUpdateReviewDto updateReview(Long userId, UUID reviewId, ReqUpdateReviewDto request) {
+
+		Review review = reviewRepository.findById(reviewId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+		// 본인 리뷰만 수정 가능 (CUSTOMER)
+		if (!review.getUserId().equals(userId)) {
+			throw new BusinessException(ErrorCode.ACCESS_DENIED);
+		}
+
+		// 변경분은 dirty checking으로 반영
+		review.update(request.getRating(), request.getContent());
+
+		return new ResUpdateReviewDto(review.getReviewId());
 	}
 }
