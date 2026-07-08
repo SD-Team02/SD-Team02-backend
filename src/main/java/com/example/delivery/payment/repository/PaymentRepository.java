@@ -1,6 +1,7 @@
 package com.example.delivery.payment.repository;
 
 import com.example.delivery.payment.entity.Payment;
+import com.example.delivery.payment.entity.PaymentStatus;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -24,6 +25,19 @@ public interface PaymentRepository extends JpaRepository<Payment, UUID> {
             @Param("userId") Long userId,
             @Param("startDateTime") LocalDateTime startDateTime,
             @Param("endDateTime") LocalDateTime endDateTime,
+            Pageable pageable
+    );
+
+    @Query(value = "SELECT p FROM Payment p JOIN FETCH p.order o " +
+            "WHERE p.approvedAt BETWEEN :startDateTime AND :endDateTime " +
+            "AND (:status IS NULL OR p.status = :status)",
+            countQuery = "SELECT count(p) FROM Payment p " +
+                    "WHERE p.approvedAt BETWEEN :startDateTime AND :endDateTime " +
+                    "AND (:status IS NULL OR p.status = :status)")
+    Page<Payment> findAdminPaymentsByFilters(
+            @Param("startDateTime") LocalDateTime startDateTime,
+            @Param("endDateTime") LocalDateTime endDateTime,
+            @Param("status") PaymentStatus status,
             Pageable pageable
     );
 

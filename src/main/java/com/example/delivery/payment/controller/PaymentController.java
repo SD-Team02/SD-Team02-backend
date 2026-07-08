@@ -93,4 +93,25 @@ public class PaymentController {
         return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("본인 결제 내역 목록 조회 성공", pageResponse));
     }
 
+    /** 3. 관리자용: 기간 범위별 목록 조회  */
+    @GetMapping
+    @Operation(summary = "관리자용 전체 결제 내역 검색 목록 조회", description = "결제를 기간 및 결제 상태(ENUM) 페이징 검색합니다. (MANAGER/MASTER 권한 전용)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "관리자용 결제 내역 검색 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 전용 접근 거부 에러")
+    })
+    public ResponseEntity<com.example.delivery.global.common.response.ApiResponse<PageResponse<ResPaymentDto>>> getAdminPayments(
+            @Valid @ModelAttribute ReqPaymentSearchDto searchDto,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", required = false) Integer size,
+            @RequestParam(value = "sortBy", defaultValue = "createdAt") String sortBy,
+            @RequestParam(value = "direction", defaultValue = "DESC") String direction
+    ) {
+        Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
+
+        Page<ResPaymentDto> pageData = paymentService.getAdminPaymentsByFilters(searchDto, pageable);
+        PageResponse<ResPaymentDto> pageResponse = PageResponse.from(pageData);
+        return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("관리자용 결제 내역 검색 성공", pageResponse));
+    }
+
 }
