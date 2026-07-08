@@ -17,6 +17,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
+import java.time.LocalTime;
 import java.util.UUID;
 
 @Service
@@ -67,7 +68,7 @@ public class PaymentService {
     /** 3. 고객 본인용: 기간 범위별 목록 조회  */
     public Page<ResPaymentDto> getMyPaymentsByPeriod(Long userId, ReqPaymentSearchDto searchDto, Pageable pageable) {
         LocalDateTime startDateTime = searchDto.getStartDate().atStartOfDay();
-        LocalDateTime endDateTime = searchDto.getEndDate().atTime(java.time.LocalTime.MAX);
+        LocalDateTime endDateTime = searchDto.getEndDate().atTime(LocalTime.MAX);
 
         Page<Payment> paymentPage = paymentRepository.findMyPaymentsByPeriod(userId, startDateTime, endDateTime, pageable);
         return paymentPage.map(ResPaymentDto::new);

@@ -8,6 +8,11 @@ import com.example.delivery.payment.dto.request.ReqPaymentSearchDto;
 import com.example.delivery.payment.dto.response.ResApprovePaymentDto;
 import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.service.PaymentService;
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameters;
+import io.swagger.v3.oas.annotations.enums.ParameterIn;
+import io.swagger.v3.oas.annotations.media.Schema;
+import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,6 +35,13 @@ public class PaymentController {
      * JWT인증 생기면 확인해야함
      */
     @PostMapping
+    @Operation(summary = "결제 승인 등록", description = "주문 정보를 기반으로 가상 결제 승인을 진행합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "결제 등록 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "결제 요청 권한 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 주문 정보입니다.")
+    })
     public ResponseEntity<ApiResponse<ResApprovePaymentDto>> approvePayment(
             @Valid @RequestBody ReqApprovePaymentDto requestDto
             , @AuthenticationPrincipal UserDetailsImpl userDetails // 시큐리티 유저객체 (수정가능성 있음)
@@ -43,6 +55,11 @@ public class PaymentController {
 
     // 2. 결제 내역 단건 조회
     @GetMapping("/{paymentId}")
+    @Operation(summary = "결제 단건 상세 조회", description = "결제 ID를 통해 특정 결제 내역을 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "결제 내역 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 결제 내역입니다.")
+    })
     public ResponseEntity<ApiResponse<ResPaymentDto>> getPayment(
             @PathVariable("paymentId") UUID paymentId
     ) {
@@ -54,25 +71,26 @@ public class PaymentController {
      * JWT인증 생기면 확인해야함
      * */
     @GetMapping("/customer")
-    public ResponseEntity<ApiResponse<PageResponse<ResPaymentDto>>> getMyPayments(
+    @Operation(summary = "본인 결제 내역 기간 페이징 조회", description = "프론트가 준 시작일과 종료일 범위 안에서 로그인 고객 본인의 영수증 리스트를 최신순 목록 조회합니다.")
+    @ApiResponses({
+            @ApiResponse(responseCode = "200", description = "본인 결제 내역 목록 조회 성공")
+    })
+    public ResponseEntity<com.example.delivery.global.common.response.ApiResponse<PageResponse<ResPaymentDto>>> getMyPayments(
             @Valid @ModelAttribute ReqPaymentSearchDto searchDto,
+            @RequestParam(value = "page", defaultValue = "0") int page,
+            @RequestParam(value = "size", required = false) Integer size,
+            @RequestParam(value = "sortBy", defaultValue = "createdAt") String sortBy,
+            @RequestParam(value = "direction", defaultValue = "DESC") String direction,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         Long userId = userDetails.getUserId();
 
-        // 중복 기본값 제거 피드백 반영: 주소창 파라미터가 비어있어도 PageableFactory 내부에서 완벽히 기본값을 입혀줍니다!
-        Pageable pageable = PageableFactory.of(
-                searchDto.getPage(),
-                searchDto.getSize(),
-                searchDto.getSortBy(),
-                searchDto.getDirection()
-        );
+        // 🌟 중복 정리 반영: 팩토리 객체에서 단 한 번만 안전하게 공통 페이징 세팅 수행!
+        Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
 
         Page<ResPaymentDto> pageData = paymentService.getMyPaymentsByPeriod(userId, searchDto, pageable);
-
-        //공통 페이징 호출
         PageResponse<ResPaymentDto> pageResponse = PageResponse.from(pageData);
-        return ResponseEntity.ok(ApiResponse.success("본인 결제 내역 목록 조회 성공", pageResponse));
+        return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("본인 결제 내역 목록 조회 성공", pageResponse));
     }
 
 }
