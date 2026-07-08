@@ -26,7 +26,7 @@ import java.util.UUID;
 public class PaymentService {
 
     private final PaymentRepository paymentRepository;
-    //private final OrderRepository orderRepository;
+    private final OrderRepository orderRepository;
 
     /**
      *  각 비즈니스 별 권한 확인 추가 필요
@@ -37,26 +37,25 @@ public class PaymentService {
      */
     @Transactional
     public ResApprovePaymentDto approve(ReqApprovePaymentDto requestDto, Long userId) {
-//        Order order = orderRepository.findById(requestDto.getOrderId())
-//                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
-//
-//        // 로그인한 진짜 유저 ID와 주문 생성자 ID를 검증
-//        if (!order.getUserId().equals(userId)) {
-//            throw new BusinessException(ErrorCode.ACCESS_DENIED); // 권한 없는 결제 시도 차단
-//        }
-//
-//        // 주문 가격과 실제 결제 가격 비교
-//        if (!order.getTotalPrice().equals(requestDto.getAmount())) {
-//            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-//        }
-//
-//        Payment payment = new Payment(order, requestDto.getPaymentMethod(), requestDto.getCardCompany(), requestDto.getAmount());
-//        payment.approve();
-//        paymentRepository.save(payment);
-//        order.changeStatus(OrderStatus.ACCEPTED); // 주문 상태 ACCEPTED 처리
-//
-//        return new ResApprovePaymentDto(payment);
-        return null;
+        Order order = orderRepository.findById(requestDto.getOrderId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+        // 로그인한 진짜 유저 ID와 주문 생성자 ID를 검증
+        if (!order.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED); // 권한 없는 결제 시도 차단
+        }
+
+        // 주문 가격과 실제 결제 가격 비교
+        if (!order.getTotalPrice().equals(requestDto.getAmount())) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        Payment payment = new Payment(order, requestDto.getPaymentMethod(), requestDto.getCardCompany(), requestDto.getAmount());
+        payment.approve();
+        paymentRepository.save(payment);
+        order.changeStatus(OrderStatus.ACCEPTED); // 주문 상태 ACCEPTED 처리
+
+        return new ResApprovePaymentDto(payment);
     }
 
     /** 2. 결제 내역 단건 조회 */
