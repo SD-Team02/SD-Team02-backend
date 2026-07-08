@@ -5,14 +5,18 @@ import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.order.entity.Order;
 import com.example.delivery.order.entity.OrderStatus;
 import com.example.delivery.payment.dto.request.ReqApprovePaymentDto;
+import com.example.delivery.payment.dto.request.ReqPaymentSearchDto;
 import com.example.delivery.payment.dto.response.ResApprovePaymentDto;
 import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.entity.Payment;
 import com.example.delivery.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Service
@@ -22,6 +26,10 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+
+    /**
+     *  각 비즈니스 별 권한 확인 추가 필요
+     */
 
     /**
      * 1. 결제 승인 비즈니스 로직 (유저 ID 검증 포함)
@@ -54,6 +62,15 @@ public class PaymentService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
         return new ResPaymentDto(payment);
+    }
+
+    /** 3. 고객 본인용: 기간 범위별 목록 조회  */
+    public Page<ResPaymentDto> getMyPaymentsByPeriod(Long userId, ReqPaymentSearchDto searchDto, Pageable pageable) {
+        LocalDateTime startDateTime = searchDto.getStartDate().atStartOfDay();
+        LocalDateTime endDateTime = searchDto.getEndDate().atTime(java.time.LocalTime.MAX);
+
+        Page<Payment> paymentPage = paymentRepository.findMyPaymentsByPeriod(userId, startDateTime, endDateTime, pageable);
+        return paymentPage.map(ResPaymentDto::new);
     }
 
 
