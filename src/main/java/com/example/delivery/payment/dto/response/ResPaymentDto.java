@@ -5,31 +5,30 @@ import com.example.delivery.payment.entity.PaymentStatus;
 import lombok.AccessLevel;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
+import lombok.NoArgsConstructor;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
 
 @Getter
-@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@NoArgsConstructor
 public class ResPaymentDto {
 
-    private final UUID paymentId;
-    private final UUID orderId;
-    private final Integer amount;
-    private final String paymentMethod;
-    private final String cardCompany;
-    private final PaymentStatus status;
-    private final LocalDateTime approvedAt;
+    private UUID paymentId;
+    private UUID orderId;
+    private Integer amount;
+    private String paymentMethod;
+    private String cardCompany;
+    private PaymentStatus status;
+    private LocalDateTime approvedAt;
 
-    public static ResPaymentDto from(Payment payment) {
-        return new ResPaymentDto(
-                payment.getPaymentId(),
-                payment.getOrder().getOrderId(),
-                payment.getAmount(),
-                payment.getPaymentMethod(),
-                payment.getCardCompany(),
-                payment.getStatus(),
-                payment.getApprovedAt()
-        );
+    public ResPaymentDto(Payment payment) {
+        this.paymentId = payment.getPaymentId();
+        this.orderId = payment.getOrder().getOrderId();
+        this.amount = payment.getAmount();
+        this.paymentMethod = payment.getPaymentMethod();
+        this.cardCompany = payment.getCardCompany();
+        this.status = payment.getStatus();
+        this.approvedAt = payment.getApprovedAt();
     }
 }
