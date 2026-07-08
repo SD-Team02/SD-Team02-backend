@@ -9,6 +9,7 @@ import com.example.delivery.category.repository.CategoryRepository;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -24,24 +25,15 @@ public class CategoryService {
     //카테고리 생성
     @Transactional
     public ResCreateCategoryDto createCategory(ReqCreateCategoryDto reqCreateCategoryDto){
-        //중복 체크
-        if (categoryRepository.existsByName(reqCreateCategoryDto.getName())) {
+        checkDuplicate(reqCreateCategoryDto.getName());
+
+        try {
+            Category category = new Category(reqCreateCategoryDto.getName());
+
+            return ResCreateCategoryDto.from(categoryRepository.save(category));
+        } catch (DataIntegrityViolationException e) {
             throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS);
         }
-
-        //entity 생성
-        Category category = new Category(reqCreateCategoryDto.getName());
-
-        //저장
-        Category savedCategory = categoryRepository.save(category);
-
-        //response DTO 반환
-        return ResCreateCategoryDto.builder()
-                .categoryId(savedCategory.getCategoryId())
-                .name(savedCategory.getName())
-                .status(savedCategory.getStatus())
-                .createdAt(savedCategory.getCreatedAt())
-                .build();
     }
 
     //전체 카테고리 조회
@@ -57,5 +49,13 @@ public class CategoryService {
         return categoryRepository.findById(categoryId)
                 .map(ResGetCategoryDto::from)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+    }
+
+
+    //카테고리명 중복 여부 확인 method
+    private void checkDuplicate(String name) {
+        if (categoryRepository.existsByName(name)) {
+            throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS);
+        }
     }
 }

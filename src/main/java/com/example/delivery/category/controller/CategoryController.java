@@ -38,7 +38,7 @@ public class CategoryController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     @PostMapping
-    public ResponseEntity<?> createCategory(@Valid @RequestBody ReqCreateCategoryDto reqCreateCategoryDto){
+    public ResponseEntity<ApiResponse<ResCreateCategoryDto>> createCategory(@Valid @RequestBody ReqCreateCategoryDto reqCreateCategoryDto){
         ResCreateCategoryDto resCreateCategoryDto = categoryService.createCategory(reqCreateCategoryDto);
 
         return ResponseEntity
@@ -49,7 +49,8 @@ public class CategoryController {
 
     @Operation(summary = "전체 카테고리 조회")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "전체 카테고리 목록 조회 성공")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "전체 카테고리 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "정렬 기준이 올바르지 않습니다.")
     })
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ResGetCategoryDto>>> getAllCategories(

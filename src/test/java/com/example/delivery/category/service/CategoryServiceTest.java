@@ -14,6 +14,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -64,6 +65,22 @@ class CategoryServiceTest {
         ReflectionTestUtils.setField(dto, "name", "한식");
         
         when(categoryRepository.existsByName(any())).thenReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.createCategory(dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_ALREADY_EXISTS.getMessage());
+    }
+
+    @Test
+    @DisplayName("카테고리 생성 - DB 중복 시 예외 발생")
+    void createCategory_dbDuplicate_throwsException() {
+        // given
+        ReqCreateCategoryDto dto = new ReqCreateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "한식");
+
+        when(categoryRepository.existsByName(any())).thenReturn(false);
+        when(categoryRepository.save(any())).thenThrow(new DataIntegrityViolationException("Duplicate"));
 
         // when & then
         assertThatThrownBy(() -> categoryService.createCategory(dto))
