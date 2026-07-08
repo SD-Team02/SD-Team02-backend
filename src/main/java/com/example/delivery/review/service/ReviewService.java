@@ -15,6 +15,7 @@ import com.example.delivery.order.entity.OrderStatus;
 import com.example.delivery.order.repository.OrderRepository;
 import com.example.delivery.review.dto.request.ReqCreateReviewDto;
 import com.example.delivery.review.dto.response.ResCreateReviewDto;
+import com.example.delivery.review.dto.response.ResReviewDto;
 import com.example.delivery.review.dto.response.ResReviewListDto;
 import com.example.delivery.review.entity.Review;
 import com.example.delivery.review.repository.ReviewRepository;
@@ -94,5 +95,25 @@ public class ReviewService {
 
 		// TODO : username N+1 조회 -> 배치 조회/QueryDSL로 최적화
 		// TODO : QueryDSL 적용 후 startDate/endDate 조건 검색 추가
+	}
+
+
+	@Transactional(readOnly = true)
+	public ResReviewDto getReview(UUID reviewId) {
+
+		Review review = reviewRepository.findById(reviewId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+
+		User user = userRepository.findById(review.getUserId())
+			.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+		return ResReviewDto.builder()
+			.reviewId(review.getReviewId())
+			.storeId(review.getStoreId())
+			.username(user.getUsername())
+			.rating(review.getRating())
+			.content(review.getContent())
+			.createdAt(review.getCreatedAt())
+			.build();
 	}
 }
