@@ -1,4 +1,4 @@
-package com.example.delivery.store.entity;
+package com.example.delivery.region.entity;
 
 import java.util.UUID;
 

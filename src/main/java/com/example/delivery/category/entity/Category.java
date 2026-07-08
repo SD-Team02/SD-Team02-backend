@@ -1,4 +1,4 @@
-package com.example.delivery.store.entity;
+package com.example.delivery.category.entity;
 
 import java.util.UUID;
 
@@ -33,7 +33,7 @@ public class Category extends BaseEntity {
     @Column(name = "category_id")
     private UUID categoryId;
 
-    @Column(name = "name", length = 100, nullable = false)
+    @Column(name = "name", length = 100, nullable = false, unique = true)
     private String name;
 
     @Enumerated(EnumType.STRING)
