@@ -3,11 +3,14 @@ package com.example.delivery.payment.controller;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.payment.dto.request.ReqApprovePaymentDto;
 import com.example.delivery.payment.dto.response.ResApprovePaymentDto;
+import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.service.PaymentService;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/payments")
@@ -30,6 +33,15 @@ public class PaymentController {
 
         ResApprovePaymentDto response = paymentService.approve(requestDto, userId);
         return ResponseEntity.ok(ApiResponse.success("결제 등록 성공", response));
+    }
+
+    // 2. 결제 내역 단건 조회
+    @GetMapping("/{paymentId}")
+    public ResponseEntity<ApiResponse<ResPaymentDto>> getPayment(
+            @PathVariable("paymentId") UUID paymentId
+    ) {
+        ResPaymentDto response = paymentService.getPaymentById(paymentId);
+        return ResponseEntity.ok(ApiResponse.success("결제 내역 조회 성공", response));
     }
 
 }

@@ -6,11 +6,14 @@ import com.example.delivery.order.entity.Order;
 import com.example.delivery.order.entity.OrderStatus;
 import com.example.delivery.payment.dto.request.ReqApprovePaymentDto;
 import com.example.delivery.payment.dto.response.ResApprovePaymentDto;
+import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.entity.Payment;
 import com.example.delivery.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +47,13 @@ public class PaymentService {
         order.changeStatus(OrderStatus.ACCEPTED); // 주문 상태 ACCEPTED 처리
 
         return new ResApprovePaymentDto(payment);
+    }
+
+    /** 2. 결제 내역 단건 조회 */
+    public ResPaymentDto getPaymentById(UUID paymentId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+        return new ResPaymentDto(payment);
     }
 
 
