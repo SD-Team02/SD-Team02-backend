@@ -2,9 +2,12 @@ package com.example.delivery.review.service;
 
 import java.util.UUID;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.order.entity.Order;
@@ -12,8 +15,12 @@ import com.example.delivery.order.entity.OrderStatus;
 import com.example.delivery.order.repository.OrderRepository;
 import com.example.delivery.review.dto.request.ReqCreateReviewDto;
 import com.example.delivery.review.dto.response.ResCreateReviewDto;
+import com.example.delivery.review.dto.response.ResReviewListDto;
 import com.example.delivery.review.entity.Review;
 import com.example.delivery.review.repository.ReviewRepository;
+import com.example.delivery.store.repository.StoreRepository;
+import com.example.delivery.user.entity.User;
+import com.example.delivery.user.repository.UserRepository;
 
 import lombok.RequiredArgsConstructor;
 
@@ -24,6 +31,8 @@ public class ReviewService {
 	private final ReviewRepository reviewRepository;
 
 	private final OrderRepository orderRepository;
+	private final StoreRepository storeRepository;
+	private final UserRepository userRepository;
 
 	@Transactional
 	public ResCreateReviewDto createReview(Long userId, UUID orderId, ReqCreateReviewDto request) {
@@ -56,5 +65,34 @@ public class ReviewService {
 		return new ResCreateReviewDto(review.getReviewId());
 
 		// TODO : JWT 연동 후 CUSTOMER 권한 검증
+	}
+
+
+	@Transactional(readOnly = true)
+	public PageResponse<ResReviewListDto> getStoreReviews(UUID storeId, Pageable pageable) {
+
+		// 가게 존재 검증
+		storeRepository.findById(storeId)
+			.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+		Page<ResReviewListDto> reviews = reviewRepository.findByStoreId(storeId, pageable)
+			.map(review -> {
+
+				User user = userRepository.findById(review.getUserId())
+					.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+
+				return ResReviewListDto.builder()
+					.reviewId(review.getReviewId())
+					.username(user.getUsername())
+					.rating(review.getRating())
+					.content(review.getContent())
+					.createdAt(review.getCreatedAt())
+					.build();
+			});
+
+		return PageResponse.from(reviews);
+
+		// TODO : username N+1 조회 -> 배치 조회/QueryDSL로 최적화
+		// TODO : QueryDSL 적용 후 startDate/endDate 조건 검색 추가
 	}
 }
