@@ -45,6 +45,13 @@ public class Category extends BaseEntity {
         this.status = CategoryStatus.ACTIVE;
     }
 
+    //카테고리 수정 메서드
+    public void update(String name, CategoryStatus status) {
+        this.name = name;
+        this.status = status;
+    }
+
+    //카테고리명 변경 메서드
     public void rename(String name) {
         this.name = name;
     }

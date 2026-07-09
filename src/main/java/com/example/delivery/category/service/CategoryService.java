@@ -1,13 +1,12 @@
 package com.example.delivery.category.service;
 
-import com.example.delivery.category.dto.ReqCreateCategoryDto;
-import com.example.delivery.category.dto.ResGetCategoryDto;
-import com.example.delivery.category.dto.ResCreateCategoryDto;
+import com.example.delivery.category.dto.*;
 import com.example.delivery.category.entity.Category;
 import com.example.delivery.category.entity.CategoryStatus;
 import com.example.delivery.category.repository.CategoryRepository;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
@@ -51,7 +50,20 @@ public class CategoryService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 
+    //카테고리 수정
+    @Transactional
+    public ResUpdateCategoryDto updateCategory(UUID categoryId, ReqUpdateCategoryDto reqUpdateCategoryDto) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
+        category.update(reqUpdateCategoryDto.getName(), reqUpdateCategoryDto.getStatus());
+        return ResUpdateCategoryDto.from(category);
+    }
+
+
+    /*
+    [공통 메서드]
+     */
     //카테고리명 중복 여부 확인 method
     private void checkDuplicate(String name) {
         if (categoryRepository.existsByName(name)) {
