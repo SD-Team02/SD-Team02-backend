@@ -3,6 +3,7 @@ package com.example.delivery.category.controller;
 import com.example.delivery.category.dto.request.ReqCreateCategoryDto;
 import com.example.delivery.category.dto.request.ReqUpdateCategoryDto;
 import com.example.delivery.category.dto.response.ResCreateCategoryDto;
+import com.example.delivery.category.dto.response.ResDeleteCategoryDto;
 import com.example.delivery.category.dto.response.ResGetCategoryDto;
 import com.example.delivery.category.dto.response.ResUpdateCategoryDto;
 import com.example.delivery.category.entity.CategoryStatus;
@@ -99,5 +100,18 @@ public class CategoryController {
             @Valid @RequestBody ReqUpdateCategoryDto reqUpdateCategoryDto){
         ResUpdateCategoryDto resUpdateCategoryDto = categoryService.updateCategory(categoryId, reqUpdateCategoryDto);
         return ResponseEntity.ok(ApiResponse.success("카테고리 수정 성공", resUpdateCategoryDto));
+    }
+
+    @Operation(summary = "카테고리 삭제")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @DeleteMapping("/{categoryId}")
+    public ResponseEntity<ApiResponse<ResDeleteCategoryDto>> deleteCategory(@PathVariable UUID categoryId) {
+        ResDeleteCategoryDto resDeleteCategoryDto = categoryService.deleteCategory(categoryId);
+        return ResponseEntity.ok(ApiResponse.success("카테고리 삭제 성공", resDeleteCategoryDto));
     }
 }
