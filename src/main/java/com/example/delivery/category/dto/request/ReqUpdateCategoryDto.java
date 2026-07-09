@@ -1,4 +1,4 @@
-package com.example.delivery.category.dto;
+package com.example.delivery.category.dto.request;
 
 import com.example.delivery.category.entity.CategoryStatus;
 import io.swagger.v3.oas.annotations.media.Schema;

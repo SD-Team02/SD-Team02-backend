@@ -1,10 +1,10 @@
 package com.example.delivery.category.service;
 
-import com.example.delivery.category.dto.ReqCreateCategoryDto;
-import com.example.delivery.category.dto.ReqUpdateCategoryDto;
-import com.example.delivery.category.dto.ResGetCategoryDto;
-import com.example.delivery.category.dto.ResCreateCategoryDto;
-import com.example.delivery.category.dto.ResUpdateCategoryDto;
+import com.example.delivery.category.dto.request.ReqCreateCategoryDto;
+import com.example.delivery.category.dto.request.ReqUpdateCategoryDto;
+import com.example.delivery.category.dto.response.ResGetCategoryDto;
+import com.example.delivery.category.dto.response.ResCreateCategoryDto;
+import com.example.delivery.category.dto.response.ResUpdateCategoryDto;
 import com.example.delivery.category.entity.Category;
 import com.example.delivery.category.entity.CategoryStatus;
 import com.example.delivery.category.repository.CategoryRepository;

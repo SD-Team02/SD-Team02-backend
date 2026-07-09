@@ -1,4 +1,4 @@
-package com.example.delivery.category.dto;
+package com.example.delivery.category.dto.response;
 
 import com.example.delivery.category.entity.Category;
 import com.example.delivery.category.entity.CategoryStatus;
