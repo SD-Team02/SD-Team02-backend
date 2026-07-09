@@ -26,12 +26,12 @@ public class ResCreateRegionDto {
     @Schema(description = "지역 등록 날짜", example = "2026-07-07T12:34:56.123456700")
     private LocalDateTime createdAt;
 
-    public static ResCreateRegionDto from(Region region) {
+    public static ResCreateRegionDto from(Region region, String parentRegionName) {
         return ResCreateRegionDto.builder()
                 .regionId(region.getRegionId())
                 .name(region.getName())
                 .parentRegionId(region.getParentRegionId())
-                .parentRegionName(null) //TODO : 이 부분 수정 필요
+                .parentRegionName(parentRegionName)
                 .status(region.getStatus())
                 .createdAt(region.getCreatedAt())
                 .build();
