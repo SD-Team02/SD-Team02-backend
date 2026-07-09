@@ -1,8 +1,10 @@
 package com.example.delivery.category.service;
 
-import com.example.delivery.category.dto.ReqCreateCategoryDto;
-import com.example.delivery.category.dto.ResGetCategoryDto;
-import com.example.delivery.category.dto.ResCreateCategoryDto;
+import com.example.delivery.category.dto.request.ReqCreateCategoryDto;
+import com.example.delivery.category.dto.request.ReqUpdateCategoryDto;
+import com.example.delivery.category.dto.response.ResGetCategoryDto;
+import com.example.delivery.category.dto.response.ResCreateCategoryDto;
+import com.example.delivery.category.dto.response.ResUpdateCategoryDto;
 import com.example.delivery.category.entity.Category;
 import com.example.delivery.category.entity.CategoryStatus;
 import com.example.delivery.category.repository.CategoryRepository;
@@ -136,5 +138,65 @@ class CategoryServiceTest {
         assertThatThrownBy(() -> categoryService.getCategory(categoryId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.CATEGORY_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("카테고리 수정 - 성공")
+    void updateCategory_success() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        Category category = new Category("한식");
+        ReflectionTestUtils.setField(category, "categoryId", categoryId);
+        
+        ReqUpdateCategoryDto dto = new ReqUpdateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "일식");
+        ReflectionTestUtils.setField(dto, "status", CategoryStatus.INACTIVE);
+
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+        // when
+        ResUpdateCategoryDto result = categoryService.updateCategory(categoryId, dto);
+
+        // then
+        assertThat(result.getName()).isEqualTo("일식");
+        assertThat(result.getStatus()).isEqualTo(CategoryStatus.INACTIVE);
+    }
+
+    @Test
+    @DisplayName("카테고리 수정 - 존재하지 않을 때 예외 발생")
+    void updateCategory_notFound_throwsException() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        ReqUpdateCategoryDto dto = new ReqUpdateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "일식");
+        ReflectionTestUtils.setField(dto, "status", CategoryStatus.ACTIVE);
+        
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.updateCategory(categoryId, dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("카테고리 수정 - 중복 이름으로 수정 시 예외 발생")
+    void updateCategory_duplicateName_throwsException() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        Category category = new Category("한식");
+        ReflectionTestUtils.setField(category, "categoryId", categoryId);
+
+        ReqUpdateCategoryDto dto = new ReqUpdateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "일식");
+        ReflectionTestUtils.setField(dto, "status", CategoryStatus.ACTIVE);
+
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(categoryRepository.existsByNameAndCategoryIdNot("일식", categoryId)).thenReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.updateCategory(categoryId, dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_ALREADY_EXISTS.getMessage());
     }
 }
