@@ -51,7 +51,7 @@ public class RegionController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "정렬 기준이 올바르지 않습니다.")
     })
     @GetMapping
-    public ResponseEntity<ApiResponse<?>> getAllRegions(
+    public ResponseEntity<ApiResponse<PageResponse<ResGetRegionDto>>> getAllRegions(
             @RequestParam(defaultValue = "ACTIVE")RegionStatus status,
             @PageableDefault(
                     page = 0,
@@ -64,4 +64,6 @@ public class RegionController {
 
         return ResponseEntity.ok(ApiResponse.success("전체 지역 조회 성공", PageResponse.from(resRegions)));
     }
+
+
 }
