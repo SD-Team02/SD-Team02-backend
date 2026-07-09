@@ -22,6 +22,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
+
+//swagger에대한 것은 Ai를 사용해 작성한 것이라 추후 수정이 필요할 수 있음
 @Slf4j
 @RestController
 @RequiredArgsConstructor

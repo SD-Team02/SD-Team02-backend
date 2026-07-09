@@ -53,14 +53,7 @@ public class UserService {
         }
 
         //비밀번호 정규식 [8자이상 15자 이하, 영어대소문자, 숫자, 특수문자]
-        if(password.length()<8 || password.length()>15)
-        {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
-        }
-        if(!password.matches("^[A-Za-z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?`~]+$"))
-        {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
-        }
+        password = passwordValidation(password);
 
         //사용중인 nickname 중복 탐색
         Optional<User> checkNickname = userRepository.findByNicknameAndDeletedFalse(nickname);
@@ -77,12 +70,6 @@ public class UserService {
         //email 정규식
         if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
             throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
-        }
-
-        //phone 중복 탐색
-        Optional<User> checkPhone = userRepository.findByPhoneAndDeletedFalse(phone);
-        if (checkPhone.isPresent()) {
-            throw new IllegalArgumentException("이미 사용중인 전화번호 입니다.");
         }
 
         //phone 정규식
@@ -119,9 +106,6 @@ public class UserService {
             }
             role = Role.OWNER;
         }
-
-        //비밀번호 인코딩
-        password = passwordEncoder.encode(requestDto.getPassword());
 
         //사용자 등록
         User user = new User(username,nickname,email,password,role,phone);
@@ -162,6 +146,7 @@ public class UserService {
         String email = userUpdateDto.getEmail();
         String nickname = userUpdateDto.getNickname();
         String phone = userUpdateDto.getPhone().trim();
+        String password = userUpdateDto.getPassword();
 
         //회원 가입과 다르게 id가 자신과 다른 경우만 체크
         //사용중인 nickname 중복 탐색
@@ -181,18 +166,14 @@ public class UserService {
             throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
         }
 
-        //phone 중복 탐색
-        Optional<User> checkPhone = userRepository.findByPhoneAndDeletedFalse(phone);
-//        if (checkPhone.isPresent() && !checkPhone.get().getUserId().equals(userId)) {
-//            throw new IllegalArgumentException("이미 사용중인 전화번호 입니다.");
-//        }
+        password = passwordValidation(password);
 
         //phone 정규식
         if(!phone.matches("^01[016789]\\d{7,8}$"))
         {
             throw new IllegalArgumentException("올바른 전화번호 양식이 아닙니다.");
         }
-        user.update(nickname,email,phone, userId);
+        user.update(nickname,email,phone,password, userId);
     }
 
     //회원 탈퇴/삭제처리
@@ -203,7 +184,7 @@ public class UserService {
             throw new BusinessException(ErrorCode.USER_NOT_FOUND);
         }
         User user = checkUser.get();
-        user.deleteUser(userId);
+        user.withdraw(userId);
 
     }
 
@@ -212,4 +193,21 @@ public class UserService {
         return userRepository.findAll(pageable)
                 .map(UserInfoDto::new);
     }
+
+    
+    //비밀번호 정규식 [8자이상 15자 이하, 영어대소문자, 숫자, 특수문자]
+    public String passwordValidation(String password)
+    {
+        if(password.length()<8 || password.length()>15)
+        {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+        }
+        if(!password.matches("^[A-Za-z0-9!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>/?`~]+$"))
+        {
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+        }
+        password = passwordEncoder.encode(password);
+        return password;
+    }
+
 }

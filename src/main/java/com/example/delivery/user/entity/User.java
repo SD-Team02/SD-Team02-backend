@@ -61,9 +61,6 @@ public class User extends BaseEntity {
     @Column(name = "updated_by")
     private Long updatedBy;
 
-    @Column(name = "deleted_by")
-    private Long deletedBy;
-
     @Column(name = "is_deleted")
     private Boolean deleted = false;
 
@@ -97,15 +94,12 @@ public class User extends BaseEntity {
         return Boolean.TRUE.equals(this.deleted);
     }
 
-    public void update(String nickname, String email, String phone, Long userId) {
+    public void update(String nickname, String email, String phone,String password ,Long userId) {
         this.nickname = nickname;
         this.email = email;
         this.phone = phone;
+        this.password = password;
         this.updatedBy = userId;
     }
 
-    public void deleteUser(Long userId) {
-        this.deleted = true;
-        this.deletedBy = userId;
-    }
 }
