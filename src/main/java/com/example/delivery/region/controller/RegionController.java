@@ -3,8 +3,10 @@ package com.example.delivery.region.controller;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.region.dto.request.ReqCreateRegionDto;
+import com.example.delivery.region.dto.request.ReqUpdateRegionDto;
 import com.example.delivery.region.dto.response.ResCreateRegionDto;
 import com.example.delivery.region.dto.response.ResGetRegionDto;
+import com.example.delivery.region.dto.response.ResUpdateRegionDto;
 import com.example.delivery.region.entity.RegionStatus;
 import com.example.delivery.region.service.RegionService;
 import io.swagger.v3.oas.annotations.Operation;
@@ -19,6 +21,8 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/regions")
@@ -65,5 +69,21 @@ public class RegionController {
         return ResponseEntity.ok(ApiResponse.success("전체 지역 조회 성공", PageResponse.from(resRegions)));
     }
 
-
+    @Operation(summary = "지역 수정")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "지역 수정 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 존재하는 지역입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "지역을 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 본문을 읽을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PutMapping("/{regionId}")
+    public ResponseEntity<ApiResponse<ResUpdateRegionDto>> updateRegion(
+            @PathVariable UUID regionId,
+            @Valid @RequestBody ReqUpdateRegionDto reqUpdateRegionDto){
+        ResUpdateRegionDto resUpdateRegionDto = regionService.updateRegion(regionId,reqUpdateRegionDto);
+        return ResponseEntity.ok(ApiResponse.success("지역 수정 성공",resUpdateRegionDto));
+    }
 }

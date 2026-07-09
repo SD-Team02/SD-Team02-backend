@@ -3,17 +3,22 @@ package com.example.delivery.region.service;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.region.dto.request.ReqCreateRegionDto;
+import com.example.delivery.region.dto.request.ReqUpdateRegionDto;
 import com.example.delivery.region.dto.response.ResCreateRegionDto;
 import com.example.delivery.region.dto.response.ResGetRegionDto;
+import com.example.delivery.region.dto.response.ResUpdateRegionDto;
 import com.example.delivery.region.entity.Region;
 import com.example.delivery.region.entity.RegionStatus;
 import com.example.delivery.region.repository.RegionRepository;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+
+import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -25,14 +30,8 @@ public class RegionService {
     public ResCreateRegionDto createRegion(ReqCreateRegionDto reqCreateRegionDto) {
         checkDuplicate(reqCreateRegionDto.getName());
 
-        //상위 지역 존재 여부 확인
-        String parentName = null;
-        if (reqCreateRegionDto.getParentRegionId() != null) {
-            Region parent = regionRepository.findByRegionIdAndDeletedAtIsNull(reqCreateRegionDto.getParentRegionId())
-                    .orElseThrow(() -> new BusinessException(ErrorCode.REGION_PARENT_NOT_FOUND));
-
-            parentName = parent.getName();
-        }
+        //상위 지역명 구하기
+        String parentName = getParentRegionName(reqCreateRegionDto.getParentRegionId());
 
         try{
             Region region = new Region(reqCreateRegionDto.getName(),reqCreateRegionDto.getParentRegionId());
@@ -51,14 +50,29 @@ public class RegionService {
     public Page<ResGetRegionDto> getAllRegions(RegionStatus status, Pageable pageable) {
         return regionRepository.findAllByStatusAndDeletedAtIsNull(status, pageable)
                 .map(region -> {
-                    String parentName = null;
-                    if (region.getParentRegionId() != null) {
-                        parentName = regionRepository.findByRegionIdAndDeletedAtIsNull(region.getParentRegionId())
-                                .map(Region::getName)
-                                .orElse(null);
-                    }
+                    String parentName = getParentRegionName(region.getParentRegionId());
                     return ResGetRegionDto.from(region, parentName);
                 });
+    }
+
+    //지역 수정
+    @Transactional
+    public ResUpdateRegionDto updateRegion(UUID regionId, @Valid ReqUpdateRegionDto reqUpdateRegionDto) {
+        Region region = regionRepository.findById(regionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+
+        if(!region.getName().equals(reqUpdateRegionDto.getName())){
+            if(regionRepository.existsByNameAndRegionIdNot(reqUpdateRegionDto.getName(),regionId)){
+                throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
+            }
+        }
+
+        String parentName = getParentRegionName(region.getParentRegionId());
+
+        region.update(reqUpdateRegionDto.getName(),reqUpdateRegionDto.getParentRegionId(),reqUpdateRegionDto.getStatus());
+        regionRepository.saveAndFlush(region);
+
+        return ResUpdateRegionDto.from(region,parentName);
     }
 
 
@@ -71,4 +85,18 @@ public class RegionService {
             throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
         }
     }
+
+    //상위 지역명 얻는 method
+    private String getParentRegionName(UUID parentRegionId){
+        String parentName = null;
+
+        if (parentRegionId != null){
+            parentName = regionRepository.findByRegionIdAndDeletedAtIsNull(parentRegionId)
+                    .map(Region::getName)
+                    .orElse(null);
+        }
+
+        return parentName;
+    }
+
 }

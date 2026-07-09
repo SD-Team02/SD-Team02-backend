@@ -54,4 +54,11 @@ public class Region extends BaseEntity {
         this.parentRegionId = null;
         this.status = RegionStatus.ACTIVE;
     }
+
+    //지역 수정 메서드
+    public void update(String name, UUID parentRegionId ,RegionStatus status) {
+        this.name = name;
+        this.parentRegionId = parentRegionId;
+        this.status = status;
+    }
 }

@@ -21,7 +21,7 @@ public class ResCreateRegionDto {
     private UUID parentRegionId;
     @Schema(description = "상위 지역명", example = "서울시")
     private String parentRegionName;
-    @Schema(description = "주문 가능 여부", example = "ACTIVE")
+    @Schema(description = "지역 활성화 상태", example = "ACTIVE")
     private RegionStatus status;
     @Schema(description = "지역 등록 날짜", example = "2026-07-07T12:34:56.123456700")
     private LocalDateTime createdAt;
