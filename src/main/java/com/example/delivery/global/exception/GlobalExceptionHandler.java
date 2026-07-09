@@ -1,5 +1,6 @@
 package com.example.delivery.global.exception;
 
+import org.springframework.data.mapping.PropertyReferenceException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
@@ -66,6 +67,14 @@ public class GlobalExceptionHandler {
         log.warn("[MethodArgumentTypeMismatchException] {}", e.getMessage());
         return ResponseEntity.status(ErrorCode.INVALID_TYPE_VALUE.getStatus())
                 .body(ApiResponse.error(ErrorCode.INVALID_TYPE_VALUE.getCode(), ErrorCode.INVALID_TYPE_VALUE.getMessage()));
+    }
+
+    // 정렬 프로퍼티 오류
+    @ExceptionHandler(PropertyReferenceException.class)
+    public ResponseEntity<ApiResponse<Void>> handlePropertyReferenceException(PropertyReferenceException e) {
+        log.warn("[PropertyReferenceException] {}", e.getMessage());
+        return ResponseEntity.status(ErrorCode.INVALID_INPUT_VALUE.getStatus())
+                .body(ApiResponse.error(ErrorCode.INVALID_INPUT_VALUE.getCode(), "정렬 기준이 올바르지 않습니다."));
     }
 
     // 잘못된 JSON body
