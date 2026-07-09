@@ -59,7 +59,15 @@ public class CategoryService {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
+        if (!category.getName().equals(reqUpdateCategoryDto.getName())) {
+            if (categoryRepository.existsByNameAndCategoryIdNot(reqUpdateCategoryDto.getName(), categoryId)) {
+                throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS);
+            }
+        }
+
         category.update(reqUpdateCategoryDto.getName(), reqUpdateCategoryDto.getStatus());
+        categoryRepository.saveAndFlush(category);
+
         return ResUpdateCategoryDto.from(category);
     }
 

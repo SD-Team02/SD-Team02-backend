@@ -84,6 +84,7 @@ public class CategoryController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 수정 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 존재하는 카테고리입니다."),
             //            #TO-DO : 현재 카테고리명 또는 상태 값을 안 넣으면 "입력값이 올바르지 않습니다." 메세지 출력됨
 //            -> 추후 GlobalExceptionHandler의 handleValidationException 부분 코드를 변경해 어떤 필드 값이 안 들어가는지 보여주도록 수정하는 것도 고려하면 좋을 듯
 //            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "카테고리명은 필수입니다."),

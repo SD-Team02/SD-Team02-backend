@@ -178,4 +178,25 @@ class CategoryServiceTest {
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.CATEGORY_NOT_FOUND.getMessage());
     }
+
+    @Test
+    @DisplayName("카테고리 수정 - 중복 이름으로 수정 시 예외 발생")
+    void updateCategory_duplicateName_throwsException() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        Category category = new Category("한식");
+        ReflectionTestUtils.setField(category, "categoryId", categoryId);
+
+        ReqUpdateCategoryDto dto = new ReqUpdateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "일식");
+        ReflectionTestUtils.setField(dto, "status", CategoryStatus.ACTIVE);
+
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(categoryRepository.existsByNameAndCategoryIdNot("일식", categoryId)).thenReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.updateCategory(categoryId, dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_ALREADY_EXISTS.getMessage());
+    }
 }
