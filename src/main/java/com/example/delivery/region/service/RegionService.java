@@ -4,10 +4,14 @@ import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.region.dto.request.ReqCreateRegionDto;
 import com.example.delivery.region.dto.response.ResCreateRegionDto;
+import com.example.delivery.region.dto.response.ResGetRegionDto;
 import com.example.delivery.region.entity.Region;
+import com.example.delivery.region.entity.RegionStatus;
 import com.example.delivery.region.repository.RegionRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -24,7 +28,7 @@ public class RegionService {
         //상위 지역 존재 여부 확인
         String parentName = null;
         if (reqCreateRegionDto.getParentRegionId() != null) {
-            Region parent = regionRepository.findById(reqCreateRegionDto.getParentRegionId())
+            Region parent = regionRepository.findByRegionIdAndDeletedAtIsNull(reqCreateRegionDto.getParentRegionId())
                     .orElseThrow(() -> new BusinessException(ErrorCode.REGION_PARENT_NOT_FOUND));
 
             parentName = parent.getName();
@@ -42,13 +46,28 @@ public class RegionService {
         }
     }
 
+    //전체 지역 조회
+    @Transactional(readOnly = true)
+    public Page<ResGetRegionDto> getAllRegions(RegionStatus status, Pageable pageable) {
+        return regionRepository.findAllByStatusAndDeletedAtIsNull(status, pageable)
+                .map(region -> {
+                    String parentName = null;
+                    if (region.getParentRegionId() != null) {
+                        parentName = regionRepository.findByRegionIdAndDeletedAtIsNull(region.getParentRegionId())
+                                .map(Region::getName)
+                                .orElse(null);
+                    }
+                    return ResGetRegionDto.from(region, parentName);
+                });
+    }
+
 
     /*
     [공통 메서드]
      */
     //지역명 중복 여부 확인 method
     private void checkDuplicate(String name) {
-        if(regionRepository.existsByName(name)){
+        if(regionRepository.existsByNameAndDeletedAtIsNull(name)){
             throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
         }
     }

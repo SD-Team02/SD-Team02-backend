@@ -55,7 +55,7 @@ class RegionServiceTest {
         UUID parentId = UUID.randomUUID();
         ReqCreateRegionDto dto = new ReqCreateRegionDto("강남구", parentId);
         when(regionRepository.existsByName("강남구")).thenReturn(false);
-        when(regionRepository.findById(parentId)).thenReturn(Optional.of(new Region("서울시")));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(parentId)).thenReturn(Optional.of(new Region("서울시")));
         when(regionRepository.save(any(Region.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
@@ -67,7 +67,7 @@ class RegionServiceTest {
         assertEquals(parentId, result.getParentRegionId());
         assertEquals("서울시", result.getParentRegionName());
         verify(regionRepository).existsByName("강남구");
-        verify(regionRepository).findById(parentId);
+        verify(regionRepository).findByRegionIdAndDeletedAtIsNull(parentId);
         verify(regionRepository).save(any(Region.class));
     }
 
@@ -90,7 +90,7 @@ class RegionServiceTest {
         UUID parentId = UUID.randomUUID();
         ReqCreateRegionDto dto = new ReqCreateRegionDto("서브지역", parentId);
         
-        when(regionRepository.findById(parentId)).thenReturn(Optional.empty());
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(parentId)).thenReturn(Optional.empty());
 
         // when & then
         assertThrows(BusinessException.class, () -> regionService.createRegion(dto));

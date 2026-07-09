@@ -1,21 +1,12 @@
 package com.example.delivery.region.entity;
 
-import java.util.UUID;
-
 import com.example.delivery.global.common.entity.BaseEntity;
-
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 /**
  * 지역 분류. parent_region_id로 계층 구조(예: 서울 > 종로구 > 광화문)를 표현한다.
@@ -24,7 +15,15 @@ import lombok.NoArgsConstructor;
  */
 @Getter
 @Entity
-@Table(name = "p_region")
+@Table(
+        name = "p_region",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_region_name_deleted_at",
+                        columnNames = {"name", "deleted_at"}
+                )
+        }
+)
 @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", nullable = false, updatable = false))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Region extends BaseEntity {
@@ -34,7 +33,7 @@ public class Region extends BaseEntity {
     @Column(name = "region_id")
     private UUID regionId;
 
-    @Column(name = "name", length = 100, nullable = false, unique = true)
+    @Column(name = "name", length = 100, nullable = false)
     private String name;
 
     @Column(name = "parent_region_id")
