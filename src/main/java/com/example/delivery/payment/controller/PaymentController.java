@@ -3,16 +3,15 @@ package com.example.delivery.payment.controller;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.common.util.PageableFactory;
+import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.payment.dto.request.ReqApprovePaymentDto;
 import com.example.delivery.payment.dto.request.ReqPaymentSearchDto;
 import com.example.delivery.payment.dto.response.ResApprovePaymentDto;
 import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.service.PaymentService;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameters;
-import io.swagger.v3.oas.annotations.enums.ParameterIn;
-import io.swagger.v3.oas.annotations.media.Schema;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -26,9 +25,11 @@ import java.util.UUID;
 @RestController
 @RequestMapping("/api/payments")
 @RequiredArgsConstructor
+@Tag(name = "결제", description = "결제 API")
 public class PaymentController {
 
     private final PaymentService paymentService;
+    private final UserService userService;
 
     /**
      * 1. 가상 결제 승인 API
@@ -47,7 +48,7 @@ public class PaymentController {
             , @AuthenticationPrincipal UserDetailsImpl userDetails // 시큐리티 유저객체 (수정가능성 있음)
     ) {
         // 로그인 회원 Long 고유 ID 추출
-        Long userId = userDetails.getUserId();
+        Long userId = userService.getCurrentUserId(userDetails);
 
         ResApprovePaymentDto response = paymentService.approve(requestDto, userId);
         return ResponseEntity.ok(ApiResponse.success("결제 등록 성공", response));
@@ -61,8 +62,11 @@ public class PaymentController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 결제 내역입니다.")
     })
     public ResponseEntity<ApiResponse<ResPaymentDto>> getPayment(
-            @PathVariable("paymentId") UUID paymentId
+            @PathVariable("paymentId") UUID paymentId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
+        userService.getCurrentUserId(userDetails);
+
         ResPaymentDto response = paymentService.getPaymentById(paymentId);
         return ResponseEntity.ok(ApiResponse.success("결제 내역 조회 성공", response));
     }
@@ -75,7 +79,7 @@ public class PaymentController {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "본인 결제 내역 목록 조회 성공")
     })
-    public ResponseEntity<com.example.delivery.global.common.response.ApiResponse<PageResponse<ResPaymentDto>>> getMyPayments(
+    public ResponseEntity<ApiResponse<PageResponse<ResPaymentDto>>> getMyPayments(
             @Valid @ModelAttribute ReqPaymentSearchDto searchDto,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", required = false) Integer size,
@@ -83,7 +87,7 @@ public class PaymentController {
             @RequestParam(value = "direction", defaultValue = "DESC") String direction,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        Long userId = userDetails.getUserId();
+        Long userId = userService.getCurrentUserId(userDetails);
 
         Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
 
@@ -99,13 +103,20 @@ public class PaymentController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "관리자용 결제 내역 검색 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 전용 접근 거부 에러")
     })
-    public ResponseEntity<com.example.delivery.global.common.response.ApiResponse<PageResponse<ResPaymentDto>>> getAdminPayments(
+    public ResponseEntity<ApiResponse<PageResponse<ResPaymentDto>>> getAdminPayments(
             @Valid @ModelAttribute ReqPaymentSearchDto searchDto,
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", required = false) Integer size,
             @RequestParam(value = "sortBy", defaultValue = "createdAt") String sortBy,
             @RequestParam(value = "direction", defaultValue = "DESC") String direction
     ) {
+
+        try {
+            userService.validateManager(userDetails);   // 매니저 권한 체크
+        } catch (BusinessException e) {
+            userService.validateMaster(userDetails);    // 마스터 권한 체크
+        }
+
         Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
 
         Page<ResPaymentDto> pageData = paymentService.getAdminPaymentsByFilters(searchDto, pageable);
@@ -120,11 +131,11 @@ public class PaymentController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 환불 완료되었거나 5분이 경과한 주문건입니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "결제 취소 권한 거부")
     })
-    public ResponseEntity<com.example.delivery.global.common.response.ApiResponse<Void>> cancelPayment(
+    public ResponseEntity<ApiResponse<Void>> cancelPayment(
             @PathVariable("paymentId") UUID paymentId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        Long userId = userDetails.getUserId();
+        Long userId = userService.getCurrentUserId(userDetails);
         paymentService.cancel(paymentId, userId);
         return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("결제 취소 성공", null));
     }
