@@ -1,15 +1,14 @@
 package com.example.delivery.payment.entity;
 
-import java.time.LocalDateTime;
-import java.util.UUID;
-
 import com.example.delivery.global.common.entity.BaseEntity;
-
 import com.example.delivery.order.entity.Order;
 import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Getter
 @Entity

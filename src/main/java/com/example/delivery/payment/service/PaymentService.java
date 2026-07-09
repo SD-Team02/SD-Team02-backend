@@ -9,6 +9,7 @@ import com.example.delivery.payment.dto.request.ReqPaymentSearchDto;
 import com.example.delivery.payment.dto.response.ResApprovePaymentDto;
 import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.entity.Payment;
+import com.example.delivery.payment.entity.PaymentStatus;
 import com.example.delivery.payment.repository.PaymentRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -83,6 +84,30 @@ public class PaymentService {
                 startDateTime, endDateTime, searchDto.getStatus(), pageable
         );
         return paymentPage.map(ResPaymentDto::new);
+    }
+
+    /** 5. 결제 취소  */
+    @Transactional
+    public ResPaymentDto cancel(UUID paymentId, Long userId) {
+        Payment payment = paymentRepository.findById(paymentId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+
+        if (payment.getStatus() == PaymentStatus.CANCELED) {
+            throw new BusinessException(ErrorCode.ENTITY_NOT_FOUND); // #TODO : 에러코드 추가 요망 ALREADY_CANCELED_PAYMENT
+        }
+
+        Order order = payment.getOrder();
+        if (!order.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        if (order.getStatus() != OrderStatus.CANCELED) {
+            throw new BusinessException(ErrorCode.ORDER_STATUS_TRANSITION_INVALID); // #TODO : 에러코드 추가 요망 ORDER_NOT_CANCELED_YET
+        }
+
+        payment.softDelete(userId);
+
+        return new ResPaymentDto(payment);
     }
 
 

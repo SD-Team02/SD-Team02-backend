@@ -114,4 +114,20 @@ public class PaymentController {
         return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("관리자용 결제 내역 검색 성공", pageResponse));
     }
 
+    @PostMapping("/{paymentId}/cancel")
+    @Operation(summary = "결제 취소 처리 (환불)", description = "결제 건의 상태를 CANCELED로 바꾸고 Soft Delete 처리(5분 초과 시 예외 발생)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "결제 취소 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 환불 완료되었거나 5분이 경과한 주문건입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "결제 취소 권한 거부")
+    })
+    public ResponseEntity<com.example.delivery.global.common.response.ApiResponse<ResPaymentDto>> cancelPayment(
+            @PathVariable("paymentId") UUID paymentId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        Long userId = userDetails.getUserId();
+        ResPaymentDto response = paymentService.cancel(paymentId, userId);
+        return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("결제 취소 성공", response));
+    }
+
 }
