@@ -30,6 +30,7 @@ import com.example.delivery.order.repository.OrderItemRepository;
 import com.example.delivery.order.repository.OrderRepository;
 import com.example.delivery.store.entity.Store;
 import com.example.delivery.store.repository.StoreRepository;
+import com.example.delivery.user.entity.Role;
 
 import lombok.RequiredArgsConstructor;
 
@@ -109,15 +110,17 @@ public class OrderService {
 		return new ResCreateOrderDto(order.getOrderId());
 
 		// TODO : Menu 2회 조회 -> 1회 조회로 최적화
-		// TODO : 메서드 분리
 	}
 
 
 	@Transactional(readOnly = true)
-	public ResOrderDto getOrder(UUID orderId) {
+	public ResOrderDto getOrder(Long userId, Role role, UUID orderId) {
 
 		Order order = orderRepository.findByOrderIdAndDeletedAtIsNull(orderId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+		// 조회 권한 검증 (CUSTOMER: 본인 / OWNER: 본인 가게 / MANAGER·MASTER: 전체)
+		validateOrderAccess(order, userId, role);
 
 		Store store = storeRepository.findById(order.getStoreId())
 			.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
@@ -132,14 +135,15 @@ public class OrderService {
 			.build();
 	}
 
-	// TODO : 고객은 자신의 주문만 조회 가능 -> 검증 메서드 들어가야 함
-
 
 	@Transactional(readOnly = true)
-	public ResOrderItemsDto getOrderItems(UUID orderId) {
+	public ResOrderItemsDto getOrderItems(Long userId, Role role, UUID orderId) {
 
 		Order order = orderRepository.findByOrderIdAndDeletedAtIsNull(orderId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+		// 조회 권한 검증 (CUSTOMER: 본인 / OWNER: 본인 가게 / MANAGER·MASTER: 전체)
+		validateOrderAccess(order, userId, role);
 
 		List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdAndDeletedAtIsNull(order.getOrderId());
 
@@ -164,30 +168,42 @@ public class OrderService {
 			.build();
 
 		// TODO : Menu N+1 조회 -> findAllById 배치 조회로 최적화 or QueryDSL
-		// TODO : 고객은 자신의 주문만 조회 가능 -> 권한 검증 추가
 	}
 
 
 	@Transactional(readOnly = true)
-	public PageResponse<ResOrderListDto> getOrders(String status, Pageable pageable) {
+	public PageResponse<ResOrderListDto> getOrders(Long userId, Role role, String status, Pageable pageable) {
 
-		Page<Order> orderPage;
+		// status == null/ALL 이면 상태 무관, 그 외엔 검증된 OrderStatus
+		OrderStatus orderStatus = parseStatus(status);
 
-		// status == ALL 이면 전체 조회 (soft delete 제외)
-		if ("ALL".equalsIgnoreCase(status)) {
-			orderPage = orderRepository.findByDeletedAtIsNull(pageable);
-		} else {
+		// 역할별 조회 범위 (soft delete 제외)
+		Page<Order> orderPage = switch (role) {
+			// CUSTOMER : 본인 주문만
+			case CUSTOMER -> (orderStatus == null)
+				? orderRepository.findByUserIdAndDeletedAtIsNull(userId, pageable)
+				: orderRepository.findByUserIdAndStatusAndDeletedAtIsNull(userId, orderStatus, pageable);
 
-			OrderStatus orderStatus;
+			// OWNER : 본인 가게 주문만
+			case OWNER -> {
+				List<UUID> storeIds = storeRepository.findByUserIdAndDeletedAtIsNull(userId).stream()
+					.map(Store::getStoreId)
+					.toList();
 
-			try {
-				orderStatus = OrderStatus.valueOf(status.toUpperCase());
-			} catch (IllegalArgumentException e) {
-				throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS);
+				if (storeIds.isEmpty()) {
+					yield Page.empty(pageable);
+				}
+
+				yield (orderStatus == null)
+					? orderRepository.findByStoreIdInAndDeletedAtIsNull(storeIds, pageable)
+					: orderRepository.findByStoreIdInAndStatusAndDeletedAtIsNull(storeIds, orderStatus, pageable);
 			}
 
-			orderPage = orderRepository.findByStatusAndDeletedAtIsNull(orderStatus, pageable);
-		}
+			// MANAGER, MASTER : 전체
+			case MANAGER, MASTER -> (orderStatus == null)
+				? orderRepository.findByDeletedAtIsNull(pageable)
+				: orderRepository.findByStatusAndDeletedAtIsNull(orderStatus, pageable);
+		};
 
 		Page<ResOrderListDto> responsePage = orderPage.map(order -> {
 
@@ -204,17 +220,31 @@ public class OrderService {
 		});
 
 		return PageResponse.from(responsePage);
+
+		// TODO QueryDSL 적용 후 startDate/endDate 조건 검색 추가 + store N+1 최적화
 	}
 
-	// TODO QueryDSL 적용 후 startDate/endDate 조건 검색 추가
-	// TODO Authentication 연동 후 권한별(고객/사장/관리자) 조회 추가
 
+	// "ALL"/null → null(상태 무관), 그 외 → 검증된 OrderStatus (없는 값이면 예외)
+	private OrderStatus parseStatus(String status) {
+		if (status == null || "ALL".equalsIgnoreCase(status)) {
+			return null;
+		}
+		try {
+			return OrderStatus.valueOf(status.toUpperCase());
+		} catch (IllegalArgumentException e) {
+			throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS);
+		}
+	}
 
 	@Transactional
-	public ResOrderStatusDto changeStatus(UUID orderId, OrderStatus status) {
+	public ResOrderStatusDto changeStatus(Long userId, Role role, UUID orderId, OrderStatus status) {
 
 		Order order = orderRepository.findByOrderIdAndDeletedAtIsNull(orderId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+
+		// OWNER는 본인 가게 주문만, MANAGER·MASTER는 전체 변경 가능
+		validateOrderAccess(order, userId, role);
 
 		// 취소(CANCELED)는 5분 제한 등 별도 규칙이 있는 '주문 취소' API로만 처리한다.
 		if (status == OrderStatus.CANCELED) {
@@ -228,8 +258,6 @@ public class OrderService {
 			.orderId(order.getOrderId())
 			.status(order.getStatus())
 			.build();
-
-		// TODO : 사장/관리자 권한 검증 추가 (본인 가게 주문인지 등)
 	}
 
 
@@ -264,5 +292,26 @@ public class OrderService {
 		order.softDelete(userId);
 
 		// TODO : 관리자(MANAGER/MASTER) 권한 검증 추가
+	}
+
+	// 접근 권한: CUSTOMER=본인 주문, OWNER=본인 가게 주문, MANAGER·MASTER=전체
+	private void validateOrderAccess(Order order, Long userId, Role role) {
+		switch (role) {
+			case CUSTOMER -> {
+				if (!order.getUserId().equals(userId)) {
+					throw new BusinessException(ErrorCode.ACCESS_DENIED);
+				}
+			}
+			case OWNER -> {
+				Store store = storeRepository.findById(order.getStoreId())
+					.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+				if (!store.getUserId().equals(userId)) {
+					throw new BusinessException(ErrorCode.ACCESS_DENIED);
+				}
+			}
+			case MANAGER, MASTER -> {
+				// 전체 접근 허용
+			}
+		}
 	}
 }
