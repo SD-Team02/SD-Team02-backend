@@ -54,7 +54,11 @@ public enum ErrorCode {
 
     // AI (메뉴+AI 담당 참고용 예시)
     AI_REQUEST_TEXT_TOO_LONG(HttpStatus.BAD_REQUEST, "AI_400_1", "입력 텍스트가 글자수 제한을 초과했습니다."),
-    AI_API_CALL_FAILED(HttpStatus.BAD_GATEWAY, "AI_502_1", "AI API 호출에 실패했습니다.");
+    AI_API_CALL_FAILED(HttpStatus.BAD_GATEWAY, "AI_502_1", "AI API 호출에 실패했습니다."),
+
+    // Category (카테고리 담당)
+    CATEGORY_ALREADY_EXISTS(HttpStatus.CONFLICT, "CATEGORY_409_1", "이미 존재하는 카테고리입니다."),
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY_404_1", "카테고리를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
