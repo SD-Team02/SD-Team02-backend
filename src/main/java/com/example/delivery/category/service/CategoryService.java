@@ -3,6 +3,7 @@ package com.example.delivery.category.service;
 import com.example.delivery.category.dto.request.ReqCreateCategoryDto;
 import com.example.delivery.category.dto.request.ReqUpdateCategoryDto;
 import com.example.delivery.category.dto.response.ResCreateCategoryDto;
+import com.example.delivery.category.dto.response.ResDeleteCategoryDto;
 import com.example.delivery.category.dto.response.ResGetCategoryDto;
 import com.example.delivery.category.dto.response.ResUpdateCategoryDto;
 import com.example.delivery.category.entity.Category;
@@ -71,6 +72,20 @@ public class CategoryService {
         return ResUpdateCategoryDto.from(category);
     }
 
+    //카테고리 삭제
+    @Transactional
+    public ResDeleteCategoryDto deleteCategory(UUID categoryId) {
+        Category category = categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        if (category.isDeleted()) {
+            throw new BusinessException(ErrorCode.CATEGORY_ALREADY_DELETED);
+        }
+
+        category.softDelete(0L); // TODO: 실제 로그인한 유저 ID를 넣어주어야 함
+        return ResDeleteCategoryDto.from(category);
+    }
+
 
     /*
     [공통 메서드]
@@ -81,4 +96,5 @@ public class CategoryService {
             throw new BusinessException(ErrorCode.CATEGORY_ALREADY_EXISTS);
         }
     }
+
 }
