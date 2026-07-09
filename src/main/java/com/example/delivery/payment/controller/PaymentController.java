@@ -85,7 +85,6 @@ public class PaymentController {
     ) {
         Long userId = userDetails.getUserId();
 
-        // 🌟 중복 정리 반영: 팩토리 객체에서 단 한 번만 안전하게 공통 페이징 세팅 수행!
         Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
 
         Page<ResPaymentDto> pageData = paymentService.getMyPaymentsByPeriod(userId, searchDto, pageable);
@@ -115,19 +114,19 @@ public class PaymentController {
     }
 
     @PostMapping("/{paymentId}/cancel")
-    @Operation(summary = "결제 취소 처리 (환불)", description = "결제 건의 상태를 CANCELED로 바꾸고 Soft Delete 처리(5분 초과 시 예외 발생)")
+    @Operation(summary = "결제 취소 처리 (환불)", description = "결제 건의 상태를 CANCELED로 바꾸고 Soft Delete 처리")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "결제 취소 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 환불 완료되었거나 5분이 경과한 주문건입니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "결제 취소 권한 거부")
     })
-    public ResponseEntity<com.example.delivery.global.common.response.ApiResponse<ResPaymentDto>> cancelPayment(
+    public ResponseEntity<com.example.delivery.global.common.response.ApiResponse<Void>> cancelPayment(
             @PathVariable("paymentId") UUID paymentId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         Long userId = userDetails.getUserId();
-        ResPaymentDto response = paymentService.cancel(paymentId, userId);
-        return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("결제 취소 성공", response));
+        paymentService.cancel(paymentId, userId);
+        return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("결제 취소 성공", null));
     }
 
 }

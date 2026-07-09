@@ -88,7 +88,7 @@ public class PaymentService {
 
     /** 5. 결제 취소  */
     @Transactional
-    public ResPaymentDto cancel(UUID paymentId, Long userId) {
+    public void cancel(UUID paymentId, Long userId) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
 
@@ -107,7 +107,6 @@ public class PaymentService {
 
         payment.softDelete(userId);
 
-        return new ResPaymentDto(payment);
     }
 
 
