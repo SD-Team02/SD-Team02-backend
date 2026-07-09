@@ -8,6 +8,7 @@ import com.example.delivery.user.dto.UserUpdateDto;
 import com.example.delivery.user.entity.Role;
 import com.example.delivery.user.entity.User;
 import com.example.delivery.user.repository.UserRepository;
+import com.example.delivery.user.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -194,7 +195,7 @@ public class UserService {
                 .map(UserInfoDto::new);
     }
 
-    
+
     //비밀번호 정규식 [8자이상 15자 이하, 영어대소문자, 숫자, 특수문자]
     public String passwordValidation(String password)
     {
@@ -210,4 +211,43 @@ public class UserService {
         return password;
     }
 
+    //로그인 여부 확인 후 사용자Id 가져오기 (user_id)값
+    public Long getCurrentUserId(UserDetailsImpl userDetails) {
+        if (userDetails == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+        return userDetails.getUser().getUserId();
+    }
+
+    //owner권한 체크
+    public void validateOwner(UserDetailsImpl userDetails) {
+        if (userDetails == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (userDetails.getUser().getRole() != Role.OWNER) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+    }
+    //manager권한 체크
+    public void validateManager(UserDetailsImpl userDetails) {
+        if (userDetails == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (userDetails.getUser().getRole() != Role.MANAGER) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+    }
+
+    //master 권한 체크
+    public void validateMaster(UserDetailsImpl userDetails) {
+        if (userDetails == null) {
+            throw new BusinessException(ErrorCode.UNAUTHORIZED);
+        }
+
+        if (userDetails.getUser().getRole() != Role.MASTER) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+    }
 }

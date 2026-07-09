@@ -58,11 +58,8 @@ public class UserController {
             @PathVariable String username,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        if (userDetails == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        Long userId = userDetails.getUser().getUserId();
+        //ID 검즘
+        Long userId = userService.getCurrentUserId(userDetails);
         UserInfoDto userInfo = userService.getUserInfoByUserId(userId);
 
         return ResponseEntity.ok(
@@ -81,11 +78,7 @@ public class UserController {
             @RequestBody UserUpdateDto userUpdateDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        if (userDetails == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        Long userId = userDetails.getUser().getUserId();
+        Long userId = userService.getCurrentUserId(userDetails);
 
         userService.updateUserInfo(userId, userUpdateDto);
 
@@ -104,11 +97,7 @@ public class UserController {
             @PathVariable String username,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
-        if (userDetails == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        Long userId = userDetails.getUser().getUserId();
+        Long userId = userService.getCurrentUserId(userDetails);
 
         userService.deleteUser(userId);
 
@@ -131,15 +120,8 @@ public class UserController {
             @RequestParam(defaultValue = "DESC") String direction,
             @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
-        // 로그인 여부 확인
-        if (userDetails == null) {
-            throw new BusinessException(ErrorCode.UNAUTHORIZED);
-        }
-
-        // MASTER 권한 확인
-        if (!userDetails.getUser().getRole().name().equals("MASTER")) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
+        //Master 권한인지 확인
+        userService.validateMaster(userDetails);
 
         Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
         Page<UserInfoDto> users = userService.getUserList(pageable);
