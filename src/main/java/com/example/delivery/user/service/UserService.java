@@ -10,6 +10,7 @@ import com.example.delivery.user.entity.User;
 import com.example.delivery.user.repository.UserRepository;
 import com.example.delivery.user.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.security.crypto.password.PasswordEncoder;
@@ -25,10 +26,15 @@ public class UserService {
     private final UserRepository userRepository;
     private final PasswordEncoder passwordEncoder;
 
-    //Role 토큰 값 임시, 운영에는 따로 관리할 것
-    private final String MASTER_TOKEN = "AAABnvxRVklrnYxKZ0aHgTBcXukeZygoC";
-    private final String MANAGER_TOKEN = "QWERfghRVklrnYxKZ0aHgTBcXukeZygoB";
-    private final String OWNER_TOKEN = "ASDFzxcRVklrnYxKZ0aHgTBcXukeZygoV";
+    //Role 토큰 값
+    @Value("${app.auth.token.master}")
+    private  String MASTER_TOKEN;
+
+    @Value("${app.auth.token.manager}")
+    private  String MANAGER_TOKEN;
+
+    @Value("${app.auth.token.owner}")
+    private  String OWNER_TOKEN;
 
     public void signup(SignupRequestDto requestDto) {
 
@@ -73,11 +79,7 @@ public class UserService {
             throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
         }
 
-        //phone 정규식
-        if(!phone.matches("^01[016789]\\d{7,8}$"))
-        {
-            throw new IllegalArgumentException("올바른 전화번호 양식이 아닙니다.");
-        }
+        phone = phoneValidation(phone);
 
         //사용자 Role 확인
         Role role = Role.CUSTOMER;
@@ -169,11 +171,7 @@ public class UserService {
 
         password = passwordValidation(password);
 
-        //phone 정규식
-        if(!phone.matches("^01[016789]\\d{7,8}$"))
-        {
-            throw new IllegalArgumentException("올바른 전화번호 양식이 아닙니다.");
-        }
+        phone = phoneValidation(phone);
         user.update(nickname,email,phone,password, userId);
     }
 
@@ -210,6 +208,17 @@ public class UserService {
         password = passwordEncoder.encode(password);
         return password;
     }
+
+    //phone 정규식
+    public String phoneValidation(String phone)
+    {
+        if(!phone.matches("^0(2|[1-9]\\d)\\d{7,8}$"))
+        {
+            throw new IllegalArgumentException("올바른 전화번호 양식이 아닙니다.");
+        }
+        return  phone;
+    }
+
 
     //로그인 여부 확인 후 사용자Id 가져오기 (user_id)값
     public Long getCurrentUserId(UserDetailsImpl userDetails) {

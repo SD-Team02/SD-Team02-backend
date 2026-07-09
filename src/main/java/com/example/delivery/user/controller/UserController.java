@@ -53,9 +53,8 @@ public class UserController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
-    @GetMapping("/user/info/{username}")
+    @GetMapping("/user/info/details")
     public ResponseEntity<ApiResponse<UserInfoDto>> userInfo(
-            @PathVariable String username,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 
         //ID 검즘
@@ -75,6 +74,7 @@ public class UserController {
     @PutMapping("/user/update/{username}")
     public ResponseEntity<ApiResponse<Void>> updateUser(
             @PathVariable String username,
+            @Valid
             @RequestBody UserUpdateDto userUpdateDto,
             @AuthenticationPrincipal UserDetailsImpl userDetails) {
 

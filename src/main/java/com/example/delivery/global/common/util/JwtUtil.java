@@ -59,11 +59,11 @@ public class JwtUtil {
     }
 
     // Header 또는 Cookie에서 JWT 가져오기 (수정된 메서드)
-    public String getJwtFromHeader(HttpServletRequest request) {
+    public String getJwtToken(HttpServletRequest request) {
         // 1. 우선 순위로 HTTP Header에서 토큰 추출 시도 (Postman, Ajax 요청 대응)
         String bearerToken = request.getHeader(AUTHORIZATION_HEADER);
         if (StringUtils.hasText(bearerToken) && bearerToken.startsWith(BEARER_PREFIX)) {
-            return bearerToken.substring(7);
+            return bearerToken.substring(BEARER_PREFIX.length());
         }
 
         // 2. Header에 없다면 Cookie에서 토큰 추출 시도 (window.location.href 이동 대응)
@@ -80,7 +80,7 @@ public class JwtUtil {
 
                             // 디코딩된 값에 "Bearer "가 붙어 있다면 제거 후 반환
                             if (decodedToken.startsWith(BEARER_PREFIX)) {
-                                return decodedToken.substring(7);
+                                return decodedToken.substring(BEARER_PREFIX.length());
                             }
                             return decodedToken;
                         } catch (Exception e) {
@@ -101,14 +101,13 @@ public class JwtUtil {
         try {
             Jwts.parser().setSigningKey(key).build().parseClaimsJws(token);
             return true;
-        } catch (SecurityException | MalformedJwtException | ExpiredJwtException e) {
+        } catch (SecurityException
+                 | MalformedJwtException
+                 | ExpiredJwtException
+                 | UnsupportedJwtException
+                 | IllegalArgumentException e) {
             throw new BusinessException(ErrorCode.INVALID_TOKEN);
-        } catch (UnsupportedJwtException e) {
-            log.error("Unsupported JWT token, 지원되지 않는 JWT 토큰 입니다.");
-        } catch (IllegalArgumentException e) {
-            log.error("JWT claims is empty, 잘못된 JWT 토큰 입니다.");
         }
-        return false;
     }
 
     // 토큰에서 사용자 정보 가져오기
