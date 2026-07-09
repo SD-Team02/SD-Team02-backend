@@ -100,7 +100,7 @@ class CategoryServiceTest {
         
         Page<Category> categoryPage = new PageImpl<>(List.of(category), PageRequest.of(0, 10), 1);
         
-        when(categoryRepository.findAllByStatus(any(), any())).thenReturn(categoryPage);
+        when(categoryRepository.findAllByStatusAndDeletedAtIsNull(any(), any())).thenReturn(categoryPage);
 
         // when
         Page<ResGetCategoryDto> result = categoryService.getAllCategories(CategoryStatus.ACTIVE, PageRequest.of(0, 10));
@@ -118,7 +118,7 @@ class CategoryServiceTest {
         UUID categoryId = UUID.randomUUID();
         ReflectionTestUtils.setField(category, "categoryId", categoryId);
         
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
 
         // when
         ResGetCategoryDto result = categoryService.getCategory(categoryId);
@@ -133,7 +133,7 @@ class CategoryServiceTest {
     void getCategory_notFound_throwsException() {
         // given
         UUID categoryId = UUID.randomUUID();
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> categoryService.getCategory(categoryId))

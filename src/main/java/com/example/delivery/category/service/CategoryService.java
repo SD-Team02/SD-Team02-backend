@@ -42,14 +42,14 @@ public class CategoryService {
     //전체 카테고리 조회
     @Transactional(readOnly = true)
     public Page<ResGetCategoryDto> getAllCategories(CategoryStatus status, Pageable pageable) {
-        return categoryRepository.findAllByStatus(status, pageable)
+        return categoryRepository.findAllByStatusAndDeletedAtIsNull(status, pageable)
                 .map(ResGetCategoryDto::from);
     }
 
     //카테고리 상세 조회
     @Transactional(readOnly = true)
     public ResGetCategoryDto getCategory(UUID categoryId) {
-        return categoryRepository.findById(categoryId)
+        return categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)
                 .map(ResGetCategoryDto::from)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
     }
