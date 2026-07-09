@@ -9,5 +9,5 @@ import com.example.delivery.order.entity.OrderItem;
 
 public interface OrderItemRepository extends JpaRepository<OrderItem, UUID> {
 
-	List<OrderItem> findAllByOrderId(UUID orderId);
+	List<OrderItem> findAllByOrderIdAndDeletedAtIsNull(UUID orderId);
 }

@@ -1,5 +1,6 @@
 package com.example.delivery.order.repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -11,6 +12,10 @@ import com.example.delivery.order.entity.OrderStatus;
 
 public interface OrderRepository extends JpaRepository<Order, UUID> {
 
-	Page<Order> findAllByStatus(OrderStatus status, Pageable pageable);
+	// soft delete 되지 않은 주문만 조회 (deletedAt is null)
+	Optional<Order> findByOrderIdAndDeletedAtIsNull(UUID orderId);
 
+	Page<Order> findByDeletedAtIsNull(Pageable pageable);
+
+	Page<Order> findByStatusAndDeletedAtIsNull(OrderStatus status, Pageable pageable);
 }

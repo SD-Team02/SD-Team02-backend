@@ -116,7 +116,7 @@ public class OrderService {
 	@Transactional(readOnly = true)
 	public ResOrderDto getOrder(UUID orderId) {
 
-		Order order = orderRepository.findById(orderId)
+		Order order = orderRepository.findByOrderIdAndDeletedAtIsNull(orderId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
 		Store store = storeRepository.findById(order.getStoreId())
@@ -138,10 +138,10 @@ public class OrderService {
 	@Transactional(readOnly = true)
 	public ResOrderItemsDto getOrderItems(UUID orderId) {
 
-		Order order = orderRepository.findById(orderId)
+		Order order = orderRepository.findByOrderIdAndDeletedAtIsNull(orderId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-		List<OrderItem> orderItems = orderItemRepository.findAllByOrderId(order.getOrderId());
+		List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdAndDeletedAtIsNull(order.getOrderId());
 
 		List<ResOrderItemDto> items = orderItems.stream()
 			.map(orderItem -> {
@@ -173,9 +173,9 @@ public class OrderService {
 
 		Page<Order> orderPage;
 
-		// status == ALL 이면 전체 조회
+		// status == ALL 이면 전체 조회 (soft delete 제외)
 		if ("ALL".equalsIgnoreCase(status)) {
-			orderPage = orderRepository.findAll(pageable);
+			orderPage = orderRepository.findByDeletedAtIsNull(pageable);
 		} else {
 
 			OrderStatus orderStatus;
@@ -186,7 +186,7 @@ public class OrderService {
 				throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS);
 			}
 
-			orderPage = orderRepository.findAllByStatus(orderStatus, pageable);
+			orderPage = orderRepository.findByStatusAndDeletedAtIsNull(orderStatus, pageable);
 		}
 
 		Page<ResOrderListDto> responsePage = orderPage.map(order -> {
@@ -213,7 +213,7 @@ public class OrderService {
 	@Transactional
 	public ResOrderStatusDto changeStatus(UUID orderId, OrderStatus status) {
 
-		Order order = orderRepository.findById(orderId)
+		Order order = orderRepository.findByOrderIdAndDeletedAtIsNull(orderId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
 		// 취소(CANCELED)는 5분 제한 등 별도 규칙이 있는 '주문 취소' API로만 처리한다.
@@ -236,7 +236,7 @@ public class OrderService {
 	@Transactional
 	public ResOrderStatusDto cancelOrder(Long userId, UUID orderId) {
 
-		Order order = orderRepository.findById(orderId)
+		Order order = orderRepository.findByOrderIdAndDeletedAtIsNull(orderId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
 		// 고객은 본인 주문만 취소 가능
@@ -257,7 +257,7 @@ public class OrderService {
 	@Transactional
 	public void deleteOrder(Long userId, UUID orderId) {
 
-		Order order = orderRepository.findById(orderId)
+		Order order = orderRepository.findByOrderIdAndDeletedAtIsNull(orderId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
 		// 실제 삭제가 아닌 soft delete (deletedAt/deletedBy 기록)
