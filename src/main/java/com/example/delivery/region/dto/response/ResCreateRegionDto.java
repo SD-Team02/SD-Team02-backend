@@ -31,7 +31,7 @@ public class ResCreateRegionDto {
                 .regionId(region.getRegionId())
                 .name(region.getName())
                 .parentRegionId(region.getParentRegionId())
-                .parentRegionName(null)
+                .parentRegionName(null) //TODO : 이 부분 수정 필요
                 .status(region.getStatus())
                 .createdAt(region.getCreatedAt())
                 .build();

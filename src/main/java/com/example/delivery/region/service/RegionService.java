@@ -21,11 +21,21 @@ public class RegionService {
     public ResCreateRegionDto createRegion(ReqCreateRegionDto reqCreateRegionDto) {
         checkDuplicate(reqCreateRegionDto.getName());
 
+        //상위 지역 존재 여부 확인
+        if (reqCreateRegionDto.getParentRegionId() != null) {
+            if (!regionRepository.existsById(reqCreateRegionDto.getParentRegionId())) {
+                throw new BusinessException(ErrorCode.REGION_PARENT_NOT_FOUND);
+            }
+        }
+
         try{
             Region region = new Region(reqCreateRegionDto.getName(),reqCreateRegionDto.getParentRegionId());
 
             return ResCreateRegionDto.from(regionRepository.save(region));
         } catch (DataIntegrityViolationException e){
+//            TODO : DB 레벨에서 지역명 중복 방어 의도로 DataIntegrityViolationException을 잡고 있지만
+//                NOUT NULL 등 다양한 원인으로 발생할 수 있을 것 같아 다른 에러 메시지를 고려할 필요 있어보임
+//            (category 생성 부분도 마찬가지)
             throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
         }
     }

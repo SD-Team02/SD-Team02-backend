@@ -49,4 +49,10 @@ public class Region extends BaseEntity {
         this.parentRegionId = parentRegionId;
         this.status = RegionStatus.ACTIVE;
     }
+
+    public Region(String name) {
+        this.name = name;
+        this.parentRegionId = null;
+        this.status = RegionStatus.ACTIVE;
+    }
 }

@@ -19,4 +19,9 @@ public class ReqCreateRegionDto {
     private String name;
     @Schema(description = "상위 지역 id", example = "550e8400-e29b-41d4-a716-446655440000")
     private UUID parentRegionId;
+
+    public ReqCreateRegionDto(String name, UUID parentRegionId) {
+        this.name = name;
+        this.parentRegionId = parentRegionId;
+    }
 }
