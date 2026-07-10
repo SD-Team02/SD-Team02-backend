@@ -28,10 +28,16 @@ public class RegionService {
     //지역 등록
     @Transactional
     public ResCreateRegionDto createRegion(ReqCreateRegionDto reqCreateRegionDto) {
-        checkDuplicate(reqCreateRegionDto.getName());
+        checkDuplicate(reqCreateRegionDto.getName(), reqCreateRegionDto.getParentRegionId());
 
         //상위 지역명 구하기
-        String parentName = getParentRegionName(reqCreateRegionDto.getParentRegionId());
+        String parentName = null;
+
+        //존재하지 않는 상위 지역으로 등록 요청 시 실패
+        if (reqCreateRegionDto.getParentRegionId() != null){
+            Region parent = getParentRegion(reqCreateRegionDto.getParentRegionId());
+            parentName = parent.getName();
+        }
 
         try{
             Region region = new Region(reqCreateRegionDto.getName(),reqCreateRegionDto.getParentRegionId());
@@ -61,7 +67,9 @@ public class RegionService {
         Region region = regionRepository.findById(regionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
 
+        //지역명 변경 없으면 DB 조회 생략
         if(!region.getName().equals(reqUpdateRegionDto.getName())){
+            //기존 데이터의 지역명으로의 변경 막기
             if(regionRepository.existsByNameAndRegionIdNot(reqUpdateRegionDto.getName(),regionId)){
                 throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
             }
@@ -80,10 +88,21 @@ public class RegionService {
     [공통 메서드]
      */
     //지역명 중복 여부 확인 method
-    private void checkDuplicate(String name) {
-        if(regionRepository.existsByNameAndDeletedAtIsNull(name)){
+    // 같은 상위 지역 아래 같은 지역명은 불가
+    private void checkDuplicate(String name, UUID parentId) {
+        boolean exists = (parentId == null) 
+            ? regionRepository.existsByNameAndParentRegionIdIsNull(name) 
+            : regionRepository.existsByNameAndParentRegionId(name, parentId);
+        
+        if (exists) {
             throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
         }
+    }
+
+    //상위 지역 조회 method
+    private Region getParentRegion(UUID parentRegionId){
+        return regionRepository.findByRegionIdAndDeletedAtIsNull(parentRegionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_PARENT_NOT_FOUND));
     }
 
     //상위 지역명 얻는 method
@@ -98,5 +117,4 @@ public class RegionService {
 
         return parentName;
     }
-
 }

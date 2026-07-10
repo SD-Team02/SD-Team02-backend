@@ -15,15 +15,7 @@ import java.util.UUID;
  */
 @Getter
 @Entity
-@Table(
-        name = "p_region",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_region_name_deleted_at",
-                        columnNames = {"name", "deleted_at"}
-                )
-        }
-)
+@Table(name = "p_region")
 @AttributeOverride(name = "createdBy", column = @Column(name = "created_by", nullable = false, updatable = false))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Region extends BaseEntity {

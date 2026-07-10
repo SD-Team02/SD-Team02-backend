@@ -4,6 +4,7 @@ import com.example.delivery.region.entity.RegionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.Size;
+import lombok.AllArgsConstructor;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -11,6 +12,7 @@ import java.util.UUID;
 
 @Getter
 @NoArgsConstructor
+@AllArgsConstructor
 @Schema(description = "지역 수정 요청 DTO")
 public class ReqUpdateRegionDto {
     @NotBlank(message = "지역명은 필수입니다.")
