@@ -1,8 +1,10 @@
 package com.example.delivery.order.service;
 
-import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -50,13 +52,23 @@ public class OrderService {
 		Store store = storeRepository.findById(request.getStoreId())
 			.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-		// 총 금액
+		// 요청 메뉴를 한 번에 조회해 Map으로 재사용 (검증 루프 + 주문상품 생성 루프 공통 사용, N+1 방지)
+		List<UUID> menuIds = request.getMenuList().stream()
+			.map(ReqCreateOrderMenuDto::getMenuId)
+			.toList();
+
+		Map<UUID, Menu> menuMap = menuRepository.findAllById(menuIds).stream()
+			.collect(Collectors.toMap(Menu::getMenuId, Function.identity()));
+
+		// 총 금액 계산 및 메뉴 검증
 		int totalPrice = 0;
 
 		for (ReqCreateOrderMenuDto menuDto : request.getMenuList()) {
 
-			Menu menu = menuRepository.findById(menuDto.getMenuId())
-				.orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+			Menu menu = menuMap.get(menuDto.getMenuId());
+			if (menu == null) {
+				throw new BusinessException(ErrorCode.MENU_NOT_FOUND);
+			}
 
 			// 다른 가게 메뉴인지 검증
 			if (!menu.getStoreId().equals(store.getStoreId())) {
@@ -68,10 +80,7 @@ public class OrderService {
 			}
 
 			// 가격 계산
-			int price = menu.getPrice() * menuDto.getQuantity();
-
-			totalPrice += price;
-
+			totalPrice += menu.getPrice() * menuDto.getQuantity();
 		}
 
 		// 주문 저장
@@ -85,30 +94,23 @@ public class OrderService {
 
 		orderRepository.save(order);
 
-		// 주문 상품 생성
-		List<OrderItem> orderItems = new ArrayList<>();
-
-		for (ReqCreateOrderMenuDto menuDto : request.getMenuList()) {
-
-			Menu menu = menuRepository.findById(menuDto.getMenuId())
-				.orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
-
-			OrderItem orderItem = new OrderItem(
-				order.getOrderId(),
-				menu.getMenuId(),
-				menuDto.getQuantity(),
-				menu.getPrice()
-			);
-
-			orderItems.add(orderItem);
-		}
+		// 주문 상품 생성 (위에서 검증된 menuMap 재사용)
+		List<OrderItem> orderItems = request.getMenuList().stream()
+			.map(menuDto -> {
+				Menu menu = menuMap.get(menuDto.getMenuId());
+				return new OrderItem(
+					order.getOrderId(),
+					menu.getMenuId(),
+					menuDto.getQuantity(),
+					menu.getPrice()
+				);
+			})
+			.toList();
 
 		orderItemRepository.saveAll(orderItems);
 
 		// 응답 반환
 		return new ResCreateOrderDto(order.getOrderId());
-
-		// TODO : Menu 2회 조회 -> 1회 조회로 최적화
 	}
 
 
@@ -146,11 +148,21 @@ public class OrderService {
 
 		List<OrderItem> orderItems = orderItemRepository.findAllByOrderIdAndDeletedAtIsNull(order.getOrderId());
 
+		// 주문상품의 메뉴를 한 번에 조회해 Map으로 재사용 (N+1 방지)
+		List<UUID> menuIds = orderItems.stream()
+			.map(OrderItem::getMenuId)
+			.toList();
+
+		Map<UUID, Menu> menuMap = menuRepository.findAllById(menuIds).stream()
+			.collect(Collectors.toMap(Menu::getMenuId, Function.identity()));
+
 		List<ResOrderItemDto> items = orderItems.stream()
 			.map(orderItem -> {
 
-				Menu menu = menuRepository.findById(orderItem.getMenuId())
-					.orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+				Menu menu = menuMap.get(orderItem.getMenuId());
+				if (menu == null) {
+					throw new BusinessException(ErrorCode.MENU_NOT_FOUND);
+				}
 
 				return ResOrderItemDto.builder()
 					.menuId(orderItem.getMenuId())
@@ -165,8 +177,6 @@ public class OrderService {
 			.orderId(order.getOrderId())
 			.items(items)
 			.build();
-
-		// TODO : Menu N+1 조회 -> findAllById 배치 조회로 최적화 or QueryDSL
 	}
 
 
@@ -202,10 +212,21 @@ public class OrderService {
 				: orderRepository.findByStatusAndDeletedAtIsNull(orderStatus, pageable);
 		};
 
+		// 페이지 내 주문들의 가게를 한 번에 조회해 Map으로 재사용 (건별 조회 N+1 방지)
+		List<UUID> storeIds = orderPage.getContent().stream()
+			.map(Order::getStoreId)
+			.distinct()
+			.toList();
+
+		Map<UUID, Store> storeMap = storeRepository.findAllById(storeIds).stream()
+			.collect(Collectors.toMap(Store::getStoreId, Function.identity()));
+
 		Page<ResOrderListDto> responsePage = orderPage.map(order -> {
 
-			Store store = storeRepository.findById(order.getStoreId())
-				.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+			Store store = storeMap.get(order.getStoreId());
+			if (store == null) {
+				throw new BusinessException(ErrorCode.STORE_NOT_FOUND);
+			}
 
 			return ResOrderListDto.builder()
 				.orderId(order.getOrderId())
@@ -218,7 +239,7 @@ public class OrderService {
 
 		return PageResponse.from(responsePage);
 
-		// TODO QueryDSL 적용 후 startDate/endDate 조건 검색 추가 + store N+1 최적화
+		// TODO QueryDSL 적용 후 startDate/endDate 조건 검색 추가
 	}
 
 	@Transactional

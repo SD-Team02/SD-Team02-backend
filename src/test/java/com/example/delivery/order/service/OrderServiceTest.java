@@ -124,7 +124,7 @@ class OrderServiceTest {
 		Menu menu = createMenu(menuId, storeId, 10000);
 
 		when(storeRepository.findById(storeId)).thenReturn(Optional.of(store));
-		when(menuRepository.findById(menuId)).thenReturn(Optional.of(menu));
+		when(menuRepository.findAllById(List.of(menuId))).thenReturn(List.of(menu));
 
 		// when
 		ResCreateOrderDto result = orderService.createOrder(1L, createReq(storeId, menuId, 2));
@@ -157,7 +157,7 @@ class OrderServiceTest {
 		UUID storeId = UUID.randomUUID();
 		UUID menuId = UUID.randomUUID();
 		when(storeRepository.findById(storeId)).thenReturn(Optional.of(createStore(storeId, 1L)));
-		when(menuRepository.findById(menuId)).thenReturn(Optional.empty());
+		when(menuRepository.findAllById(List.of(menuId))).thenReturn(List.of());
 
 		assertThatThrownBy(() -> orderService.createOrder(1L, createReq(storeId, menuId, 1)))
 			.isInstanceOf(BusinessException.class)
@@ -171,7 +171,7 @@ class OrderServiceTest {
 		UUID menuId = UUID.randomUUID();
 		when(storeRepository.findById(storeId)).thenReturn(Optional.of(createStore(storeId, 1L)));
 		// 메뉴는 다른 가게 소속
-		when(menuRepository.findById(menuId)).thenReturn(Optional.of(createMenu(menuId, UUID.randomUUID(), 10000)));
+		when(menuRepository.findAllById(List.of(menuId))).thenReturn(List.of(createMenu(menuId, UUID.randomUUID(), 10000)));
 
 		assertThatThrownBy(() -> orderService.createOrder(1L, createReq(storeId, menuId, 1)))
 			.isInstanceOf(BusinessException.class)
@@ -186,7 +186,7 @@ class OrderServiceTest {
 		Menu menu = createMenu(menuId, storeId, 10000);
 		menu.hide();
 		when(storeRepository.findById(storeId)).thenReturn(Optional.of(createStore(storeId, 1L)));
-		when(menuRepository.findById(menuId)).thenReturn(Optional.of(menu));
+		when(menuRepository.findAllById(List.of(menuId))).thenReturn(List.of(menu));
 
 		assertThatThrownBy(() -> orderService.createOrder(1L, createReq(storeId, menuId, 1)))
 			.isInstanceOf(BusinessException.class)
@@ -203,7 +203,7 @@ class OrderServiceTest {
 		Page<Order> page = new PageImpl<>(List.of(order), pageable, 1);
 
 		when(orderRepository.findByUserIdAndDeletedAtIsNull(1L, pageable)).thenReturn(page);
-		when(storeRepository.findById(storeId)).thenReturn(Optional.of(createStore(storeId, 9L)));
+		when(storeRepository.findAllById(List.of(storeId))).thenReturn(List.of(createStore(storeId, 9L)));
 
 		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.CUSTOMER, null, pageable);
 
@@ -220,7 +220,7 @@ class OrderServiceTest {
 
 		when(orderRepository.findByUserIdAndStatusAndDeletedAtIsNull(1L, OrderStatus.REQUESTED, pageable))
 			.thenReturn(page);
-		when(storeRepository.findById(storeId)).thenReturn(Optional.of(createStore(storeId, 9L)));
+		when(storeRepository.findAllById(List.of(storeId))).thenReturn(List.of(createStore(storeId, 9L)));
 
 		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.CUSTOMER, OrderStatus.REQUESTED, pageable);
 
@@ -239,7 +239,7 @@ class OrderServiceTest {
 
 		when(storeRepository.findByUserIdAndDeletedAtIsNull(1L)).thenReturn(List.of(store));
 		when(orderRepository.findByStoreIdInAndDeletedAtIsNull(List.of(storeId), pageable)).thenReturn(page);
-		when(storeRepository.findById(storeId)).thenReturn(Optional.of(store));
+		when(storeRepository.findAllById(List.of(storeId))).thenReturn(List.of(store));
 
 		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.OWNER, null, pageable);
 
@@ -266,7 +266,7 @@ class OrderServiceTest {
 		Page<Order> page = new PageImpl<>(List.of(order), pageable, 1);
 
 		when(orderRepository.findByDeletedAtIsNull(pageable)).thenReturn(page);
-		when(storeRepository.findById(storeId)).thenReturn(Optional.of(createStore(storeId, 9L)));
+		when(storeRepository.findAllById(List.of(storeId))).thenReturn(List.of(createStore(storeId, 9L)));
 
 		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.MANAGER, null, pageable);
 
@@ -343,7 +343,7 @@ class OrderServiceTest {
 		when(orderRepository.findByOrderIdAndDeletedAtIsNull(orderId))
 			.thenReturn(Optional.of(createOrderEntity(orderId, 5L, storeId)));
 		when(orderItemRepository.findAllByOrderIdAndDeletedAtIsNull(orderId)).thenReturn(List.of(item));
-		when(menuRepository.findById(menuId)).thenReturn(Optional.of(createMenu(menuId, storeId, 10000)));
+		when(menuRepository.findAllById(List.of(menuId))).thenReturn(List.of(createMenu(menuId, storeId, 10000)));
 
 		ResOrderItemsDto result = orderService.getOrderItems(1L, Role.MANAGER, orderId);
 
