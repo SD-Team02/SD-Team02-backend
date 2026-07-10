@@ -35,7 +35,7 @@ public class PaymentController {
 
     /** 1. 가상 결제 승인 API */
     @PostMapping
-    @Operation(summary = "결제 승인 등록", description = "주문 정보를 기반으로 가상 결제 승인을 진행합니다.")
+    @Operation(summary = "결제 승인 등록")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "결제 등록 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 파라미터"),
@@ -55,7 +55,7 @@ public class PaymentController {
 
     // 2. 결제 내역 단건 조회
     @GetMapping("/{paymentId}")
-    @Operation(summary = "결제 단건 상세 조회", description = "결제 ID를 통해 특정 결제 내역을 조회합니다.")
+    @Operation(summary = "결제 단건 상세 조회")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "결제 내역 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 결제 내역입니다.")
@@ -72,7 +72,7 @@ public class PaymentController {
 
     /** 3. 고객 본인용: 기간 범위별 목록 조회 **/
     @GetMapping("/customer")
-    @Operation(summary = "본인 결제 내역 기간 페이징 조회", description = "프론트가 준 시작일과 종료일 범위 안에서 로그인 고객 본인의 영수증 리스트를 최신순 목록 조회합니다.")
+    @Operation(summary = "본인 결제 내역 기간 페이징 조회")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "본인 결제 내역 목록 조회 성공")
     })
@@ -95,7 +95,7 @@ public class PaymentController {
 
     /** 4. 관리자용: 기간 범위별 목록 조회  */
     @GetMapping
-    @Operation(summary = "관리자용 전체 결제 내역 검색 목록 조회", description = "결제를 기간 및 결제 상태(ENUM) 페이징 검색합니다. (MANAGER/MASTER 권한 전용)")
+    @Operation(summary = "관리자용 전체 결제 내역 검색 목록 조회")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "관리자용 결제 내역 검색 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 전용 접근 거부 에러")
@@ -124,7 +124,7 @@ public class PaymentController {
 
     /** 5. 결제 취소  */
     @PostMapping("/{paymentId}/cancel")
-    @Operation(summary = "결제 취소 처리 (환불)", description = "결제 건의 상태를 CANCELED로 바꾸고 Soft Delete 처리")
+    @Operation(summary = "결제 취소 처리)
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "결제 취소 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 환불 완료되었거나 5분이 경과한 주문건입니다."),
