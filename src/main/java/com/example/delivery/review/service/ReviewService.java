@@ -1,6 +1,10 @@
 package com.example.delivery.review.service;
 
+import java.util.List;
+import java.util.Map;
 import java.util.UUID;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -78,24 +82,35 @@ public class ReviewService {
 		storeRepository.findById(storeId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-		Page<ResReviewListDto> reviews = reviewRepository.findByStoreIdAndDeletedAtIsNull(storeId, pageable)
-			.map(review -> {
+		Page<Review> reviewPage = reviewRepository.findByStoreIdAndDeletedAtIsNull(storeId, pageable);
 
-				User user = userRepository.findById(review.getUserId())
-					.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+		// 페이지 내 작성자를 한 번에 조회해 Map으로 재사용 (username 건별 조회 N+1 방지)
+		List<Long> userIds = reviewPage.getContent().stream()
+			.map(Review::getUserId)
+			.distinct()
+			.toList();
 
-				return ResReviewListDto.builder()
-					.reviewId(review.getReviewId())
-					.username(user.getUsername())
-					.rating(review.getRating())
-					.content(review.getContent())
-					.createdAt(review.getCreatedAt())
-					.build();
-			});
+		Map<Long, User> userMap = userRepository.findAllById(userIds).stream()
+			.collect(Collectors.toMap(User::getUserId, Function.identity()));
+
+		Page<ResReviewListDto> reviews = reviewPage.map(review -> {
+
+			User user = userMap.get(review.getUserId());
+			if (user == null) {
+				throw new BusinessException(ErrorCode.USER_NOT_FOUND);
+			}
+
+			return ResReviewListDto.builder()
+				.reviewId(review.getReviewId())
+				.username(user.getUsername())
+				.rating(review.getRating())
+				.content(review.getContent())
+				.createdAt(review.getCreatedAt())
+				.build();
+		});
 
 		return PageResponse.from(reviews);
 
-		// TODO : username N+1 조회 -> 배치 조회/QueryDSL로 최적화
 		// TODO : QueryDSL 적용 후 startDate/endDate 조건 검색 추가
 	}
 
