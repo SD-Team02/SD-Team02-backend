@@ -34,7 +34,9 @@ public class Review extends BaseEntity {
     @Column(name = "store_id", nullable = false)
     private UUID storeId;
 
-    @Column(name = "order_id", nullable = false, unique = true)
+    // soft delete 후 같은 주문으로 재작성을 허용하기 위해 DB UNIQUE 제약을 두지 않는다.
+    // (삭제되지 않은 리뷰 중복 방지는 서비스에서 existsByOrderIdAndDeletedAtIsNull로 처리)
+    @Column(name = "order_id", nullable = false)
     private UUID orderId;
 
     @Column(name = "user_id", nullable = false)

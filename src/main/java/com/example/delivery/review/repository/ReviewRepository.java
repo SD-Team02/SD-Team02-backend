@@ -1,5 +1,6 @@
 package com.example.delivery.review.repository;
 
+import java.util.Optional;
 import java.util.UUID;
 
 import org.springframework.data.domain.Page;
@@ -10,7 +11,10 @@ import com.example.delivery.review.entity.Review;
 
 public interface ReviewRepository extends JpaRepository<Review, UUID> {
 
-	boolean existsByOrderId(UUID orderId);
+	// 삭제되지 않은 리뷰 기준으로만 중복 여부/조회 (soft delete 제외)
+	boolean existsByOrderIdAndDeletedAtIsNull(UUID orderId);
 
-	Page<Review> findByStoreId(UUID storeId, Pageable pageable);
+	Optional<Review> findByReviewIdAndDeletedAtIsNull(UUID reviewId);
+
+	Page<Review> findByStoreIdAndDeletedAtIsNull(UUID storeId, Pageable pageable);
 }

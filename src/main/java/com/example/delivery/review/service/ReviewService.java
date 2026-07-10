@@ -51,7 +51,7 @@ public class ReviewService {
 			throw new BusinessException(ErrorCode.REVIEW_NOT_ALLOWED);
 		}
 
-		if (reviewRepository.existsByOrderId(orderId)) {
+		if (reviewRepository.existsByOrderIdAndDeletedAtIsNull(orderId)) {
 			throw new BusinessException(ErrorCode.REVIEW_ALREADY_EXISTS);
 		}
 
@@ -78,7 +78,7 @@ public class ReviewService {
 		storeRepository.findById(storeId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-		Page<ResReviewListDto> reviews = reviewRepository.findByStoreId(storeId, pageable)
+		Page<ResReviewListDto> reviews = reviewRepository.findByStoreIdAndDeletedAtIsNull(storeId, pageable)
 			.map(review -> {
 
 				User user = userRepository.findById(review.getUserId())
@@ -103,7 +103,7 @@ public class ReviewService {
 	@Transactional(readOnly = true)
 	public ResReviewDto getReview(UUID reviewId) {
 
-		Review review = reviewRepository.findById(reviewId)
+		Review review = reviewRepository.findByReviewIdAndDeletedAtIsNull(reviewId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
 		User user = userRepository.findById(review.getUserId())
@@ -123,7 +123,7 @@ public class ReviewService {
 	@Transactional
 	public ResUpdateReviewDto updateReview(Long userId, UUID reviewId, ReqUpdateReviewDto request) {
 
-		Review review = reviewRepository.findById(reviewId)
+		Review review = reviewRepository.findByReviewIdAndDeletedAtIsNull(reviewId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
 		// 본인 리뷰만 수정 가능 (CUSTOMER)
@@ -141,7 +141,7 @@ public class ReviewService {
 	@Transactional
 	public void deleteReview(Long userId, UUID reviewId) {
 
-		Review review = reviewRepository.findById(reviewId)
+		Review review = reviewRepository.findByReviewIdAndDeletedAtIsNull(reviewId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
 		review.softDelete(userId);
