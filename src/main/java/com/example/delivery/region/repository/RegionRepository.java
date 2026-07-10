@@ -13,9 +13,11 @@ import java.util.UUID;
 
 public interface RegionRepository extends JpaRepository<Region, UUID> {
     boolean existsByName(String name);
-    boolean existsByNameAndParentRegionId(String name, UUID parentRegionId);
-    boolean existsByNameAndParentRegionIdIsNull(String name);
+    boolean existsByNameAndParentRegionIdAndDeletedAtIsNull(String name, UUID parentRegionId);
+    boolean existsByNameAndParentRegionIdIsNullAndDeletedAtIsNull(String name);
     Page<Region> findAllByStatusAndDeletedAtIsNull(RegionStatus status, Pageable pageable);
     Optional<Region> findByRegionIdAndDeletedAtIsNull(UUID regionId);
     boolean existsByNameAndRegionIdNot(String name, UUID regionId);
+    boolean existsByNameAndParentRegionIdAndRegionIdNotAndDeletedAtIsNull(String name, UUID parentRegionId, UUID regionId);
+    boolean existsByNameAndParentRegionIdIsNullAndRegionIdNotAndDeletedAtIsNull(String name, UUID regionId);
 }

@@ -18,6 +18,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -28,7 +29,7 @@ public class RegionService {
     //지역 등록
     @Transactional
     public ResCreateRegionDto createRegion(ReqCreateRegionDto reqCreateRegionDto) {
-        checkDuplicate(reqCreateRegionDto.getName(), reqCreateRegionDto.getParentRegionId());
+        checkDuplicateForCreate(reqCreateRegionDto.getName(), reqCreateRegionDto.getParentRegionId());
 
         //상위 지역명 구하기
         String parentName = null;
@@ -64,18 +65,19 @@ public class RegionService {
     //지역 수정
     @Transactional
     public ResUpdateRegionDto updateRegion(UUID regionId, @Valid ReqUpdateRegionDto reqUpdateRegionDto) {
-        Region region = regionRepository.findById(regionId)
+        Region region = regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
 
-        //지역명 변경 없으면 DB 조회 생략
-        if(!region.getName().equals(reqUpdateRegionDto.getName())){
+        if(!Objects.equals(region.getName(), reqUpdateRegionDto.getName())
+                || !Objects.equals(region.getParentRegionId(), reqUpdateRegionDto.getParentRegionId())){
             //기존 데이터의 지역명으로의 변경 막기
-            if(regionRepository.existsByNameAndRegionIdNot(reqUpdateRegionDto.getName(),regionId)){
-                throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
-            }
+            checkDuplicateForUpdate(reqUpdateRegionDto.getName(), reqUpdateRegionDto.getParentRegionId(), regionId);
         }
 
-        String parentName = getParentRegionName(region.getParentRegionId());
+        String parentName = null;
+        if (reqUpdateRegionDto.getParentRegionId() != null) {
+            parentName = getParentRegion(reqUpdateRegionDto.getParentRegionId()).getName();
+        }
 
         region.update(reqUpdateRegionDto.getName(),reqUpdateRegionDto.getParentRegionId(),reqUpdateRegionDto.getStatus());
         regionRepository.saveAndFlush(region);
@@ -87,12 +89,12 @@ public class RegionService {
     /*
     [공통 메서드]
      */
-    //지역명 중복 여부 확인 method
+    //지역 등록 시 중복 여부 확인
     // 같은 상위 지역 아래 같은 지역명은 불가
-    private void checkDuplicate(String name, UUID parentId) {
+    private void checkDuplicateForCreate(String name, UUID parentId) {
         boolean exists = (parentId == null) 
-            ? regionRepository.existsByNameAndParentRegionIdIsNull(name) 
-            : regionRepository.existsByNameAndParentRegionId(name, parentId);
+            ? regionRepository.existsByNameAndParentRegionIdIsNullAndDeletedAtIsNull(name) 
+            : regionRepository.existsByNameAndParentRegionIdAndDeletedAtIsNull(name, parentId);
         
         if (exists) {
             throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
@@ -116,5 +118,16 @@ public class RegionService {
         }
 
         return parentName;
+    }
+
+    //지역 수정 시 중복 여부 확인
+    private void checkDuplicateForUpdate(String name, UUID parentId, UUID regionId) {
+        boolean exists = (parentId == null)
+            ? regionRepository.existsByNameAndParentRegionIdIsNullAndRegionIdNotAndDeletedAtIsNull(name, regionId)
+            : regionRepository.existsByNameAndParentRegionIdAndRegionIdNotAndDeletedAtIsNull(name, parentId, regionId);
+
+        if (exists) {
+            throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
+        }
     }
 }

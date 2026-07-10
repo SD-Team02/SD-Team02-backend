@@ -3,6 +3,7 @@ package com.example.delivery.region.dto.request;
 import com.example.delivery.region.entity.RegionStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -21,6 +22,7 @@ public class ReqUpdateRegionDto {
     private String name;
     @Schema(description = "상위 지역 id", example = "550e8400-e29b-41d4-a716-446655440000")
     private UUID parentRegionId;
+    @NotNull
     @Schema(description = "지역 활성화 상태", example = "ACTIVE")
     private RegionStatus status;
 }

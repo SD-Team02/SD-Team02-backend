@@ -38,7 +38,7 @@ class RegionServiceTest {
     void createRegion_Success_NoParent() {
         // given
         ReqCreateRegionDto dto = new ReqCreateRegionDto("대한민국", null);
-        when(regionRepository.existsByNameAndParentRegionIdIsNull("대한민국")).thenReturn(false);
+        when(regionRepository.existsByNameAndParentRegionIdIsNullAndDeletedAtIsNull("대한민국")).thenReturn(false);
         when(regionRepository.save(any(Region.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
         // when
@@ -47,7 +47,7 @@ class RegionServiceTest {
         // then
         assertNotNull(result);
         assertEquals("대한민국", result.getName());
-        verify(regionRepository).existsByNameAndParentRegionIdIsNull("대한민국");
+        verify(regionRepository).existsByNameAndParentRegionIdIsNullAndDeletedAtIsNull("대한민국");
         verify(regionRepository).save(any(Region.class));
     }
 
@@ -57,7 +57,7 @@ class RegionServiceTest {
         // given
         UUID parentId = UUID.randomUUID();
         ReqCreateRegionDto dto = new ReqCreateRegionDto("강남구", parentId);
-        when(regionRepository.existsByNameAndParentRegionId("강남구", parentId)).thenReturn(false);
+        when(regionRepository.existsByNameAndParentRegionIdAndDeletedAtIsNull("강남구", parentId)).thenReturn(false);
         when(regionRepository.findByRegionIdAndDeletedAtIsNull(parentId)).thenReturn(Optional.of(new Region("서울시")));
         when(regionRepository.save(any(Region.class))).thenAnswer(invocation -> invocation.getArgument(0));
 
@@ -69,7 +69,7 @@ class RegionServiceTest {
         assertEquals("강남구", result.getName());
         assertEquals(parentId, result.getParentRegionId());
         assertEquals("서울시", result.getParentRegionName());
-        verify(regionRepository).existsByNameAndParentRegionId("강남구", parentId);
+        verify(regionRepository).existsByNameAndParentRegionIdAndDeletedAtIsNull("강남구", parentId);
         verify(regionRepository).findByRegionIdAndDeletedAtIsNull(parentId);
         verify(regionRepository).save(any(Region.class));
     }
@@ -79,7 +79,7 @@ class RegionServiceTest {
     void createRegion_DuplicateName() {
         // given
         ReqCreateRegionDto dto = new ReqCreateRegionDto("서울", null);
-        when(regionRepository.existsByNameAndParentRegionIdIsNull("서울")).thenReturn(true);
+        when(regionRepository.existsByNameAndParentRegionIdIsNullAndDeletedAtIsNull("서울")).thenReturn(true);
 
         // when & then
         assertThrows(BusinessException.class, () -> regionService.createRegion(dto));
@@ -93,7 +93,7 @@ class RegionServiceTest {
         UUID parentId = UUID.randomUUID();
         ReqCreateRegionDto dto = new ReqCreateRegionDto("서브지역", parentId);
 
-        when(regionRepository.existsByNameAndParentRegionId("서브지역", parentId)).thenReturn(false);
+        when(regionRepository.existsByNameAndParentRegionIdAndDeletedAtIsNull("서브지역", parentId)).thenReturn(false);
         when(regionRepository.findByRegionIdAndDeletedAtIsNull(parentId)).thenReturn(Optional.empty());
 
         // when & then
@@ -109,8 +109,8 @@ class RegionServiceTest {
         ReqUpdateRegionDto dto = new ReqUpdateRegionDto("강남구 수정", null, RegionStatus.ACTIVE);
         Region existingRegion = new Region("강남구", null);
         
-        when(regionRepository.findById(regionId)).thenReturn(Optional.of(existingRegion));
-        when(regionRepository.existsByNameAndRegionIdNot("강남구 수정", regionId)).thenReturn(false);
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.of(existingRegion));
+        when(regionRepository.existsByNameAndParentRegionIdIsNullAndRegionIdNotAndDeletedAtIsNull("강남구 수정", regionId)).thenReturn(false);
 
         // when
         ResUpdateRegionDto result = regionService.updateRegion(regionId, dto);
@@ -118,8 +118,8 @@ class RegionServiceTest {
         // then
         assertNotNull(result);
         assertEquals("강남구 수정", result.getName());
-        verify(regionRepository).findById(regionId);
-        verify(regionRepository).existsByNameAndRegionIdNot("강남구 수정", regionId);
+        verify(regionRepository).findByRegionIdAndDeletedAtIsNull(regionId);
+        verify(regionRepository).existsByNameAndParentRegionIdIsNullAndRegionIdNotAndDeletedAtIsNull("강남구 수정", regionId);
         verify(regionRepository).saveAndFlush(any(Region.class));
     }
 
@@ -129,10 +129,27 @@ class RegionServiceTest {
         // given
         UUID regionId = UUID.randomUUID();
         ReqUpdateRegionDto dto = new ReqUpdateRegionDto("강남구 수정", null, RegionStatus.ACTIVE);
-        when(regionRepository.findById(regionId)).thenReturn(Optional.empty());
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.empty());
 
         // when & then
         assertThrows(BusinessException.class, () -> regionService.updateRegion(regionId, dto));
+    }
+
+    @Test
+    @DisplayName("지역 수정 - 존재하지 않는 상위 지역으로 수정 시 예외를 발생시킨다.")
+    void updateRegion_ParentNotFound() {
+        // given
+        UUID regionId = UUID.randomUUID();
+        UUID parentId = UUID.randomUUID();
+        ReqUpdateRegionDto dto = new ReqUpdateRegionDto("강남구 수정", parentId, RegionStatus.ACTIVE);
+        Region existingRegion = new Region("강남구", null);
+        
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.of(existingRegion));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(parentId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(BusinessException.class, () -> regionService.updateRegion(regionId, dto));
+        verify(regionRepository, never()).saveAndFlush(any(Region.class));
     }
 
     @Test
@@ -143,11 +160,37 @@ class RegionServiceTest {
         ReqUpdateRegionDto dto = new ReqUpdateRegionDto("강남구 수정", null, RegionStatus.ACTIVE);
         Region existingRegion = new Region("강남구", null);
         
-        when(regionRepository.findById(regionId)).thenReturn(Optional.of(existingRegion));
-        when(regionRepository.existsByNameAndRegionIdNot("강남구 수정", regionId)).thenReturn(true);
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.of(existingRegion));
+        when(regionRepository.existsByNameAndParentRegionIdIsNullAndRegionIdNotAndDeletedAtIsNull("강남구 수정", regionId)).thenReturn(true);
 
         // when & then
         assertThrows(BusinessException.class, () -> regionService.updateRegion(regionId, dto));
         verify(regionRepository, never()).saveAndFlush(any(Region.class));
+    }
+
+    @Test
+    @DisplayName("지역 수정 - 다른 상위 지역 아래에 동일한 이름이 이미 존재하면 수정에 성공한다.")
+    void updateRegion_Success_SameNameDifferentParent() {
+        // given
+        UUID regionId = UUID.randomUUID();
+        UUID otherParentId = UUID.randomUUID();
+        ReqUpdateRegionDto dto = new ReqUpdateRegionDto("강남구", otherParentId, RegionStatus.ACTIVE);
+        Region existingRegion = new Region("기존이름", null);
+        
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.of(existingRegion));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(otherParentId)).thenReturn(Optional.of(new Region("부모지역")));
+        
+        // This test should pass if we implement correctly.
+        // Currently this would fail because `existsByNameAndRegionIdNot` returns true if "강남구" exists under otherParentId.
+        when(regionRepository.existsByNameAndParentRegionIdAndRegionIdNotAndDeletedAtIsNull("강남구", otherParentId, regionId)).thenReturn(false);
+
+        // when
+        ResUpdateRegionDto result = regionService.updateRegion(regionId, dto);
+
+        // then
+        assertNotNull(result);
+        assertEquals("강남구", result.getName());
+        verify(regionRepository).findByRegionIdAndDeletedAtIsNull(regionId);
+        verify(regionRepository).saveAndFlush(any(Region.class));
     }
 }
