@@ -27,6 +27,7 @@ import com.example.delivery.order.dto.response.ResOrderDto;
 import com.example.delivery.order.dto.response.ResOrderItemsDto;
 import com.example.delivery.order.dto.response.ResOrderListDto;
 import com.example.delivery.order.dto.response.ResOrderStatusDto;
+import com.example.delivery.order.entity.OrderStatus;
 import com.example.delivery.order.service.OrderService;
 import com.example.delivery.user.entity.Role;
 import com.example.delivery.user.security.UserDetailsImpl;
@@ -79,7 +80,8 @@ public class OrderController {
 	@GetMapping
 	public ResponseEntity<ApiResponse<PageResponse<ResOrderListDto>>> getOrders(
 		@AuthenticationPrincipal UserDetailsImpl userDetails,
-		@RequestParam(defaultValue = "ALL") String status,
+		// status 미지정 시 전체 상태 조회, 지정 시 해당 상태만. 잘못된 값은 스프링 바인딩 단계에서 400 처리.
+		@RequestParam(required = false) OrderStatus status,
 		@RequestParam(defaultValue = "0") int page,
 		@RequestParam(required = false) Integer size,
 		@RequestParam(defaultValue = "createdAt") String sortBy,

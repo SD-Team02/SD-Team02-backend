@@ -8,6 +8,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Getter;
 
 @Getter
@@ -19,11 +20,13 @@ public class ReqCreateOrderDto {
 	private UUID storeId;
 
 	@NotBlank
-	@Schema(description = "배송 주소", example = "서울시 강남구 테헤란로 123")
+	@Size(max = 255)
+	@Schema(description = "배송 주소 (최대 255자)", example = "서울시 강남구 테헤란로 123")
 	private String address;
 
 	@NotBlank
-	@Schema(description = "상세 주소", example = "101동 1001호")
+	@Size(max = 255)
+	@Schema(description = "상세 주소 (최대 255자)", example = "101동 1001호")
 	private String detailAddress;
 
 	@Valid

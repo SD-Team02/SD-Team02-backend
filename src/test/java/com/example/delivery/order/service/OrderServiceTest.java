@@ -1,11 +1,8 @@
 package com.example.delivery.order.service;
 
-import static org.assertj.core.api.Assertions.assertThat;
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.never;
-import static org.mockito.Mockito.verify;
-import static org.mockito.Mockito.when;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.*;
+import static org.mockito.Mockito.*;
 
 import java.time.LocalDateTime;
 import java.time.LocalTime;
@@ -18,12 +15,12 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.TestInfo;
 import org.junit.jupiter.api.extension.ExtendWith;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 import org.mockito.ArgumentCaptor;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -208,10 +205,28 @@ class OrderServiceTest {
 		when(orderRepository.findByUserIdAndDeletedAtIsNull(1L, pageable)).thenReturn(page);
 		when(storeRepository.findById(storeId)).thenReturn(Optional.of(createStore(storeId, 9L)));
 
-		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.CUSTOMER, "ALL", pageable);
+		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.CUSTOMER, null, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		verify(orderRepository).findByUserIdAndDeletedAtIsNull(1L, pageable);
+	}
+
+	@Test
+	@DisplayName("주문 목록 - 상태 필터 지정 시 상태별 조회")
+	void getOrders_customer_withStatus() {
+		UUID storeId = UUID.randomUUID();
+		Order order = createOrderEntity(UUID.randomUUID(), 1L, storeId);
+		Page<Order> page = new PageImpl<>(List.of(order), pageable, 1);
+
+		when(orderRepository.findByUserIdAndStatusAndDeletedAtIsNull(1L, OrderStatus.REQUESTED, pageable))
+			.thenReturn(page);
+		when(storeRepository.findById(storeId)).thenReturn(Optional.of(createStore(storeId, 9L)));
+
+		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.CUSTOMER, OrderStatus.REQUESTED, pageable);
+
+		assertThat(result.getContent()).hasSize(1);
+		verify(orderRepository).findByUserIdAndStatusAndDeletedAtIsNull(1L, OrderStatus.REQUESTED, pageable);
+		verify(orderRepository, never()).findByUserIdAndDeletedAtIsNull(any(), any());
 	}
 
 	@Test
@@ -226,7 +241,7 @@ class OrderServiceTest {
 		when(orderRepository.findByStoreIdInAndDeletedAtIsNull(List.of(storeId), pageable)).thenReturn(page);
 		when(storeRepository.findById(storeId)).thenReturn(Optional.of(store));
 
-		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.OWNER, "ALL", pageable);
+		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.OWNER, null, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		verify(orderRepository).findByStoreIdInAndDeletedAtIsNull(List.of(storeId), pageable);
@@ -237,7 +252,7 @@ class OrderServiceTest {
 	void getOrders_owner_noStores() {
 		when(storeRepository.findByUserIdAndDeletedAtIsNull(1L)).thenReturn(List.of());
 
-		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.OWNER, "ALL", pageable);
+		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.OWNER, null, pageable);
 
 		assertThat(result.getContent()).isEmpty();
 		verify(orderRepository, never()).findByStoreIdInAndDeletedAtIsNull(any(), any());
@@ -253,18 +268,10 @@ class OrderServiceTest {
 		when(orderRepository.findByDeletedAtIsNull(pageable)).thenReturn(page);
 		when(storeRepository.findById(storeId)).thenReturn(Optional.of(createStore(storeId, 9L)));
 
-		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.MANAGER, "ALL", pageable);
+		PageResponse<ResOrderListDto> result = orderService.getOrders(1L, Role.MANAGER, null, pageable);
 
 		assertThat(result.getContent()).hasSize(1);
 		verify(orderRepository).findByDeletedAtIsNull(pageable);
-	}
-
-	@Test
-	@DisplayName("주문 목록 - 잘못된 상태값")
-	void getOrders_invalidStatus() {
-		assertThatThrownBy(() -> orderService.getOrders(1L, Role.MASTER, "WRONG", pageable))
-			.isInstanceOf(BusinessException.class)
-			.extracting("errorCode").isEqualTo(ErrorCode.INVALID_ORDER_STATUS);
 	}
 
 	// ===== getOrder (단건 소유권) =====

@@ -40,7 +40,6 @@ public class OrderService {
 
 	private final OrderRepository orderRepository;
 	private final OrderItemRepository orderItemRepository;
-
 	private final MenuRepository menuRepository;
 	private final StoreRepository storeRepository;
 
@@ -172,10 +171,8 @@ public class OrderService {
 
 
 	@Transactional(readOnly = true)
-	public PageResponse<ResOrderListDto> getOrders(Long userId, Role role, String status, Pageable pageable) {
-
-		// status == null/ALL 이면 상태 무관, 그 외엔 검증된 OrderStatus
-		OrderStatus orderStatus = parseStatus(status);
+	// orderStatus == null 이면 상태 무관(전체), 그 외엔 해당 상태만 조회
+	public PageResponse<ResOrderListDto> getOrders(Long userId, Role role, OrderStatus orderStatus, Pageable pageable) {
 
 		// 역할별 조회 범위 (soft delete 제외)
 		Page<Order> orderPage = switch (role) {
@@ -222,19 +219,6 @@ public class OrderService {
 		return PageResponse.from(responsePage);
 
 		// TODO QueryDSL 적용 후 startDate/endDate 조건 검색 추가 + store N+1 최적화
-	}
-
-
-	// "ALL"/null → null(상태 무관), 그 외 → 검증된 OrderStatus (없는 값이면 예외)
-	private OrderStatus parseStatus(String status) {
-		if (status == null || "ALL".equalsIgnoreCase(status)) {
-			return null;
-		}
-		try {
-			return OrderStatus.valueOf(status.toUpperCase());
-		} catch (IllegalArgumentException e) {
-			throw new BusinessException(ErrorCode.INVALID_ORDER_STATUS);
-		}
 	}
 
 	@Transactional

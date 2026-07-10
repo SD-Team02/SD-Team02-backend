@@ -43,8 +43,6 @@ public enum ErrorCode {
     ORDER_CANCEL_TIME_EXCEEDED(HttpStatus.BAD_REQUEST, "ORDER_400_1", "주문 취소 가능 시간(5분)이 지났습니다."),
     ORDER_STATUS_TRANSITION_INVALID(HttpStatus.BAD_REQUEST, "ORDER_400_2", "해당 상태로 변경할 수 없습니다."),
     ORDER_MENU_STORE_MISMATCH(HttpStatus.BAD_REQUEST, "ORDER_400_3","주문한 메뉴가 해당 가게의 메뉴가 아닙니다."),
-    INVALID_ORDER_STATUS(HttpStatus.BAD_REQUEST, "ORDER_400_4", "존재하지 않는 주문 상태입니다."),
-
     // Payment (결제 담당 참고용 예시)
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_404_1", "결제 내역을 찾을 수 없습니다."),
 
