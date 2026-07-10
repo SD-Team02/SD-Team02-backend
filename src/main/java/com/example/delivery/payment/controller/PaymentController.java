@@ -44,7 +44,7 @@ public class PaymentController {
     })
     public ResponseEntity<ApiResponse<ResApprovePaymentDto>> approvePayment(
             @Valid @RequestBody ReqApprovePaymentDto requestDto
-            , @AuthenticationPrincipal UserDetailsImpl userDetails // 시큐리티 유저객체 (수정가능성 있음)
+            , @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         // 로그인 회원 Long 고유 ID 추출
         Long userId = userService.getCurrentUserId(userDetails);

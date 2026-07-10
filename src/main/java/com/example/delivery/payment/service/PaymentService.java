@@ -36,7 +36,7 @@ public class PaymentService {
         Order order = orderRepository.findById(requestDto.getOrderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
-        // 로그인한 진짜 유저 ID와 주문 생성자 ID를 검증
+        // 로그인한 유저 ID와 주문 생성자 ID를 검증
         if (!order.getUserId().equals(userId)) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED); // 권한 없는 결제 시도 차단
         }
