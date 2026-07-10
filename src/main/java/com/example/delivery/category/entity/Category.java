@@ -1,4 +1,4 @@
-package com.example.delivery.store.entity;
+package com.example.delivery.category.entity;
 
 import java.util.UUID;
 
@@ -33,7 +33,7 @@ public class Category extends BaseEntity {
     @Column(name = "category_id")
     private UUID categoryId;
 
-    @Column(name = "name", length = 100, nullable = false)
+    @Column(name = "name", length = 100, nullable = false, unique = true)
     private String name;
 
     @Enumerated(EnumType.STRING)
@@ -45,6 +45,13 @@ public class Category extends BaseEntity {
         this.status = CategoryStatus.ACTIVE;
     }
 
+    //카테고리 수정 메서드
+    public void update(String name, CategoryStatus status) {
+        this.name = name;
+        this.status = status;
+    }
+
+    //카테고리명 변경 메서드
     public void rename(String name) {
         this.name = name;
     }
