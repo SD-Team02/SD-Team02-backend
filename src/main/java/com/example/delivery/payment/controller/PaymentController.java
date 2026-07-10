@@ -9,6 +9,8 @@ import com.example.delivery.payment.dto.request.ReqPaymentSearchDto;
 import com.example.delivery.payment.dto.response.ResApprovePaymentDto;
 import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.service.PaymentService;
+import com.example.delivery.user.security.UserDetailsImpl;
+import com.example.delivery.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -108,7 +110,8 @@ public class PaymentController {
             @RequestParam(value = "page", defaultValue = "0") int page,
             @RequestParam(value = "size", required = false) Integer size,
             @RequestParam(value = "sortBy", defaultValue = "createdAt") String sortBy,
-            @RequestParam(value = "direction", defaultValue = "DESC") String direction
+            @RequestParam(value = "direction", defaultValue = "DESC") String direction,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
 
         try {

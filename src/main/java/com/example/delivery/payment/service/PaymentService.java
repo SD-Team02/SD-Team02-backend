@@ -4,6 +4,7 @@ import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.order.entity.Order;
 import com.example.delivery.order.entity.OrderStatus;
+import com.example.delivery.order.repository.OrderRepository;
 import com.example.delivery.payment.dto.request.ReqApprovePaymentDto;
 import com.example.delivery.payment.dto.request.ReqPaymentSearchDto;
 import com.example.delivery.payment.dto.response.ResApprovePaymentDto;
