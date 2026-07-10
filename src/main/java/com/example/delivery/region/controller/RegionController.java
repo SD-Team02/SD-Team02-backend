@@ -53,7 +53,8 @@ public class RegionController {
     @Operation(summary = "전체 지역 조회")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "전체 지역 조회 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "정렬 기준이 올바르지 않습니다.")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "정렬 기준이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ResGetRegionDto>>> getAllRegions(
@@ -68,6 +69,19 @@ public class RegionController {
         Page<ResGetRegionDto> resRegions = regionService.getAllRegions(status,pageable);
 
         return ResponseEntity.ok(ApiResponse.success("전체 지역 조회 성공", PageResponse.from(resRegions)));
+    }
+
+    @Operation(summary = "지역 상세 조회")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "지역 상세 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "지역을 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @GetMapping("/{regionId}")
+    public ResponseEntity<ApiResponse<ResGetRegionDto>> getRegion(@PathVariable UUID regionId){
+        ResGetRegionDto resGetRegionDto = regionService.getRegion(regionId);
+        return ResponseEntity.ok(ApiResponse.success("지역 상세 조회 성공",resGetRegionDto));
     }
 
     @Operation(summary = "지역 수정")

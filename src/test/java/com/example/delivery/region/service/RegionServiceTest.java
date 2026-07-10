@@ -102,6 +102,36 @@ class RegionServiceTest {
     }
 
     @Test
+    @DisplayName("지역 상세 조회 - 성공한다.")
+    void getRegion_Success() {
+        // given
+        UUID regionId = UUID.randomUUID();
+        Region region = new Region("강남구", null);
+
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.of(region));
+
+        // when
+        var result = regionService.getRegion(regionId);
+
+        // then
+        assertNotNull(result);
+        assertEquals("강남구", result.getName());
+        verify(regionRepository).findByRegionIdAndDeletedAtIsNull(regionId);
+    }
+
+    @Test
+    @DisplayName("지역 상세 조회 - 존재하지 않는 지역인 경우 예외를 발생시킨다.")
+    void getRegion_RegionNotFound() {
+        // given
+        UUID regionId = UUID.randomUUID();
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(BusinessException.class, () -> regionService.getRegion(regionId));
+        verify(regionRepository).findByRegionIdAndDeletedAtIsNull(regionId);
+    }
+
+    @Test
     @DisplayName("지역 수정 - 성공한다.")
     void updateRegion_Success() {
         // given

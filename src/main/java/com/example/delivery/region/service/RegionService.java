@@ -63,6 +63,16 @@ public class RegionService {
                 });
     }
 
+    //지역 상세 조회
+    @Transactional(readOnly = true)
+    public ResGetRegionDto getRegion(UUID regionId) {
+        Region region = regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+
+        String parentName = getParentRegionName(region.getParentRegionId());
+        return ResGetRegionDto.from(region, parentName);
+    }
+
     //지역 수정
     @Transactional
     public ResUpdateRegionDto updateRegion(UUID regionId, @Valid ReqUpdateRegionDto reqUpdateRegionDto) {
