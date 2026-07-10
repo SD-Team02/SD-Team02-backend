@@ -30,13 +30,7 @@ public class PaymentService {
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
 
-    /**
-     *  각 비즈니스 별 권한 확인 추가 필요
-     */
-
-    /**
-     * 1. 결제 승인 비즈니스 로직 (유저 ID 검증 포함)
-     */
+    /** 1. 결제 승인 비즈니스 로직  */
     @Transactional
     public ResApprovePaymentDto approve(ReqApprovePaymentDto requestDto, Long userId) {
         Order order = orderRepository.findById(requestDto.getOrderId())
@@ -107,10 +101,8 @@ public class PaymentService {
         }
 
         payment.softDelete(userId);
+        payment.cancel();
 
     }
-
-
-
 
 }

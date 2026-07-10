@@ -33,10 +33,7 @@ public class PaymentController {
     private final PaymentService paymentService;
     private final UserService userService;
 
-    /**
-     * 1. 가상 결제 승인 API
-     * JWT인증 생기면 확인해야함
-     */
+    /** 1. 가상 결제 승인 API */
     @PostMapping
     @Operation(summary = "결제 승인 등록", description = "주문 정보를 기반으로 가상 결제 승인을 진행합니다.")
     @ApiResponses({
@@ -73,9 +70,7 @@ public class PaymentController {
         return ResponseEntity.ok(ApiResponse.success("결제 내역 조회 성공", response));
     }
 
-    /** 3. 고객 본인용: 기간 범위별 목록 조회
-     * JWT인증 생기면 확인해야함
-     * */
+    /** 3. 고객 본인용: 기간 범위별 목록 조회 **/
     @GetMapping("/customer")
     @Operation(summary = "본인 결제 내역 기간 페이징 조회", description = "프론트가 준 시작일과 종료일 범위 안에서 로그인 고객 본인의 영수증 리스트를 최신순 목록 조회합니다.")
     @ApiResponses({
@@ -98,7 +93,7 @@ public class PaymentController {
         return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("본인 결제 내역 목록 조회 성공", pageResponse));
     }
 
-    /** 3. 관리자용: 기간 범위별 목록 조회  */
+    /** 4. 관리자용: 기간 범위별 목록 조회  */
     @GetMapping
     @Operation(summary = "관리자용 전체 결제 내역 검색 목록 조회", description = "결제를 기간 및 결제 상태(ENUM) 페이징 검색합니다. (MANAGER/MASTER 권한 전용)")
     @ApiResponses({
@@ -127,6 +122,7 @@ public class PaymentController {
         return ResponseEntity.ok(com.example.delivery.global.common.response.ApiResponse.success("관리자용 결제 내역 검색 성공", pageResponse));
     }
 
+    /** 5. 결제 취소  */
     @PostMapping("/{paymentId}/cancel")
     @Operation(summary = "결제 취소 처리 (환불)", description = "결제 건의 상태를 CANCELED로 바꾸고 Soft Delete 처리")
     @ApiResponses({
