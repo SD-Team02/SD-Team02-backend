@@ -20,7 +20,7 @@ app:
     secret: ${JWT_SECRET} # 기본값 없음: 운영에 값 안 넣으면 기동 자체가 실패하도록 함
   ai:
     gemini:
-      api-key: ${GEMINI_API_KEY}
+      api-key: ${AI_API_KEY}
 
 logging:
   level:
