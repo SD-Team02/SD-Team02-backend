@@ -1,15 +1,16 @@
 package com.example.delivery.category.controller;
 
-import com.example.delivery.category.dto.ReqCreateCategoryDto;
-import com.example.delivery.category.dto.ResGetCategoryDto;
-import com.example.delivery.category.dto.ResCreateCategoryDto;
+import com.example.delivery.category.dto.request.ReqCreateCategoryDto;
+import com.example.delivery.category.dto.request.ReqUpdateCategoryDto;
+import com.example.delivery.category.dto.response.ResCreateCategoryDto;
+import com.example.delivery.category.dto.response.ResDeleteCategoryDto;
+import com.example.delivery.category.dto.response.ResGetCategoryDto;
+import com.example.delivery.category.dto.response.ResUpdateCategoryDto;
 import com.example.delivery.category.entity.CategoryStatus;
 import com.example.delivery.category.service.CategoryService;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.common.util.PageableFactory;
-import com.example.delivery.global.exception.BusinessException;
-import com.example.delivery.global.exception.ErrorCode;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -60,10 +61,10 @@ public class CategoryController {
             @RequestParam(defaultValue = "createdAt") String sortBy,
             @RequestParam(defaultValue = "DESC") String direction) {
         Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
-        Page<ResGetCategoryDto> categories = categoryService.getAllCategories(status, pageable);
+        Page<ResGetCategoryDto> resCategories = categoryService.getAllCategories(status, pageable);
 
         return ResponseEntity
-                .ok(ApiResponse.success("전체 카테고리 목록 조회 성공", PageResponse.from(categories)));
+                .ok(ApiResponse.success("전체 카테고리 목록 조회 성공", PageResponse.from(resCategories)));
     }
 
     @Operation(summary = "카테고리 상세 조회")
@@ -75,7 +76,42 @@ public class CategoryController {
     })
     @GetMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<ResGetCategoryDto>> getCategory(@PathVariable UUID categoryId) {
-        ResGetCategoryDto category = categoryService.getCategory(categoryId);
-        return ResponseEntity.ok(ApiResponse.success("카테고리 상세 조회 성공", category));
+        ResGetCategoryDto resGetCategoryDto = categoryService.getCategory(categoryId);
+        return ResponseEntity.ok(ApiResponse.success("카테고리 상세 조회 성공", resGetCategoryDto));
+    }
+
+    @Operation(summary = "카테고리 수정")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 수정 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "입력값이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 존재하는 카테고리입니다."),
+            //            #TO-DO : 현재 카테고리명 또는 상태 값을 안 넣으면 "입력값이 올바르지 않습니다." 메세지 출력됨
+//            -> 추후 GlobalExceptionHandler의 handleValidationException 부분 코드를 변경해 어떤 필드 값이 안 들어가는지 보여주도록 수정하는 것도 고려하면 좋을 듯
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "카테고리명은 필수입니다."),
+//            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "카테고리 상태는 필수입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 본문을 읽을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PutMapping("/{categoryId}")
+    public ResponseEntity<ApiResponse<ResUpdateCategoryDto>> updateCategory(
+            @PathVariable UUID categoryId,
+            @Valid @RequestBody ReqUpdateCategoryDto reqUpdateCategoryDto){
+        ResUpdateCategoryDto resUpdateCategoryDto = categoryService.updateCategory(categoryId, reqUpdateCategoryDto);
+        return ResponseEntity.ok(ApiResponse.success("카테고리 수정 성공", resUpdateCategoryDto));
+    }
+
+    @Operation(summary = "카테고리 삭제")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "카테고리 삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @DeleteMapping("/{categoryId}")
+    public ResponseEntity<ApiResponse<ResDeleteCategoryDto>> deleteCategory(@PathVariable UUID categoryId) {
+        ResDeleteCategoryDto resDeleteCategoryDto = categoryService.deleteCategory(categoryId);
+        return ResponseEntity.ok(ApiResponse.success("카테고리 삭제 성공", resDeleteCategoryDto));
     }
 }

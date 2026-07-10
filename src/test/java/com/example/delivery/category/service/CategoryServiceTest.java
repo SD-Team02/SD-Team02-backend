@@ -1,8 +1,11 @@
 package com.example.delivery.category.service;
 
-import com.example.delivery.category.dto.ReqCreateCategoryDto;
-import com.example.delivery.category.dto.ResGetCategoryDto;
-import com.example.delivery.category.dto.ResCreateCategoryDto;
+import com.example.delivery.category.dto.request.ReqCreateCategoryDto;
+import com.example.delivery.category.dto.request.ReqUpdateCategoryDto;
+import com.example.delivery.category.dto.response.ResDeleteCategoryDto;
+import com.example.delivery.category.dto.response.ResGetCategoryDto;
+import com.example.delivery.category.dto.response.ResCreateCategoryDto;
+import com.example.delivery.category.dto.response.ResUpdateCategoryDto;
 import com.example.delivery.category.entity.Category;
 import com.example.delivery.category.entity.CategoryStatus;
 import com.example.delivery.category.repository.CategoryRepository;
@@ -97,7 +100,7 @@ class CategoryServiceTest {
         
         Page<Category> categoryPage = new PageImpl<>(List.of(category), PageRequest.of(0, 10), 1);
         
-        when(categoryRepository.findAllByStatus(any(), any())).thenReturn(categoryPage);
+        when(categoryRepository.findAllByStatusAndDeletedAtIsNull(any(), any())).thenReturn(categoryPage);
 
         // when
         Page<ResGetCategoryDto> result = categoryService.getAllCategories(CategoryStatus.ACTIVE, PageRequest.of(0, 10));
@@ -115,7 +118,7 @@ class CategoryServiceTest {
         UUID categoryId = UUID.randomUUID();
         ReflectionTestUtils.setField(category, "categoryId", categoryId);
         
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
 
         // when
         ResGetCategoryDto result = categoryService.getCategory(categoryId);
@@ -130,11 +133,120 @@ class CategoryServiceTest {
     void getCategory_notFound_throwsException() {
         // given
         UUID categoryId = UUID.randomUUID();
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> categoryService.getCategory(categoryId))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.CATEGORY_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("카테고리 수정 - 성공")
+    void updateCategory_success() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        Category category = new Category("한식");
+        ReflectionTestUtils.setField(category, "categoryId", categoryId);
+        
+        ReqUpdateCategoryDto dto = new ReqUpdateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "일식");
+        ReflectionTestUtils.setField(dto, "status", CategoryStatus.INACTIVE);
+
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+        // when
+        ResUpdateCategoryDto result = categoryService.updateCategory(categoryId, dto);
+
+        // then
+        assertThat(result.getName()).isEqualTo("일식");
+        assertThat(result.getStatus()).isEqualTo(CategoryStatus.INACTIVE);
+    }
+
+    @Test
+    @DisplayName("카테고리 수정 - 존재하지 않을 때 예외 발생")
+    void updateCategory_notFound_throwsException() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        ReqUpdateCategoryDto dto = new ReqUpdateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "일식");
+        ReflectionTestUtils.setField(dto, "status", CategoryStatus.ACTIVE);
+        
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.updateCategory(categoryId, dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("카테고리 수정 - 중복 이름으로 수정 시 예외 발생")
+    void updateCategory_duplicateName_throwsException() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        Category category = new Category("한식");
+        ReflectionTestUtils.setField(category, "categoryId", categoryId);
+
+        ReqUpdateCategoryDto dto = new ReqUpdateCategoryDto();
+        ReflectionTestUtils.setField(dto, "name", "일식");
+        ReflectionTestUtils.setField(dto, "status", CategoryStatus.ACTIVE);
+
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(categoryRepository.existsByNameAndCategoryIdNot("일식", categoryId)).thenReturn(true);
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.updateCategory(categoryId, dto))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_ALREADY_EXISTS.getMessage());
+    }
+
+    @Test
+    @DisplayName("카테고리 삭제 - 성공")
+    void deleteCategory_success() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        Category category = new Category("한식");
+        ReflectionTestUtils.setField(category, "categoryId", categoryId);
+
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+        // when
+        ResDeleteCategoryDto result = categoryService.deleteCategory(categoryId);
+
+        // then
+        assertThat(result.getName()).isEqualTo("한식");
+        assertThat(category.isDeleted()).isTrue();
+    }
+
+    @Test
+    @DisplayName("카테고리 삭제 - 존재하지 않을 때 예외 발생")
+    void deleteCategory_notFound_throwsException() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.deleteCategory(categoryId))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_NOT_FOUND.getMessage());
+    }
+
+    @Test
+    @DisplayName("카테고리 삭제 - 이미 삭제된 경우 예외 발생")
+    void deleteCategory_alreadyDeleted_throwsException() {
+        // given
+        UUID categoryId = UUID.randomUUID();
+        Category category = new Category("한식");
+        ReflectionTestUtils.setField(category, "categoryId", categoryId);
+        category.softDelete(0L);
+
+        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+
+        // when & then
+        assertThatThrownBy(() -> categoryService.deleteCategory(categoryId))
+                .isInstanceOf(BusinessException.class)
+                .hasMessageContaining(ErrorCode.CATEGORY_ALREADY_DELETED.getMessage());
     }
 }
