@@ -26,6 +26,7 @@ import com.example.delivery.review.dto.response.ResReviewDto;
 import com.example.delivery.review.dto.response.ResReviewListDto;
 import com.example.delivery.review.dto.response.ResUpdateReviewDto;
 import com.example.delivery.review.service.ReviewService;
+import com.example.delivery.user.entity.Role;
 import com.example.delivery.user.security.UserDetailsImpl;
 import com.example.delivery.user.service.UserService;
 
@@ -145,7 +146,8 @@ public class ReviewController {
 	) {
 		// CUSTOMER는 본인 리뷰만 / MANAGER·MASTER는 전체 (소유권 검증은 서비스에서 처리)
 		Long userId = userService.getCurrentUserId(userDetails);
-		reviewService.deleteReview(userId, reviewId);
+		Role role = userDetails.getUser().getRole();
+		reviewService.deleteReview(userId, role, reviewId);
 
 		return ResponseEntity
 			.ok(ApiResponse.successMessage("리뷰가 삭제되었습니다."));

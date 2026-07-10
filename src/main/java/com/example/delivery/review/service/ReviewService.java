@@ -22,6 +22,7 @@ import com.example.delivery.review.dto.response.ResUpdateReviewDto;
 import com.example.delivery.review.entity.Review;
 import com.example.delivery.review.repository.ReviewRepository;
 import com.example.delivery.store.repository.StoreRepository;
+import com.example.delivery.user.entity.Role;
 import com.example.delivery.user.entity.User;
 import com.example.delivery.user.repository.UserRepository;
 
@@ -67,7 +68,6 @@ public class ReviewService {
 
 		return new ResCreateReviewDto(review.getReviewId());
 
-		// TODO : JWT 연동 후 CUSTOMER 권한 검증
 	}
 
 
@@ -139,13 +139,16 @@ public class ReviewService {
 
 
 	@Transactional
-	public void deleteReview(Long userId, UUID reviewId) {
+	public void deleteReview(Long userId, Role role, UUID reviewId) {
 
 		Review review = reviewRepository.findByReviewIdAndDeletedAtIsNull(reviewId)
 			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
-		review.softDelete(userId);
+		// CUSTOMER는 본인 리뷰만, MANAGER·MASTER는 전체 삭제 가능
+		if (role == Role.CUSTOMER && !review.getUserId().equals(userId)) {
+			throw new BusinessException(ErrorCode.ACCESS_DENIED);
+		}
 
-		// TODO : JWT 연동 후 권한 검증 (CUSTOMER는 본인 리뷰만 / MANAGER·MASTER는 전체)
+		review.softDelete(userId);
 	}
 }
