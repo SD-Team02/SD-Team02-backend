@@ -15,6 +15,7 @@ name: CD - Build & Push Docker Image, Deploy to EC2
 #   EC2_HOST, EC2_USERNAME, EC2_SSH_KEY     - EC2 접속 정보
 #   DB_URL, DB_USERNAME, DB_PASSWORD        - 운영 DB 접속 정보 (RDS)
 #   JWT_SECRET, AI_API_KEY              - 운영 시크릿 값
+#   MASTER_TOKEN, MANAGER_TOKEN, OWNER_TOKEN - 역할별 정적 인증 토큰
 #   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET, AWS_REGION - S3 이미지 업로드용
 #
 # EC2 사전 세팅 (최초 1회, 수동):
@@ -92,7 +93,7 @@ jobs:
           host: ${{ secrets.EC2_HOST }}
           username: ${{ secrets.EC2_USERNAME }}
           key: ${{ secrets.EC2_SSH_KEY }}
-          envs: DB_URL,DB_USERNAME,DB_PASSWORD,JWT_SECRET,AI_API_KEY,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_S3_BUCKET,AWS_REGION
+          envs: DB_URL,DB_USERNAME,DB_PASSWORD,JWT_SECRET,AI_API_KEY,MASTER_TOKEN,MANAGER_TOKEN,OWNER_TOKEN,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_S3_BUCKET,AWS_REGION
           script: |
             docker pull ${{ env.IMAGE_NAME }}:latest
 
@@ -110,6 +111,9 @@ jobs:
               -e DB_PASSWORD="$DB_PASSWORD" \
               -e JWT_SECRET="$JWT_SECRET" \
               -e AI_API_KEY="$AI_API_KEY" \
+              -e MASTER_TOKEN="$MASTER_TOKEN" \
+              -e MANAGER_TOKEN="$MANAGER_TOKEN" \
+              -e OWNER_TOKEN="$OWNER_TOKEN" \
               -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
               -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
               -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
