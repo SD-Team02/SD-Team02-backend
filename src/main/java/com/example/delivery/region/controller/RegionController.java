@@ -5,6 +5,7 @@ import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.region.dto.request.ReqCreateRegionDto;
 import com.example.delivery.region.dto.request.ReqUpdateRegionDto;
 import com.example.delivery.region.dto.response.ResCreateRegionDto;
+import com.example.delivery.region.dto.response.ResDeleteRegionDto;
 import com.example.delivery.region.dto.response.ResGetRegionDto;
 import com.example.delivery.region.dto.response.ResUpdateRegionDto;
 import com.example.delivery.region.entity.RegionStatus;
@@ -86,5 +87,19 @@ public class RegionController {
             @Valid @RequestBody ReqUpdateRegionDto reqUpdateRegionDto){
         ResUpdateRegionDto resUpdateRegionDto = regionService.updateRegion(regionId,reqUpdateRegionDto);
         return ResponseEntity.ok(ApiResponse.success("지역 수정 성공",resUpdateRegionDto));
+    }
+
+    @Operation(summary = "지역 삭제")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "지역 삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 삭제된 지역입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "지역을 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @DeleteMapping("/{regionId}")
+    public ResponseEntity<ApiResponse<ResDeleteRegionDto>> deleteRegion(@PathVariable UUID regionId){
+        ResDeleteRegionDto resDeleteRegionDto = regionService.deleteRegion(regionId);
+        return ResponseEntity.ok(ApiResponse.success("지역 삭제 성공",resDeleteRegionDto));
     }
 }

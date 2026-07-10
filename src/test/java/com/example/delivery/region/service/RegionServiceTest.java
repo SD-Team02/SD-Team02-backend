@@ -193,4 +193,47 @@ class RegionServiceTest {
         verify(regionRepository).findByRegionIdAndDeletedAtIsNull(regionId);
         verify(regionRepository).saveAndFlush(any(Region.class));
     }
+
+    @Test
+    @DisplayName("지역 삭제 - 성공한다.")
+    void deleteRegion_Success() {
+        // given
+        UUID regionId = UUID.randomUUID();
+        Region existingRegion = new Region("강남구", null);
+        
+        when(regionRepository.findById(regionId)).thenReturn(Optional.of(existingRegion));
+
+        // when
+        var result = regionService.deleteRegion(regionId);
+
+        // then
+        assertNotNull(result);
+        assertTrue(existingRegion.isDeleted());
+        verify(regionRepository).findById(regionId);
+    }
+
+    @Test
+    @DisplayName("지역 삭제 - 존재하지 않는 지역인 경우 예외를 발생시킨다.")
+    void deleteRegion_RegionNotFound() {
+        // given
+        UUID regionId = UUID.randomUUID();
+        when(regionRepository.findById(regionId)).thenReturn(Optional.empty());
+
+        // when & then
+        assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId));
+    }
+
+    @Test
+    @DisplayName("지역 삭제 - 이미 삭제된 지역인 경우 예외를 발생시킨다.")
+    void deleteRegion_AlreadyDeleted() {
+        // given
+        UUID regionId = UUID.randomUUID();
+        Region existingRegion = new Region("강남구", null);
+        existingRegion.softDelete(1L);
+        
+        when(regionRepository.findById(regionId)).thenReturn(Optional.of(existingRegion));
+
+        // when & then
+        assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId));
+    }
 }

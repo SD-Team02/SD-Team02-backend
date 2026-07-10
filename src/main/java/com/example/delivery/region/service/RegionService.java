@@ -5,6 +5,7 @@ import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.region.dto.request.ReqCreateRegionDto;
 import com.example.delivery.region.dto.request.ReqUpdateRegionDto;
 import com.example.delivery.region.dto.response.ResCreateRegionDto;
+import com.example.delivery.region.dto.response.ResDeleteRegionDto;
 import com.example.delivery.region.dto.response.ResGetRegionDto;
 import com.example.delivery.region.dto.response.ResUpdateRegionDto;
 import com.example.delivery.region.entity.Region;
@@ -85,6 +86,20 @@ public class RegionService {
         return ResUpdateRegionDto.from(region,parentName);
     }
 
+    //지역 삭제
+    @Transactional
+    public ResDeleteRegionDto deleteRegion(UUID regionId) {
+        Region region = regionRepository.findById(regionId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+
+        if(region.isDeleted()){
+            throw new BusinessException(ErrorCode.REGION_ALREADY_DELETED);
+        }
+
+        region.softDelete(0L); // TODO: 실제 로그인한 유저 ID를 넣어주어야 함
+        return ResDeleteRegionDto.from(region);
+    }
+
 
     /*
     [공통 메서드]
@@ -96,6 +111,17 @@ public class RegionService {
             ? regionRepository.existsByNameAndParentRegionIdIsNullAndDeletedAtIsNull(name) 
             : regionRepository.existsByNameAndParentRegionIdAndDeletedAtIsNull(name, parentId);
         
+        if (exists) {
+            throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
+        }
+    }
+
+    //지역 수정 시 중복 여부 확인
+    private void checkDuplicateForUpdate(String name, UUID parentId, UUID regionId) {
+        boolean exists = (parentId == null)
+                ? regionRepository.existsByNameAndParentRegionIdIsNullAndRegionIdNotAndDeletedAtIsNull(name, regionId)
+                : regionRepository.existsByNameAndParentRegionIdAndRegionIdNotAndDeletedAtIsNull(name, parentId, regionId);
+
         if (exists) {
             throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
         }
@@ -118,16 +144,5 @@ public class RegionService {
         }
 
         return parentName;
-    }
-
-    //지역 수정 시 중복 여부 확인
-    private void checkDuplicateForUpdate(String name, UUID parentId, UUID regionId) {
-        boolean exists = (parentId == null)
-            ? regionRepository.existsByNameAndParentRegionIdIsNullAndRegionIdNotAndDeletedAtIsNull(name, regionId)
-            : regionRepository.existsByNameAndParentRegionIdAndRegionIdNotAndDeletedAtIsNull(name, parentId, regionId);
-
-        if (exists) {
-            throw new BusinessException(ErrorCode.REGION_ALREADY_EXISTS);
-        }
     }
 }
