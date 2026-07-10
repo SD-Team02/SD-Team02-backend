@@ -124,7 +124,7 @@ public class PaymentController {
 
     /** 5. 결제 취소  */
     @PostMapping("/{paymentId}/cancel")
-    @Operation(summary = "결제 취소 처리)
+    @Operation(summary = "결제 취소 처리")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "결제 취소 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 환불 완료되었거나 5분이 경과한 주문건입니다."),
