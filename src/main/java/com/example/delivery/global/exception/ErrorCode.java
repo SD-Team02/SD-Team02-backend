@@ -42,7 +42,7 @@ public enum ErrorCode {
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER_404_1", "주문을 찾을 수 없습니다."),
     ORDER_CANCEL_TIME_EXCEEDED(HttpStatus.BAD_REQUEST, "ORDER_400_1", "주문 취소 가능 시간(5분)이 지났습니다."),
     ORDER_STATUS_TRANSITION_INVALID(HttpStatus.BAD_REQUEST, "ORDER_400_2", "해당 상태로 변경할 수 없습니다."),
-
+    ORDER_MENU_STORE_MISMATCH(HttpStatus.BAD_REQUEST, "ORDER_400_3","주문한 메뉴가 해당 가게의 메뉴가 아닙니다."),
     // Payment (결제 담당 참고용 예시)
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_404_1", "결제 내역을 찾을 수 없습니다."),
 
@@ -57,7 +57,11 @@ public enum ErrorCode {
     // Category (카테고리 담당)
     CATEGORY_ALREADY_EXISTS(HttpStatus.CONFLICT, "CATEGORY_409_1", "이미 존재하는 카테고리입니다."),
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY_404_1", "카테고리를 찾을 수 없습니다."),
-    CATEGORY_ALREADY_DELETED(HttpStatus.CONFLICT, "CATEGORY_409_2", "이미 삭제된 카테고리입니다.");
+    CATEGORY_ALREADY_DELETED(HttpStatus.CONFLICT, "CATEGORY_409_2", "이미 삭제된 카테고리입니다."),
+
+    // Menu
+    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "MENU_404_1", "메뉴를 찾을 수 없습니다."),
+    MENU_HIDDEN(HttpStatus.NOT_FOUND, "MENU_404_2", "메뉴가 숨김 처리 되어있습니다.");
 
     private final HttpStatus status;
     private final String code;
