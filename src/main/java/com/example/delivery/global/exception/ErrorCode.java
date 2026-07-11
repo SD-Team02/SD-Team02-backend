@@ -47,6 +47,7 @@ public enum ErrorCode {
     PAYMENT_NOT_FOUND(HttpStatus.NOT_FOUND, "PAYMENT_404_1", "결제 내역을 찾을 수 없습니다."),
 
     // Review (주문/리뷰 담당 참고용 예시)
+    REVIEW_NOT_FOUND(HttpStatus.NOT_FOUND, "REVIEW_404_1", "리뷰를 찾을 수 없습니다."),
     REVIEW_ALREADY_EXISTS(HttpStatus.CONFLICT, "REVIEW_409_1", "이미 작성한 리뷰가 있습니다."),
     REVIEW_NOT_ALLOWED(HttpStatus.BAD_REQUEST, "REVIEW_400_1", "배송 완료된 주문에만 리뷰를 작성할 수 있습니다."),
 
