@@ -18,4 +18,5 @@ public interface RegionRepository extends JpaRepository<Region, UUID> {
     Optional<Region> findByRegionIdAndDeletedAtIsNull(UUID regionId);
     boolean existsByNameAndParentRegionIdAndRegionIdNotAndDeletedAtIsNull(String name, UUID parentRegionId, UUID regionId);
     boolean existsByNameAndParentRegionIdIsNullAndRegionIdNotAndDeletedAtIsNull(String name, UUID regionId);
+    boolean existsByParentRegionIdAndDeletedAtIsNull(UUID parentRegionId);
 }

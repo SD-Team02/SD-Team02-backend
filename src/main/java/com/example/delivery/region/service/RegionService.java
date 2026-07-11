@@ -106,6 +106,10 @@ public class RegionService {
             throw new BusinessException(ErrorCode.REGION_ALREADY_DELETED);
         }
 
+        if (regionRepository.existsByParentRegionIdAndDeletedAtIsNull(regionId)) {
+            throw new BusinessException(ErrorCode.REGION_HAS_CHILDREN);
+        }
+
         region.softDelete(0L); // TODO: 실제 로그인한 유저 ID를 넣어주어야 함
         return ResDeleteRegionDto.from(region);
     }

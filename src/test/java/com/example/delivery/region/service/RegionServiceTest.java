@@ -266,4 +266,21 @@ class RegionServiceTest {
         // when & then
         assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId));
     }
+
+    @Test
+    @DisplayName("지역 삭제 - 하위 지역이 존재하는 경우 예외를 발생시킨다.")
+    void deleteRegion_HasChildren() {
+        // given
+        UUID regionId = UUID.randomUUID();
+        Region existingRegion = new Region("강남구", null);
+        
+        when(regionRepository.findById(regionId)).thenReturn(Optional.of(existingRegion));
+        when(regionRepository.existsByParentRegionIdAndDeletedAtIsNull(regionId)).thenReturn(true);
+
+        // when & then
+        BusinessException exception = assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId));
+        assertEquals(ErrorCode.REGION_HAS_CHILDREN, exception.getErrorCode());
+        verify(regionRepository).findById(regionId);
+        verify(regionRepository).existsByParentRegionIdAndDeletedAtIsNull(regionId);
+    }
 }

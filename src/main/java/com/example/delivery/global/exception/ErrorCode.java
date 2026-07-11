@@ -63,7 +63,8 @@ public enum ErrorCode {
     REGION_ALREADY_EXISTS(HttpStatus.CONFLICT, "REGION_409_1", "이미 존재하는 지역입니다."),
     REGION_NOT_FOUND(HttpStatus.NOT_FOUND, "REGION_404_1", "지역을 찾을 수 없습니다."),
     REGION_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "REGION_404_2", "상위 지역을 찾을 수 없습니다."),
-    REGION_ALREADY_DELETED(HttpStatus.CONFLICT, "REGION_409_2", "이미 삭제된 지역입니다.");
+    REGION_ALREADY_DELETED(HttpStatus.CONFLICT, "REGION_409_2", "이미 삭제된 지역입니다."),
+    REGION_HAS_CHILDREN(HttpStatus.CONFLICT, "REGION_409_3", "하위 지역이 존재하여 삭제할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
