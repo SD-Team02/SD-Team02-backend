@@ -30,7 +30,7 @@ public class RegionService {
     //지역 등록
     @Transactional
     public ResCreateRegionDto createRegion(ReqCreateRegionDto reqCreateRegionDto) {
-        checkDuplicateForCreate(reqCreateRegionDto.getName(), reqCreateRegionDto.getParentRegionId());
+        checkDuplicate(reqCreateRegionDto.getName(), reqCreateRegionDto.getParentRegionId());
 
         //상위 지역명 구하기
         String parentName = null;
@@ -82,7 +82,7 @@ public class RegionService {
         if(!Objects.equals(region.getName(), reqUpdateRegionDto.getName())
                 || !Objects.equals(region.getParentRegionId(), reqUpdateRegionDto.getParentRegionId())){
             //기존 데이터의 지역명으로의 변경 막기
-            checkDuplicateForUpdate(reqUpdateRegionDto.getName(), reqUpdateRegionDto.getParentRegionId(), regionId);
+            checkDuplicate(reqUpdateRegionDto.getName(), reqUpdateRegionDto.getParentRegionId(), regionId);
         }
 
         String parentName = null;
@@ -115,8 +115,7 @@ public class RegionService {
     [공통 메서드]
      */
     //지역 등록 시 중복 여부 확인
-    // 같은 상위 지역 아래 같은 지역명은 불가
-    private void checkDuplicateForCreate(String name, UUID parentId) {
+    private void checkDuplicate(String name, UUID parentId) {
         boolean exists = (parentId == null) 
             ? regionRepository.existsByNameAndParentRegionIdIsNullAndDeletedAtIsNull(name) 
             : regionRepository.existsByNameAndParentRegionIdAndDeletedAtIsNull(name, parentId);
@@ -127,7 +126,7 @@ public class RegionService {
     }
 
     //지역 수정 시 중복 여부 확인
-    private void checkDuplicateForUpdate(String name, UUID parentId, UUID regionId) {
+    private void checkDuplicate(String name, UUID parentId, UUID regionId) {
         boolean exists = (parentId == null)
                 ? regionRepository.existsByNameAndParentRegionIdIsNullAndRegionIdNotAndDeletedAtIsNull(name, regionId)
                 : regionRepository.existsByNameAndParentRegionIdAndRegionIdNotAndDeletedAtIsNull(name, parentId, regionId);
