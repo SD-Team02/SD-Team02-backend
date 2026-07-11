@@ -209,9 +209,7 @@ class RegionServiceTest {
         
         when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.of(existingRegion));
         when(regionRepository.findByRegionIdAndDeletedAtIsNull(otherParentId)).thenReturn(Optional.of(new Region("부모지역")));
-        
-        // This test should pass if we implement correctly.
-        // Currently this would fail because `existsByNameAndRegionIdNot` returns true if "강남구" exists under otherParentId.
+
         when(regionRepository.existsByNameAndParentRegionIdAndRegionIdNotAndDeletedAtIsNull("강남구", otherParentId, regionId)).thenReturn(false);
 
         // when
