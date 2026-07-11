@@ -20,6 +20,7 @@ import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -135,7 +136,7 @@ class ReviewServiceTest {
 		assertThat(result).isNotNull();
 
 		ArgumentCaptor<Review> captor = ArgumentCaptor.forClass(Review.class);
-		verify(reviewRepository).save(captor.capture());
+		verify(reviewRepository).saveAndFlush(captor.capture());
 		log.info("저장된 리뷰 storeId={}, userId={}, rating={}",
 			captor.getValue().getStoreId(), captor.getValue().getUserId(), captor.getValue().getRating());
 		assertThat(captor.getValue().getStoreId()).isEqualTo(storeId);
@@ -154,7 +155,24 @@ class ReviewServiceTest {
 
 		reviewService.createReview(1L, orderId, createReq(4, "좋아요"));
 
-		verify(reviewRepository).save(any(Review.class));
+		verify(reviewRepository).saveAndFlush(any(Review.class));
+	}
+
+	@Test
+	@DisplayName("리뷰 생성 - 동시 요청으로 DB 유니크 위반 시 중복 처리")
+	void createReview_concurrentDuplicate() {
+		UUID orderId = UUID.randomUUID();
+		Order order = createOrder(orderId, 1L, UUID.randomUUID(), OrderStatus.DELIVERED);
+
+		when(orderRepository.findById(orderId)).thenReturn(Optional.of(order));
+		when(reviewRepository.existsByOrderIdAndDeletedAtIsNull(orderId)).thenReturn(false);
+		// 선체크는 통과했지만, 동시 삽입으로 부분 유니크 인덱스에 걸린 상황
+		when(reviewRepository.saveAndFlush(any(Review.class)))
+			.thenThrow(new DataIntegrityViolationException("duplicate order_id"));
+
+		assertThatThrownBy(() -> reviewService.createReview(1L, orderId, createReq(5, "맛있어요")))
+			.isInstanceOf(BusinessException.class)
+			.extracting("errorCode").isEqualTo(ErrorCode.REVIEW_ALREADY_EXISTS);
 	}
 
 	@Test

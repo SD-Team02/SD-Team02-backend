@@ -6,6 +6,7 @@ import java.util.UUID;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -68,10 +69,15 @@ public class ReviewService {
 			request.getContent()
 		);
 
-		reviewRepository.save(review);
+		// 최종 방어선은 DB 부분 유니크 인덱스(order_id where deleted_at is null)이며,
+		// 위반 시 saveAndFlush에서 예외가 발생하므로 중복 에러로 변환한다.
+		try {
+			reviewRepository.saveAndFlush(review);
+		} catch (DataIntegrityViolationException e) {
+			throw new BusinessException(ErrorCode.REVIEW_ALREADY_EXISTS);
+		}
 
 		return new ResCreateReviewDto(review.getReviewId());
-
 	}
 
 
