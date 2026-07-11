@@ -22,13 +22,13 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Address extends BaseEntity {
 
+    @Column(name = "user_id", nullable = false)
+    private Long userId;
+
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     @Column(name = "address_id")
     private UUID addressId;
-
-    @Column(name = "user_id", nullable = false)
-    private Long userId;
 
     @Column(name = "address", nullable = false)
     private String address;
