@@ -1,0 +1,16 @@
+services:
+  postgres:
+    image: pgvector/pgvector:pg17
+    container_name: delivery-postgres
+    restart: always
+    environment:
+      POSTGRES_DB: delivery_local
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: 1234
+    ports:
+      - "5433:5432"
+    volumes:
+      - delivery-postgres-data:/var/lib/postgresql/data
+
+volumes:
+  delivery-postgres-data:
