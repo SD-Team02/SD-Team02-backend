@@ -46,4 +46,10 @@ public class Address extends BaseEntity {
         this.address = address;
         this.detailAddress = detailAddress;
     }
+
+    public void delete(Long userId)
+    {
+        softDelete(userId);
+    }
+
 }

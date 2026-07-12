@@ -7,6 +7,7 @@ import com.example.delivery.user.dto.request.ReqCreateAddressDto;
 import com.example.delivery.user.dto.request.ReqUpdateAddressDto;
 import com.example.delivery.user.dto.response.ResAddressListDto;
 import com.example.delivery.user.dto.response.ResCreateAddressDto;
+import com.example.delivery.user.dto.response.ResDeleteAddressDto;
 import com.example.delivery.user.dto.response.ResUpdateAddressDto;
 import com.example.delivery.user.entity.Role;
 import com.example.delivery.user.security.UserDetailsImpl;
@@ -98,5 +99,42 @@ public class AddressController {
         ResUpdateAddressDto resUpdateAddressDto = addressService.updateAddress(userId,role, addressId,reqUpdateAddressDto);
         return ResponseEntity.ok(ApiResponse.success("주소가 성공적으로 수정되었습니다.",resUpdateAddressDto));
     }
+
+    @Operation(summary = "주소 삭제")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "삭제 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @DeleteMapping("/delete/{addressId}")
+    public ResponseEntity<ApiResponse<ResDeleteAddressDto>> deleteAddress(
+            @PathVariable UUID addressId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ) {
+        Long userId = userService.getCurrentUserId(userDetails);
+        Role role = userDetails.getUser().getRole();
+
+        ResDeleteAddressDto resDeleteAddressDto = addressService.deleteAddress(addressId, userId, role);
+        return ResponseEntity.ok(ApiResponse.success("주소 삭제 성공",resDeleteAddressDto));
+    }
+
+    @Operation(summary = "주소 상세")
+    @PreAuthorize("isAuthenticated()")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "주소 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "인증 필요"),
+    })
+    @GetMapping("/{addressId}")
+    public ResponseEntity<ApiResponse<ResAddressListDto>> getAddress(
+            @PathVariable UUID addressId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails
+    ){
+        Long userId = userService.getCurrentUserId(userDetails);
+        Role role = userDetails.getUser().getRole();
+
+        ResAddressListDto resAddressListDto = addressService.addressDetail(addressId, userId, role);
+        return ResponseEntity
+                .ok(ApiResponse.success("주소가 조회되었습니다." , resAddressListDto));
+    }
+
 
 }

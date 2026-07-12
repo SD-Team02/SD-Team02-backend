@@ -7,6 +7,7 @@ import com.example.delivery.user.dto.request.ReqCreateAddressDto;
 import com.example.delivery.user.dto.request.ReqUpdateAddressDto;
 import com.example.delivery.user.dto.response.ResAddressListDto;
 import com.example.delivery.user.dto.response.ResCreateAddressDto;
+import com.example.delivery.user.dto.response.ResDeleteAddressDto;
 import com.example.delivery.user.dto.response.ResUpdateAddressDto;
 import com.example.delivery.user.entity.Address;
 import com.example.delivery.user.entity.Role;
@@ -92,5 +93,44 @@ public class AddressService {
                 addressE.getAddress(),
                 addressE.getDetailAddress()
         );
+    }
+
+    @Transactional
+    public ResDeleteAddressDto deleteAddress(UUID addressId, Long userId, Role role) {
+
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUND));
+
+        // MASTER가 아니면서 자신의 주소가 아니면 삭제 불가
+        if (role != Role.MASTER &&
+                !address.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // 소프트 삭제
+        address.delete(userId);
+
+        return new ResDeleteAddressDto(address.getAddressId());
+
+    }
+
+    //주소 상세 정보 [ 주소 단건 검색]
+    @Transactional
+    public ResAddressListDto addressDetail(UUID addressId, Long userId, Role role) {
+
+        Address address = addressRepository.findById(addressId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUND));
+
+        //master만 삭제된 데이터에 접근 가능
+        if (role != Role.MASTER && address.getDeletedAt() != null) {
+            throw new BusinessException(ErrorCode.ADDRESS_NOT_FOUND);
+        }
+
+        // MASTER가 아니면 자신의 주소이외에 접근 불가
+        if (role != Role.MASTER &&
+                !address.getUserId().equals(userId)) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+        return new ResAddressListDto(address.getUserId(), address.getAddressId(),address.getAddress(), address.getDetailAddress());
     }
 }
