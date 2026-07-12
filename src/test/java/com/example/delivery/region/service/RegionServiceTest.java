@@ -223,6 +223,24 @@ class RegionServiceTest {
     }
 
     @Test
+    @DisplayName("지역 수정 - 순환 참조가 발생하는 경우 예외를 발생시킨다.")
+    void updateRegion_CircularReference() {
+        // given
+        UUID regionId = UUID.randomUUID();
+        UUID childRegionId = UUID.randomUUID();
+        ReqUpdateRegionDto dto = new ReqUpdateRegionDto("강남구 수정", childRegionId, RegionStatus.ACTIVE);
+        Region existingRegion = new Region("강남구", null);
+        Region childRegion = new Region("역삼동", regionId);
+
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.of(existingRegion));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(childRegionId)).thenReturn(Optional.of(childRegion));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)).thenReturn(Optional.of(existingRegion));
+
+        // when & then
+        assertThrows(BusinessException.class, () -> regionService.updateRegion(regionId, dto));
+    }
+
+    @Test
     @DisplayName("지역 삭제 - 성공한다.")
     void deleteRegion_Success() {
         // given

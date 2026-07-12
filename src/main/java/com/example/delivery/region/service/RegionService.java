@@ -79,16 +79,22 @@ public class RegionService {
         Region region = regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
 
-        if(!Objects.equals(region.getName(), reqUpdateRegionDto.getName())
-                || !Objects.equals(region.getParentRegionId(), reqUpdateRegionDto.getParentRegionId())){
-            //기존 데이터의 지역명으로의 변경 막기
+        //기존 데이터와 다른 경우에만 검증 수행
+        if (!Objects.equals(region.getName(), reqUpdateRegionDto.getName())
+                || !Objects.equals(region.getParentRegionId(), reqUpdateRegionDto.getParentRegionId())) {
+            
+            // 2. 기존 데이터의 지역명으로 변경하는 경우 (409)
             checkDuplicate(reqUpdateRegionDto.getName(), reqUpdateRegionDto.getParentRegionId(), regionId);
+
+            // 3. 부모 지역이 존재하지 않는 경우 (404)
+            if (reqUpdateRegionDto.getParentRegionId() != null) {
+                getParentRegion(reqUpdateRegionDto.getParentRegionId());
+                // 4. 계층 구조 순환 참조가 발생하는 경우 (409)
+                checkCircularReference(regionId, reqUpdateRegionDto.getParentRegionId());
+            }
         }
 
-        String parentName = null;
-        if (reqUpdateRegionDto.getParentRegionId() != null) {
-            parentName = getParentRegion(reqUpdateRegionDto.getParentRegionId()).getName();
-        }
+        String parentName = getParentRegionName(reqUpdateRegionDto.getParentRegionId());
 
         region.update(reqUpdateRegionDto.getName(),reqUpdateRegionDto.getParentRegionId(),reqUpdateRegionDto.getStatus());
         regionRepository.saveAndFlush(region);
@@ -157,5 +163,23 @@ public class RegionService {
         }
 
         return parentName;
+    }
+
+    //순환 참조 확인
+    private void checkCircularReference(UUID regionId, UUID newParentId) {
+        if (newParentId == null) return;
+        
+        UUID currentParentId = newParentId;
+        while (currentParentId != null) {
+
+            if (currentParentId.equals(regionId)) {
+                throw new BusinessException(ErrorCode.REGION_CIRCULAR_REFERENCE);
+            }
+
+            Region region = regionRepository.findByRegionIdAndDeletedAtIsNull(currentParentId)
+                    .orElse(null);
+            if (region == null) break;
+            currentParentId = region.getParentRegionId();
+        }
     }
 }
