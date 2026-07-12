@@ -12,6 +12,7 @@ import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.entity.Payment;
 import com.example.delivery.payment.entity.PaymentStatus;
 import com.example.delivery.payment.repository.PaymentRepository;
+import com.example.delivery.user.entity.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -55,9 +56,12 @@ public class PaymentService {
     }
 
     /** 2. 결제 내역 단건 조회 */
-    public ResPaymentDto getPaymentById(UUID paymentId) {
+    public ResPaymentDto getPaymentById(UUID paymentId, Long userId, Role role) {
         Payment payment = paymentRepository.findByPaymentIdAndDeletedAtIsNull(paymentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
+
+        validatePaymentAccess(payment, userId, role);
+
         return new ResPaymentDto(payment);
     }
 
@@ -83,13 +87,15 @@ public class PaymentService {
 
     /** 5. 결제 취소  */
     @Transactional
-    public void cancel(UUID paymentId, Long userId) {
+    public void cancel(UUID paymentId, Long userId, Role role) {
         Payment payment = paymentRepository.findByPaymentIdAndDeletedAtIsNull(paymentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
 
         if (payment.getStatus() == PaymentStatus.CANCELED) {
             throw new BusinessException(ErrorCode.ENTITY_NOT_FOUND); // #TODO : 에러코드 추가 요망 ALREADY_CANCELED_PAYMENT
         }
+
+        validatePaymentAccess(payment, userId, role);
 
         Order order = payment.getOrder();
         if (!order.getUserId().equals(userId)) {
@@ -102,7 +108,23 @@ public class PaymentService {
 
         payment.softDelete(userId);
         payment.cancel();
+    }
 
+
+    private void validatePaymentAccess(Payment payment, Long userId, Role role) {
+        switch (role) {
+            case CUSTOMER -> {
+                if (!payment.getOrder().getUserId().equals(userId)) {
+                    throw new BusinessException(ErrorCode.ACCESS_DENIED);
+                }
+            }
+            case OWNER -> {
+                // 임시로 사장님 검증 영역을 열어둠
+            }
+            case MANAGER, MASTER -> {
+                // 전체 접근 허용
+            }
+        }
     }
 
 }
