@@ -1,14 +1,10 @@
 package com.example.delivery.global.config;
 
-import com.example.delivery.global.common.util.JwtUtil;
-import com.example.delivery.user.security.JwtAuthenticationFilter;
-import com.example.delivery.user.security.JwtAuthorizationFilter;
-import com.example.delivery.user.security.UserDetailsServiceImpl;
-import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.config.annotation.authentication.configuration.AuthenticationConfiguration;
+import org.springframework.security.config.annotation.method.configuration.EnableMethodSecurity;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.http.SessionCreationPolicy;
@@ -17,6 +13,13 @@ import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
 
+import com.example.delivery.global.common.util.JwtUtil;
+import com.example.delivery.user.security.JwtAuthenticationFilter;
+import com.example.delivery.user.security.JwtAuthorizationFilter;
+import com.example.delivery.user.security.UserDetailsServiceImpl;
+
+import lombok.RequiredArgsConstructor;
+
 /**
  * 임시 SecurityFilterChain. 인증 담당자가 JWT 필터/역할별 인가 규칙을 붙이기 전까지
  * 개발/테스트가 막히지 않도록 전체 permitAll로 열어둔다.
@@ -24,6 +27,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
  */
 @Configuration
 @EnableWebSecurity
+@EnableMethodSecurity   // @PreAuthorize 활성화 (기본 prePostEnabled=true)
 @RequiredArgsConstructor
 public class SecurityConfig {
 
