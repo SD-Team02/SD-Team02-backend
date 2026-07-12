@@ -54,10 +54,21 @@ public enum ErrorCode {
     AI_REQUEST_TEXT_TOO_LONG(HttpStatus.BAD_REQUEST, "AI_400_1", "입력 텍스트가 글자수 제한을 초과했습니다."),
     AI_NOT_FOUND(HttpStatus.NOT_FOUND,"AI_404_1", "AI 히스토리 조회에 실패하였습니다."),
     AI_API_CALL_FAILED(HttpStatus.BAD_GATEWAY, "AI_502_1", "AI API 호출에 실패했습니다."),
+    AI_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "AI_500_1","AI 히스토리 등록에 실패 하였습니다."),
     // MENU
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "MENU_404_1", "메뉴를 찾을 수 없습니다."),
     MENU_HIDDEN(HttpStatus.BAD_REQUEST, "MENU_400_2","주문한 메뉴가 숨김 처리 되어있습니다."),
-    INVALID_MENU_STATUS(HttpStatus.BAD_REQUEST, "MENU_400_3","잘못된 값이 들어왔습니다.");
+    INVALID_MENU_STATUS(HttpStatus.BAD_REQUEST, "MENU_400_3","잘못된 값이 들어왔습니다."),
+    MENU_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "MENU_500_1","메뉴 등록에 실패 하였습니다."),
+    // image
+    INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "IMAGE_400_1", "업로드할 이미지가 없습니다."),
+    IMAGE_SIZE_EXCEEDED(HttpStatus.BAD_REQUEST, "IMAGE_400_2", "이미지는 10MB 이하만 업로드 가능합니다."),
+    INVALID_IMAGE_TYPE(HttpStatus.BAD_REQUEST, "IMAGE_400_3", "지원하지 않는 이미지 형식입니다."),
+    INVALID_IMAGE_DELETE_FILE(HttpStatus.BAD_REQUEST, "IMAGE_400_4", "삭제할 이미지가 없습니다."),
+    IMAGE_DELETE_FILE(HttpStatus.BAD_REQUEST, "IMAGE_400_5", "이미 삭제된 이미지 입니다."),
+    IMAGE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_1", "이미지 업로드에 실패했습니다."),
+    IMAGE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_2", "이미지 삭제에 실패했습니다."),
+    IMAGE_URL_GENERATION_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_3", "이미지 접근 URL 생성에 실패했습니다.");
 
 
     private final HttpStatus status;
