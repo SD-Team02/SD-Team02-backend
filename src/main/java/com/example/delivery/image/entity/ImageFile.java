@@ -76,6 +76,11 @@ public class ImageFile extends BaseEntity {
         this.displayStatus = ImageDisplayStatus.NORMAL;
     }
 
+    // 메뉴 등록 수정 시 refID값 변경
+    public void changeRefId(String refId) {
+        this.refId = refId;
+    }
+
     public void hide() {
         this.displayStatus = ImageDisplayStatus.HIDDEN;
     }

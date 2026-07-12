@@ -106,7 +106,7 @@ public class ImageService {
             })
             .toList();
     }
-
+    // 이미지 삭제
     @Transactional
     public void deleteImage(UUID imageId, JpaAuditingConfig.CustomUserDetails userDetails) {
 
@@ -128,4 +128,23 @@ public class ImageService {
         image.softDelete(userDetails.getUserId());
 
     }
+    // 업로드된 이미지에 refId 값넣가
+    @Transactional
+    public void connectMenuImage(UUID imageId, String refId) {
+
+        // 이미지가 없으면 연결하지 않음
+        if (imageId == null) {
+            return;
+        }
+
+        // 이미지 조회
+        ImageFile imageFile = imageRepository.findById(imageId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
+
+        // 메뉴 이미지로 연결
+        imageFile.changeRefId(
+                refId
+        );
+    }
+
 }

@@ -51,9 +51,12 @@ public class MenuService {
 
 
         try {
-            menuRepository.save(menu);
+            Menu savedMenu = menuRepository.save(menu);
             // 메뉴 등록시 refId 값 넣기
-            //imageService.imageUpDate();
+            imageService.connectMenuImage(
+                menuRequestDto.getImageId(),
+                String.valueOf(savedMenu.getMenuId())
+            );
         } catch (Exception e) {
             throw new BusinessException(ErrorCode.MENU_SERVER_ERROR);
         }
