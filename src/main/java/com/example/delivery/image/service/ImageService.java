@@ -1,0 +1,131 @@
+package com.example.delivery.image.service;
+
+import com.example.delivery.global.config.JpaAuditingConfig;
+import com.example.delivery.global.exception.BusinessException;
+import com.example.delivery.global.exception.ErrorCode;
+import com.example.delivery.image.dto.S3UploadResult;
+import com.example.delivery.image.dto.request.ImageRequestDto;
+import com.example.delivery.image.dto.response.ImageResponseDto;
+import com.example.delivery.image.entity.ImageDisplayStatus;
+import com.example.delivery.image.entity.ImageFile;
+import com.example.delivery.image.repository.ImageRepository;
+import jakarta.validation.constraints.NotNull;
+import lombok.RequiredArgsConstructor;
+import org.springframework.core.io.Resource;
+import org.springframework.core.io.UrlResource;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
+import org.springframework.web.multipart.MultipartFile;
+
+import java.net.MalformedURLException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.UUID;
+
+@Service
+@RequiredArgsConstructor
+public class ImageService {
+
+    private final ImageRepository imageRepository;
+    private final S3StorageService s3StorageService;
+
+    @Transactional
+    public List<ImageResponseDto> imageUpLoad (ImageRequestDto request, List<MultipartFile> files) {
+        // 이미지를 S3에 업로드
+        List<S3UploadResult> uploadResults = s3StorageService.upload(files);
+
+        List<ImageResponseDto> responses = new ArrayList<>();
+
+        try {
+            // 이미지 엔티티 생성
+           for (int i = 0; i < uploadResults.size(); i++) {
+               S3UploadResult uploadResult = uploadResults.get(i);
+
+               // 이미지 엔티티 생성
+               ImageFile imageFile = new ImageFile(
+                       request.getRefType(),
+                       request.getRefId(),
+                       uploadResult.imageKey(),
+                       uploadResult.originalName(),
+                       uploadResult.savedName(),
+                       uploadResult.contentType(),
+                       uploadResult.fileSize(),
+                       i+1
+               );
+               // 이미지 정보를 DB에 저장
+               ImageFile savedImage = imageRepository.save(imageFile);
+
+               // 이미지 접근 URL 생성
+               String imageUrl = s3StorageService.generatePresignedUrl(savedImage.getImageKey());
+
+               // 응답 목록 추가
+               responses.add(
+                       new ImageResponseDto(savedImage, imageUrl)
+               );
+           }
+
+           return responses;
+
+        } catch (Exception e) {
+            // DB 저장 실패 시 S3 이미지 삭제
+            uploadResults.forEach(result ->
+                   s3StorageService.delete(result.imageKey())
+            );
+
+            throw new BusinessException(ErrorCode.IMAGE_UPLOAD_FAILED);
+        }
+    }
+
+    // 이미지 가져오기
+    @Transactional(readOnly = true)
+    public List<ImageResponseDto> getImages(@NotNull ImageRequestDto imageRequestDto) {
+
+        // 조회 조건 검증
+        if (imageRequestDto.getImageId() == null
+                && imageRequestDto.getRefType() == null
+                && !StringUtils.hasText(imageRequestDto.getRefId())) {
+            throw new BusinessException(ErrorCode.INVALID_INPUT_VALUE);
+        }
+
+        // 조건에 맞는 이미지 조회
+        List<ImageFile> images = imageRepository.findImages(imageRequestDto);
+
+//        try {
+//            return new UrlResource(
+//                "https://media.istockphoto.com/id/183752521/ko/%EC%82%AC%EC%A7%84/%EB%B9%84%EB%B9%84%EB%B0%A5.jpg?s=1024x1024&w=is&k=20&c=jLN0v90BRQcE_2j307HzS7R7CH39IhbLJXQNOosEQio="
+//            );
+//        } catch (MalformedURLException e) {
+//            throw new IllegalArgumentException("이미지 URL이 올바르지 않습니다.");
+//        }
+        return images.stream()
+            .map(image -> {
+                // S3 이미지에 접근할 수 있는 임시 URL 생성
+                String imageUrl = s3StorageService.generatePresignedUrl(image.getImageKey());
+                return new ImageResponseDto(image, imageUrl);
+            })
+            .toList();
+    }
+
+    @Transactional
+    public void deleteImage(UUID imageId, JpaAuditingConfig.CustomUserDetails userDetails) {
+
+        ImageFile image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_IMAGE_DELETE_FILE));
+
+        //권한 확인
+        if(!(userDetails.getUserId()).equals(image.getCreatedBy()) /*|| !("MASTER").equals(userDetails.getRole) || !("MANAGER").equals(userDetails.getRole)*/){
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
+        // 2. 이미 삭제된 이미지라면 다시 삭제할 수 없도록 막는다.
+        if (image.isDeleted() || image.getDisplayStatus() == ImageDisplayStatus.HIDDEN) {
+            throw new BusinessException(ErrorCode.IMAGE_DELETE_FILE);
+        }
+
+        image.hide();
+
+        image.softDelete(userDetails.getUserId());
+
+    }
+}
