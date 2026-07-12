@@ -79,7 +79,7 @@ public class ImageService {
 
     // 이미지 가져오기
     @Transactional(readOnly = true)
-    public List<ImageResponseDto> getImages(@NotNull ImageRequestDto imageRequestDto) {
+    public List<ImageResponseDto> getImages(ImageRequestDto imageRequestDto) {
 
         // 조회 조건 검증
         if (imageRequestDto.getImageId() == null
@@ -146,5 +146,25 @@ public class ImageService {
                 refId
         );
     }
+    // LLM이 이미지 받을수 있도록 서비스 생성
+    public Resource getImageResource(@NotNull(message = "메뉴 이미지 ID는 필수입니다.") UUID imageId) {
+         // 이미지 조회
+        ImageFile image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
+        // 삭제된 이미지 확인
+        if (image.isDeleted() || image.getDisplayStatus() == ImageDisplayStatus.HIDDEN) {
+            throw new BusinessException(ErrorCode.ENTITY_NOT_FOUND);
+        }
+
+        // 이미지 URL 생성
+        String imageUrl = s3StorageService.generatePresignedUrl(image.getImageKey());
+
+        try {
+            // 이미지 Resource 생성
+            return new UrlResource(imageUrl);
+        } catch (MalformedURLException e) {
+            throw new BusinessException(ErrorCode.IMAGE_URL_GENERATION_FAILED);
+        }
+    }
 }

@@ -34,7 +34,7 @@ public class AiGenerateService {
 
     public String generateDescription(@Valid AiGenerateRequestDto aiGenerateRequestDto, JpaAuditingConfig.CustomUserDetails userDetails) {
 
-        Resource image = imageService.getImage(aiGenerateRequestDto.getImageId());
+        Resource image = imageService.getImageResource(aiGenerateRequestDto.getImageId());
 
         // 1. RAG 검색
         String context = ragService.retrieveContext(aiGenerateRequestDto);
