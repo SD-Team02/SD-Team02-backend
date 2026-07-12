@@ -10,6 +10,8 @@ import com.example.delivery.region.dto.response.ResGetRegionDto;
 import com.example.delivery.region.dto.response.ResUpdateRegionDto;
 import com.example.delivery.region.entity.RegionStatus;
 import com.example.delivery.region.service.RegionService;
+import com.example.delivery.user.security.UserDetailsImpl;
+import com.example.delivery.user.service.UserService;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -22,6 +24,7 @@ import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -32,6 +35,7 @@ import java.util.UUID;
 @Tag(name = "지역", description = "지역 API")
 public class RegionController {
     private final RegionService regionService;
+    private final UserService userService;
 
     @Operation(summary = "지역 생성")
     @ApiResponses({
@@ -44,7 +48,9 @@ public class RegionController {
     })
     @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @PostMapping
-    public ResponseEntity<ApiResponse<ResCreateRegionDto>> createRegion(@Valid @RequestBody ReqCreateRegionDto reqCreateRegionDto){
+    public ResponseEntity<ApiResponse<ResCreateRegionDto>> createRegion(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @Valid @RequestBody ReqCreateRegionDto reqCreateRegionDto){
         ResCreateRegionDto resCreateRegionDto = regionService.createRegion(reqCreateRegionDto);
 
         return ResponseEntity
@@ -61,6 +67,7 @@ public class RegionController {
     @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ResGetRegionDto>>> getAllRegions(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam(defaultValue = "ACTIVE")RegionStatus status,
             @PageableDefault(
                     page = 0,
@@ -83,7 +90,9 @@ public class RegionController {
     })
     @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @GetMapping("/{regionId}")
-    public ResponseEntity<ApiResponse<ResGetRegionDto>> getRegion(@PathVariable UUID regionId){
+    public ResponseEntity<ApiResponse<ResGetRegionDto>> getRegion(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable UUID regionId){
         ResGetRegionDto resGetRegionDto = regionService.getRegion(regionId);
         return ResponseEntity.ok(ApiResponse.success("지역 상세 조회 성공",resGetRegionDto));
     }
@@ -103,6 +112,7 @@ public class RegionController {
     @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @PutMapping("/{regionId}")
     public ResponseEntity<ApiResponse<ResUpdateRegionDto>> updateRegion(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable UUID regionId,
             @Valid @RequestBody ReqUpdateRegionDto reqUpdateRegionDto){
         ResUpdateRegionDto resUpdateRegionDto = regionService.updateRegion(regionId,reqUpdateRegionDto);
@@ -120,8 +130,12 @@ public class RegionController {
     })
     @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @DeleteMapping("/{regionId}")
-    public ResponseEntity<ApiResponse<ResDeleteRegionDto>> deleteRegion(@PathVariable UUID regionId){
-        ResDeleteRegionDto resDeleteRegionDto = regionService.deleteRegion(regionId);
+    public ResponseEntity<ApiResponse<ResDeleteRegionDto>> deleteRegion(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable UUID regionId){
+        Long userId = userService.getCurrentUserId(userDetails);
+
+        ResDeleteRegionDto resDeleteRegionDto = regionService.deleteRegion(regionId,userId);
         return ResponseEntity.ok(ApiResponse.success("지역 삭제 성공",resDeleteRegionDto));
     }
 }

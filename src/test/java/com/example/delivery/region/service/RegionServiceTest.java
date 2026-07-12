@@ -250,7 +250,7 @@ class RegionServiceTest {
         when(regionRepository.findById(regionId)).thenReturn(Optional.of(existingRegion));
 
         // when
-        var result = regionService.deleteRegion(regionId);
+        var result = regionService.deleteRegion(regionId, 1L);
 
         // then
         assertNotNull(result);
@@ -266,7 +266,7 @@ class RegionServiceTest {
         when(regionRepository.findById(regionId)).thenReturn(Optional.empty());
 
         // when & then
-        assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId));
+        assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId, 1L));
     }
 
     @Test
@@ -280,7 +280,7 @@ class RegionServiceTest {
         when(regionRepository.findById(regionId)).thenReturn(Optional.of(existingRegion));
 
         // when & then
-        assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId));
+        assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId, 1L));
     }
 
     @Test
@@ -294,7 +294,7 @@ class RegionServiceTest {
         when(regionRepository.existsByParentRegionIdAndDeletedAtIsNull(regionId)).thenReturn(true);
 
         // when & then
-        BusinessException exception = assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId));
+        BusinessException exception = assertThrows(BusinessException.class, () -> regionService.deleteRegion(regionId, 1L));
         assertEquals(ErrorCode.REGION_HAS_CHILDREN, exception.getErrorCode());
         verify(regionRepository).findById(regionId);
         verify(regionRepository).existsByParentRegionIdAndDeletedAtIsNull(regionId);

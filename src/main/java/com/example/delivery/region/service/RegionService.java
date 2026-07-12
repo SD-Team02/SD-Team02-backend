@@ -104,7 +104,7 @@ public class RegionService {
 
     //지역 삭제
     @Transactional
-    public ResDeleteRegionDto deleteRegion(UUID regionId) {
+    public ResDeleteRegionDto deleteRegion(UUID regionId, Long userId) {
         Region region = regionRepository.findById(regionId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
 
@@ -116,7 +116,7 @@ public class RegionService {
             throw new BusinessException(ErrorCode.REGION_HAS_CHILDREN);
         }
 
-        region.softDelete(0L); // TODO: 실제 로그인한 유저 ID를 넣어주어야 함
+        region.softDelete(userId);
         return ResDeleteRegionDto.from(region);
     }
 
