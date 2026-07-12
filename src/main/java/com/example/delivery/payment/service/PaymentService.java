@@ -33,7 +33,7 @@ public class PaymentService {
     /** 1. 결제 승인 비즈니스 로직  */
     @Transactional
     public ResApprovePaymentDto approve(ReqApprovePaymentDto requestDto, Long userId) {
-        Order order = orderRepository.findById(requestDto.getOrderId())
+        Order order = orderRepository.findByOrderIdAndDeletedAtIsNull(requestDto.getOrderId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
         // 로그인한 유저 ID와 주문 생성자 ID를 검증
@@ -56,7 +56,7 @@ public class PaymentService {
 
     /** 2. 결제 내역 단건 조회 */
     public ResPaymentDto getPaymentById(UUID paymentId) {
-        Payment payment = paymentRepository.findById(paymentId)
+        Payment payment = paymentRepository.findByPaymentIdAndDeletedAtIsNull(paymentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
         return new ResPaymentDto(payment);
     }
@@ -84,7 +84,7 @@ public class PaymentService {
     /** 5. 결제 취소  */
     @Transactional
     public void cancel(UUID paymentId, Long userId) {
-        Payment payment = paymentRepository.findById(paymentId)
+        Payment payment = paymentRepository.findByPaymentIdAndDeletedAtIsNull(paymentId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
 
         if (payment.getStatus() == PaymentStatus.CANCELED) {
