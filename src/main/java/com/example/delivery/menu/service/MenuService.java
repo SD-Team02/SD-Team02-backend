@@ -4,9 +4,11 @@ import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.config.JpaAuditingConfig;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
+import com.example.delivery.image.entity.ImageFile;
+import com.example.delivery.image.repository.ImageRepository;
+import com.example.delivery.image.service.ImageService;
 import com.example.delivery.menu.dto.request.MenuRequestDto;
 import com.example.delivery.menu.dto.response.MenuResponseDto;
-import com.example.delivery.menu.entity.AiHistory;
 import com.example.delivery.menu.entity.Menu;
 import com.example.delivery.menu.repository.AiHistoryRepository;
 import com.example.delivery.menu.repository.MenuRepository;
@@ -17,7 +19,6 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 
@@ -27,6 +28,7 @@ public class MenuService {
 
     private final MenuRepository menuRepository;
     private final AiHistoryRepository aiHistoryRepository;
+    private final ImageService imageService;
 
     @Transactional
     public void createMenu(MenuRequestDto menuRequestDto, JpaAuditingConfig.CustomUserDetails userDetails) {
@@ -39,8 +41,7 @@ public class MenuService {
 
         //validateMenuAccess(store, userDetails);
 
-
-        Menu menu = new Menu(
+         Menu menu = new Menu(
             menuRequestDto.getStoreId(),        // UUID
             menuRequestDto.getMenuName(),       // String
             menuRequestDto.getPrice(),          // Integer
@@ -48,19 +49,14 @@ public class MenuService {
             menuRequestDto.getAiGenerated()     // Boolean
         );
 
-        menuRepository.save(menu);
 
-        // 메뉴 등록 성공시 Ai로 Description 작성했다면 Ai 히스토리 등록되도록 저장
-        if (Boolean.TRUE.equals(menuRequestDto.getAiGenerated())) {
-            AiHistory aiHistory = new AiHistory(
-                menu.getMenuId(),
-                menuRequestDto.getPrompt(),
-                menuRequestDto.getResponse()
-            );
-            aiHistoryRepository.save(aiHistory);
+        try {
+            menuRepository.save(menu);
+            // 메뉴 등록시 refId 값 넣기
+            //imageService.imageUpDate();
+        } catch (Exception e) {
+            throw new BusinessException(ErrorCode.MENU_SERVER_ERROR);
         }
-
-        //이미지 저장 기능 추가
 
     }
 
@@ -80,8 +76,10 @@ public class MenuService {
         //if ("CUSTOMER".equals(userDetails.getRole()) || "OWNER".equals(userDetails.getRole())) {
         //    throw new BusinessException(ErrorCode.ACCESS_DENIED);
         //}
+
         Page<Menu> menus = menuRepository.searchAdminMenus(menuRequestDto, pageable);
         Page<MenuResponseDto> dtoPage = menus.map(MenuResponseDto::new);
+
         return PageResponse.from(dtoPage);
     }
 
@@ -117,18 +115,6 @@ public class MenuService {
         } else if ("NORMAL".equals(menuRequestDto.getMenuStatus())) {
             menu.show();
         }
-
-        // AI로 설명 재생성한 경우 히스토리 저장
-        if (Boolean.TRUE.equals(menuRequestDto.getAiGenerated())) {
-            AiHistory aiHistory = new AiHistory(
-                menu.getMenuId(),
-                menuRequestDto.getPrompt(),
-                menuRequestDto.getResponse()
-            );
-            aiHistoryRepository.save(aiHistory);
-        }
-
-        //이미지 저장 기능 추가
 
     }
 

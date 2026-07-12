@@ -19,13 +19,13 @@ import java.util.UUID;
 
 @Slf4j
 @RestController
-@RequestMapping("/api/menu")
+@RequestMapping("/api")
 @RequiredArgsConstructor
 public class MenuController {
 
     private final MenuService menuService;
 
-    @PostMapping("/createmenu")
+    @PostMapping("/menus")
     public ResponseEntity<ApiResponse<Void>> createMenu(
             @RequestBody MenuRequestDto menuRequestDto,
             @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails){
@@ -38,7 +38,7 @@ public class MenuController {
         );
     }
     // 사용자 메뉴 검색
-    @GetMapping("/getmenulist")
+    @GetMapping("/menus")
     public ResponseEntity<ApiResponse<List<MenuResponseDto>>> getMenuList(
            @RequestParam UUID storeId){
 
@@ -50,7 +50,7 @@ public class MenuController {
         );
     }
     // 관리자 메뉴 검색
-    @GetMapping("/getadminmenulist")
+    @GetMapping("/menus/admin")
     public ResponseEntity<ApiResponse<PageResponse<MenuResponseDto>>> getAdminMenuList(
            MenuRequestDto menuRequestDto,
            @PageableDefault(size = 10) Pageable pageable,
@@ -64,7 +64,7 @@ public class MenuController {
         );
     }
     // 메뉴 수정
-    @PutMapping("/updatemenu")
+    @PutMapping("/menus")
     public ResponseEntity<ApiResponse<Void>> updateMenu(
             @RequestBody MenuRequestDto menuRequestDto,
             @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails){
@@ -77,7 +77,7 @@ public class MenuController {
         );
     }
     //메뉴삭제
-    @DeleteMapping("/deletemenu")
+    @DeleteMapping("/menus")
     public ResponseEntity<ApiResponse<Void>> deleteMenu(
             @RequestParam UUID menuId,
             @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails

@@ -27,7 +27,7 @@ import static com.example.delivery.store.entity.QStore.store;
 @RequiredArgsConstructor
 public class MenuRepositoryImpl implements MenuRepositoryCustom{
 
-     private final JPAQueryFactory queryFactory;
+    private final JPAQueryFactory queryFactory;
 
     @Override
     public Page<Menu> searchAdminMenus(MenuRequestDto menuRequestDto, Pageable pageable) {
