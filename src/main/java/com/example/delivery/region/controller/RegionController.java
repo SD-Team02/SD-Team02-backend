@@ -21,6 +21,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.UUID;
@@ -41,6 +42,7 @@ public class RegionController {
 //            #TO-DO : 모든 인증이 필요한 API에 공통으로 적용되는 어노테이션을 별도로 생성하거나, 전역 필터 단에서 처리되도록 구조화하는 방식을 고려
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @PostMapping
     public ResponseEntity<ApiResponse<ResCreateRegionDto>> createRegion(@Valid @RequestBody ReqCreateRegionDto reqCreateRegionDto){
         ResCreateRegionDto resCreateRegionDto = regionService.createRegion(reqCreateRegionDto);
@@ -56,6 +58,7 @@ public class RegionController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "정렬 기준이 올바르지 않습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ResGetRegionDto>>> getAllRegions(
             @RequestParam(defaultValue = "ACTIVE")RegionStatus status,
@@ -78,6 +81,7 @@ public class RegionController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "지역을 찾을 수 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @GetMapping("/{regionId}")
     public ResponseEntity<ApiResponse<ResGetRegionDto>> getRegion(@PathVariable UUID regionId){
         ResGetRegionDto resGetRegionDto = regionService.getRegion(regionId);
@@ -96,6 +100,7 @@ public class RegionController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 본문을 읽을 수 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @PutMapping("/{regionId}")
     public ResponseEntity<ApiResponse<ResUpdateRegionDto>> updateRegion(
             @PathVariable UUID regionId,
@@ -113,6 +118,7 @@ public class RegionController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "지역을 찾을 수 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @DeleteMapping("/{regionId}")
     public ResponseEntity<ApiResponse<ResDeleteRegionDto>> deleteRegion(@PathVariable UUID regionId){
         ResDeleteRegionDto resDeleteRegionDto = regionService.deleteRegion(regionId);
