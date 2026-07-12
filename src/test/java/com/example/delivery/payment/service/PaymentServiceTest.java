@@ -19,7 +19,7 @@ import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.entity.Payment;
 import com.example.delivery.payment.entity.PaymentStatus;
 import com.example.delivery.payment.repository.PaymentRepository;
-import com.example.delivery.user.entity.Role; // 🌟 유저 권한 ENUM 임포트 추가
+import com.example.delivery.user.entity.Role;
 import java.lang.reflect.Constructor;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
