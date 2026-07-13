@@ -168,7 +168,6 @@ class StoreServiceTest {
         when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
         when(storeRepository.searchStores(isNull(), eq(categoryId), eq(List.of()), eq(StoreStatus.OPEN), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(store)));
-        when(categoryRepository.findById(store.getCategoryId())).thenReturn(Optional.of(category));
         when(regionRepository.findById(store.getRegionId())).thenReturn(Optional.of(region));
 
         // when
@@ -177,6 +176,9 @@ class StoreServiceTest {
         // then
         assertEquals(1, result.getTotalElements());
         assertEquals("한식집", result.getContent().get(0).getName());
+        assertEquals("한식", result.getContent().get(0).getCategoryName());
+        // categoryId 필터링 시 이미 조회한 카테고리명을 재사용하므로 store별 findById는 호출되지 않아야 함
+        verify(categoryRepository, never()).findById(any());
     }
 
     @Test
@@ -208,10 +210,8 @@ class StoreServiceTest {
                 "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
 
         when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
-        when(categoryRepository.findByNameContainingAndDeletedAtIsNull(keyword)).thenReturn(List.of(category));
-        when(storeRepository.searchStores(eq(keyword), eq(categoryId), anyList(), eq(StoreStatus.OPEN), eq(pageable)))
+        when(storeRepository.searchStores(eq(keyword), eq(categoryId), eq(List.of()), eq(StoreStatus.OPEN), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(store)));
-        when(categoryRepository.findById(store.getCategoryId())).thenReturn(Optional.of(category));
         when(regionRepository.findById(store.getRegionId())).thenReturn(Optional.of(region));
 
         // when
@@ -220,6 +220,9 @@ class StoreServiceTest {
         // then
         assertEquals(1, result.getTotalElements());
         assertEquals("엽기떡볶이", result.getContent().get(0).getName());
+        verify(categoryRepository, never()).findById(any());
+        // categoryId가 이미 지정된 경우엔 카테고리명으로 keyword를 재검색하지 않아야 함
+        verify(categoryRepository, never()).findByNameContainingAndDeletedAtIsNull(any());
     }
 
     @Test

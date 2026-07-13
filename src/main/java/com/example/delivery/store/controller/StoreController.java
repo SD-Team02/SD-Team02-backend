@@ -158,6 +158,12 @@ public class StoreController {
                     direction = Sort.Direction.DESC
             )
             Pageable pageable){
+        /*
+        [가게 검색] - categoryId & keyword
+        CASE1) categoryId 만 전달 : 해당 카테고리에 속하는 모든 가게들을 검색
+        CASE2) keyword 만 전달 : 가게명 중에서 keyword를 포함하는 가게들 & 카테고리에서 keyword를 포함하는 카테고리들에 속하는 가게들 검색
+        CASE3) categoryId & keyword 전달 : 해당 카테고리에 속하는 가게들 중 가게명에 keyword가 포함된 가게들 검색
+         */
         Page<ResSearchStoreDto> resStores = storeService.searchStores(keyword, categoryId, status, pageable);
         return ResponseEntity.ok(ApiResponse.success("가게 검색 성공", PageResponse.from(resStores)));
     }

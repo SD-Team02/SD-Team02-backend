@@ -2,6 +2,7 @@ package com.example.delivery.store.service;
 
 import com.example.delivery.category.entity.Category;
 import com.example.delivery.category.repository.CategoryRepository;
+import com.example.delivery.region.entity.Region;
 import com.example.delivery.region.repository.RegionRepository;
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
 import com.example.delivery.store.dto.request.ReqUpdateStoreDto;
@@ -70,13 +71,8 @@ public class StoreService {
         storeRepository.save(store);
 
         // 3. 응답 DTO 반환
-        String categoryName = categoryRepository.findById(store.getCategoryId())
-                .map(category -> category.getName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
-
-        String regionName = regionRepository.findById(store.getRegionId())
-                .map(region -> region.getName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+        String categoryName = resolveCategoryName(store.getCategoryId());
+        String regionName = resolveRegionName(store.getRegionId());
 
         return ResCreateStoreDto.from(store, categoryName, regionName);
     }
@@ -86,13 +82,8 @@ public class StoreService {
     public Page<ResGetStoreDto> getAllStores(StoreStatus status, Pageable pageable) {
         return storeRepository.findByStatusAndDeletedAtIsNull(status, pageable)
                 .map(store -> {
-                    String categoryName = categoryRepository.findById(store.getCategoryId())
-                            .map(category -> category.getName())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
-
-                    String regionName = regionRepository.findById(store.getRegionId())
-                            .map(region -> region.getName())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+                    String categoryName = resolveCategoryName(store.getCategoryId());
+                    String regionName = resolveRegionName(store.getRegionId());
 
                     return ResGetStoreDto.from(store, categoryName, regionName);
                 });
@@ -104,13 +95,8 @@ public class StoreService {
         Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-        String categoryName = categoryRepository.findById(store.getCategoryId())
-                .map(category -> category.getName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
-
-        String regionName = regionRepository.findById(store.getRegionId())
-                .map(region -> region.getName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+        String categoryName = resolveCategoryName(store.getCategoryId());
+        String regionName = resolveRegionName(store.getRegionId());
 
         return ResGetStoreDto.from(store, categoryName, regionName);
     }
@@ -146,13 +132,8 @@ public class StoreService {
 
         store.changeStatus(reqUpdateStoreDto.getStatus());
 
-        String categoryName = categoryRepository.findById(store.getCategoryId())
-                .map(category -> category.getName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
-
-        String regionName = regionRepository.findById(store.getRegionId())
-                .map(region -> region.getName())
-                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+        String categoryName = resolveCategoryName(store.getCategoryId());
+        String regionName = resolveRegionName(store.getRegionId());
 
         return ResGetStoreDto.from(store, categoryName, regionName);
     }
@@ -182,31 +163,50 @@ public class StoreService {
             throw new BusinessException(ErrorCode.STORE_SEARCH_CONDITION_REQUIRED);
         }
 
-        // categoryId로 검색하는데 그 카테고리가 없거나 삭제됐으면 결과 없음
-        if (categoryId != null && categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId).isEmpty()) {
-            return Page.empty(pageable);
+        // categoryId로 검색하는 경우, 결과 매핑에 재사용할 수 있도록 카테고리명을 미리 조회해둔다
+        String filteredCategoryName = null;
+        if (categoryId != null) {
+            filteredCategoryName = categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)
+                    .map(Category::getName)
+                    .orElse(null);
+            if (filteredCategoryName == null) {
+                return Page.empty(pageable);
+            }
         }
 
-        List<UUID> keywordCategoryIds = keyword == null
+        // categoryId가 이미 지정된 경우엔 "카테고리명이 keyword를 포함하는지"는 볼 필요가 없다.
+        // (그 카테고리로 이미 필터링되므로, 남는 조건은 store.name만으로 좁혀야 함)
+        List<UUID> keywordCategoryIds = (keyword == null || categoryId != null)
                 ? List.of()
                 : categoryRepository.findByNameContainingAndDeletedAtIsNull(keyword).stream()
                         .map(Category::getCategoryId)
                         .toList();
 
+        String resolvedCategoryName = filteredCategoryName;
+
         return storeRepository.searchStores(keyword, categoryId, keywordCategoryIds, status, pageable)
                 .map(store -> {
-                    String categoryName = categoryRepository.findById(store.getCategoryId())
-                            .map(category -> category.getName())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
-
-                    String regionName = regionRepository.findById(store.getRegionId())
-                            .map(region -> region.getName())
-                            .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+                    // categoryId로 필터링된 경우 모든 결과가 같은 카테고리이므로 위에서 조회한 이름을 재사용
+                    String categoryName = resolvedCategoryName != null
+                            ? resolvedCategoryName
+                            : resolveCategoryName(store.getCategoryId());
+                    String regionName = resolveRegionName(store.getRegionId());
 
                     return ResSearchStoreDto.from(store, categoryName, regionName);
                 });
     }
 
+    private String resolveCategoryName(UUID categoryId) {
+        return categoryRepository.findById(categoryId)
+                .map(Category::getName)
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+    }
+
+    private String resolveRegionName(UUID regionId) {
+        return regionRepository.findById(regionId)
+                .map(Region::getName)
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+    }
 
     // OWNER는 본인 소유 가게만, MANAGER·MASTER는 전체 접근 허용
     private void validateStoreAccess(Store store, Long userId, Role role) {
