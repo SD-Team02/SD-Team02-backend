@@ -1,6 +1,7 @@
 package com.example.delivery.user;
 
 
+import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.user.dto.SignupRequestDto;
 import com.example.delivery.user.entity.Role;
 import com.example.delivery.user.entity.User;
@@ -35,15 +36,6 @@ public class UserServiceTest {
     @Mock
     PasswordEncoder passwordEncoder;
 
-    //db등록 테스트
-//    @Autowired
-//    UserRepository userRepository;
-//    @Autowired
-//    PasswordEncoder passwordEncoder;
-//    @Autowired
-//    UserService userService;
-
-
     @Test
     void 신규_유저_등록_테스트(){
         //중복 검사는 테스트 하지 않음
@@ -54,7 +46,7 @@ public class UserServiceTest {
         signupRequestDto.setUsername("asdf12");
         signupRequestDto.setPassword("Abcd1234!");
         signupRequestDto.setNickname("홍길동");
-        signupRequestDto.setEmail("test@test.com");
+        signupRequestDto.setEmail("aassddff@test.com");
         signupRequestDto.setPhone("01012345678");
         signupRequestDto.setRole("CUSTOMER");
 
@@ -70,8 +62,6 @@ public class UserServiceTest {
         when(userRepository.findByEmailAndDeletedFalse(any()))
                 .thenReturn(Optional.empty());
 
-        when(userRepository.findByPhoneAndDeletedFalse(any()))
-                .thenReturn(Optional.empty());
 
         userService.signup(signupRequestDto);
 
@@ -102,8 +92,8 @@ public class UserServiceTest {
         when(userRepository.findByUsernameAndDeletedFalse(any()))
                 .thenReturn(Optional.of(user));
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        BusinessException exception = assertThrows(
+                BusinessException.class,
                 () -> userService.signup(signupRequestDto)
         );
 
@@ -136,8 +126,8 @@ public class UserServiceTest {
         when(userRepository.findByNicknameAndDeletedFalse(any()))
                 .thenReturn(Optional.of(user));
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        BusinessException exception = assertThrows(
+                BusinessException.class,
                 () -> userService.signup(signupRequestDto)
         );
 
@@ -176,28 +166,6 @@ public class UserServiceTest {
         // 예외 메시지 출력
         System.out.println("예외 메시지 : " + exception.getMessage());
         verify(userRepository, never()).save(any(User.class));
-    }
-
-
-    @Test
-    void 실제_DB_회원등록_테스트() {
-
-        Role role = Role.CUSTOMER;
-
-        User user = new User(
-                "asdf12",
-                "홍길동",
-                "test@test.com",
-                passwordEncoder.encode("Abcd1234!"),
-                role,
-                "01012345678"
-        );
-
-        User savedUser = userRepository.save(user);
-
-        System.out.println("저장 완료");
-        System.out.println("userId : " + savedUser.getUserId());
-        System.out.println("username : " + savedUser.getUsername());
     }
 
 }

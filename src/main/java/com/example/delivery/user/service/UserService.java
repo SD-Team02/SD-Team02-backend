@@ -46,7 +46,7 @@ public class UserService {
 
         //사용중인 중복된 username 탐색
         Optional<User> checkUsername = userRepository.findByUsernameAndDeletedFalse(username);
-        System.out.println(checkUsername.isPresent());
+
         if (checkUsername.isPresent()) {
            throw new BusinessException(ErrorCode.DUPLICATE_USERNAME);
         }
