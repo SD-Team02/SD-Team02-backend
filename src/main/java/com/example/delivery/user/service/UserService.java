@@ -53,10 +53,10 @@ public class UserService {
 
         //username 정규식 [알파벳 소문자와 숫자, 4자이상 10자 이하]
         if(username.length() <4 || username.length() >10)
-            throw new IllegalArgumentException("4자 이상 10자 이하로 입력해 주세요");
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         if(!username.matches("^[a-z0-9]+$"))
         {
-            throw new IllegalArgumentException("영문 소문자와 숫자만 입력해 주세요");
+            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
         }
 
         //비밀번호 정규식 [8자이상 15자 이하, 영어대소문자, 숫자, 특수문자]
@@ -71,12 +71,12 @@ public class UserService {
         //사용중인 email 중복탐색
         Optional<User> checkEmail = userRepository.findByEmailAndDeletedFalse(email);
         if (checkEmail.isPresent()) {
-            throw new IllegalArgumentException("이미 사용중인 이메일 입니다.");
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         //email 정규식
         if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+            throw new BusinessException(ErrorCode.INVALID_EMAIL);
         }
 
         phone = phoneValidation(phone);
@@ -87,7 +87,7 @@ public class UserService {
         if(requestDto.isMaster())
         {
             if (!MASTER_TOKEN.equals(requestDto.getMasterToken())) {
-                throw new IllegalArgumentException("Master 암호가 틀려 등록이 불가능합니다.");
+                throw new BusinessException(ErrorCode.INVALID_MASTER);
             }
                 role = Role.MASTER;
         }
@@ -96,7 +96,7 @@ public class UserService {
         if(requestDto.isManager())
         {
             if (!MANAGER_TOKEN.equals(requestDto.getManagerToken())) {
-                throw new IllegalArgumentException("Manager 암호가 틀려 등록이 불가능합니다.");
+                throw new BusinessException(ErrorCode.INVALID_MANAGER);
             }
             role = Role.MANAGER;
         }
@@ -105,7 +105,7 @@ public class UserService {
         if(requestDto.isOwner())
         {
             if (!OWNER_TOKEN.equals(requestDto.getOwnerToken())) {
-                throw new IllegalArgumentException("Owner 암호가 틀려 등록이 불가능합니다.");
+                throw new BusinessException(ErrorCode.INVALID_OWNER);
             }
             role = Role.OWNER;
         }
@@ -161,12 +161,12 @@ public class UserService {
         //사용중인 email 중복탐색
         Optional<User> checkEmail = userRepository.findByEmailAndDeletedFalse(email);
         if (checkEmail.isPresent() && !checkEmail.get().getUserId().equals(userId)) {
-            throw new IllegalArgumentException("이미 사용중인 이메일 입니다.");
+            throw new BusinessException(ErrorCode.DUPLICATE_EMAIL);
         }
 
         //email 정규식
         if (!email.matches("^[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$")) {
-            throw new IllegalArgumentException("올바른 이메일 형식이 아닙니다.");
+            throw new BusinessException(ErrorCode.INVALID_EMAIL);
         }
 
         password = passwordValidation(password);
@@ -214,7 +214,7 @@ public class UserService {
     {
         if(!phone.matches("^0(2|[1-9]\\d)\\d{7,8}$"))
         {
-            throw new IllegalArgumentException("올바른 전화번호 양식이 아닙니다.");
+            throw new BusinessException(ErrorCode.INVALID_PHONE);
         }
         return  phone;
     }

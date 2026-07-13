@@ -158,8 +158,8 @@ public class UserServiceTest {
         when(userRepository.findByEmailAndDeletedFalse(any()))
                 .thenReturn(Optional.of(user));
 
-        IllegalArgumentException exception = assertThrows(
-                IllegalArgumentException.class,
+        BusinessException exception = assertThrows(
+                BusinessException.class,
                 () -> userService.signup(signupRequestDto)
         );
 

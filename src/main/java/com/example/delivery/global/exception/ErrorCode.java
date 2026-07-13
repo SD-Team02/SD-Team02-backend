@@ -33,6 +33,12 @@ public enum ErrorCode {
     USER_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_1", "사용자를 찾을 수 없습니다."),
     INVALID_PASSWORD(HttpStatus.BAD_REQUEST, "USER_400_1", "비밀번호 형식이 올바르지 않습니다."),
     LOGIN_FAILED(HttpStatus.UNAUTHORIZED, "USER_401_1", "아이디 또는 비밀번호가 일치하지 않습니다."),
+    DUPLICATE_EMAIL(HttpStatus.CONFLICT, "USER_409_3", "이미 사용중인 이메일 입니다."),
+    INVALID_EMAIL(HttpStatus.BAD_REQUEST, "USER_400_2", "이메일 형식이 올바르지 않습니다."),
+    INVALID_MASTER(HttpStatus.BAD_REQUEST, "USER_400_3", "Master 토큰이 올바르지 않습니다."),
+    INVALID_MANAGER(HttpStatus.BAD_REQUEST, "USER_400_4", "MANAGER 토큰이 올바르지 않습니다."),
+    INVALID_OWNER(HttpStatus.BAD_REQUEST, "USER_400_5", "OWNER 토큰이 올바르지 않습니다."),
+    INVALID_PHONE(HttpStatus.BAD_REQUEST, "USER_400_6", "전화번호 형식이 올바르지 않습니다."),
 
     // Store (가게 담당 참고용 예시)
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE_404_1", "가게를 찾을 수 없습니다."),
