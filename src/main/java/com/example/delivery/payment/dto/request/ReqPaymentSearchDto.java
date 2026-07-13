@@ -21,7 +21,7 @@ public class ReqPaymentSearchDto {
     @NotNull(message = "검색 종료 날짜는 필수 입력 사항입니다.")
     @Schema(description = "검색 종료 날짜", example = "2026-07-13")
     private LocalDate endDate;
-ㄴ
+
     @Schema(description = "결제 상태 필터링", example = "SUCCESS")
     private PaymentStatus status;
 
