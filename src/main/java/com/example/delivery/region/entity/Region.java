@@ -1,21 +1,12 @@
 package com.example.delivery.region.entity;
 
-import java.util.UUID;
-
 import com.example.delivery.global.common.entity.BaseEntity;
-
-import jakarta.persistence.AttributeOverride;
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
+
+import java.util.UUID;
 
 /**
  * 지역 분류. parent_region_id로 계층 구조(예: 서울 > 종로구 > 광화문)를 표현한다.
@@ -48,5 +39,18 @@ public class Region extends BaseEntity {
         this.name = name;
         this.parentRegionId = parentRegionId;
         this.status = RegionStatus.ACTIVE;
+    }
+
+    public Region(String name) {
+        this.name = name;
+        this.parentRegionId = null;
+        this.status = RegionStatus.ACTIVE;
+    }
+
+    //지역 수정 메서드
+    public void update(String name, UUID parentRegionId ,RegionStatus status) {
+        this.name = name;
+        this.parentRegionId = parentRegionId;
+        this.status = status;
     }
 }
