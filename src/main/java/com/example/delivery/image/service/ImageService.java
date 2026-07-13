@@ -45,17 +45,17 @@ public class ImageService {
 
             // 이미지 엔티티 생성
            for (int i = 0; i < uploadResults.size(); i++) {
-               S3UploadResult uploadResult = uploadResults.get(i);
+               S3UploadResult result = uploadResults.get(i);
 
                // 이미지 엔티티 생성
                ImageFile imageFile = new ImageFile(
                        request.getRefType(),
                        request.getRefId(),
-                       uploadResult.imageKey(),
-                       uploadResult.originalName(),
-                       uploadResult.savedName(),
-                       uploadResult.contentType(),
-                       uploadResult.fileSize(),
+                       result.imageKey(),
+                       result.originalName(),
+                       result.savedName(),
+                       result.contentType(),
+                       result.fileSize(),
                        i+1
                );
                // 업로드가 먼저 되었을때 숨김 처리
