@@ -81,7 +81,7 @@ public enum ErrorCode {
     IMAGE_DELETE_FILE(HttpStatus.BAD_REQUEST, "IMAGE_400_5", "이미 삭제된 이미지 입니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_1", "이미지 업로드에 실패했습니다."),
     IMAGE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_2", "이미지 삭제에 실패했습니다."),
-    IMAGE_URL_GENERATION_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_3", "이미지 접근 URL 생성에 실패했습니다.");
+    IMAGE_URL_GENERATION_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_3", "이미지 접근 URL 생성에 실패했습니다."),
 
     AI_API_CALL_FAILED(HttpStatus.BAD_GATEWAY, "AI_502_1", "AI API 호출에 실패했습니다."),
 
