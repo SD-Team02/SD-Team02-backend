@@ -24,8 +24,10 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -80,13 +82,19 @@ public class StoreService {
     //전체 가게 조회
     @Transactional(readOnly = true)
     public Page<ResGetStoreDto> getAllStores(StoreStatus status, Pageable pageable) {
-        return storeRepository.findByStatusAndDeletedAtIsNull(status, pageable)
-                .map(store -> {
-                    String categoryName = resolveCategoryName(store.getCategoryId());
-                    String regionName = resolveRegionName(store.getRegionId());
+        Page<Store> storePage = storeRepository.findByStatusAndDeletedAtIsNull(status, pageable);
 
-                    return ResGetStoreDto.from(store, categoryName, regionName);
-                });
+        // 페이지에 담긴 가게들의 카테고리/지역명을 한 번씩만 조회해 N+1을 방지한다
+        Map<UUID, String> categoryNames = resolveCategoryNames(
+                storePage.getContent().stream().map(Store::getCategoryId).distinct().toList());
+        Map<UUID, String> regionNames = resolveRegionNames(
+                storePage.getContent().stream().map(Store::getRegionId).distinct().toList());
+
+        return storePage.map(store -> ResGetStoreDto.from(
+                store,
+                requireCategoryName(categoryNames, store.getCategoryId()),
+                requireRegionName(regionNames, store.getRegionId())
+        ));
     }
 
     //가게 상세 조회
@@ -183,17 +191,21 @@ public class StoreService {
                         .toList();
 
         String resolvedCategoryName = filteredCategoryName;
+        Page<Store> storePage = storeRepository.searchStores(keyword, categoryId, keywordCategoryIds, status, pageable);
 
-        return storeRepository.searchStores(keyword, categoryId, keywordCategoryIds, status, pageable)
-                .map(store -> {
-                    // categoryId로 필터링된 경우 모든 결과가 같은 카테고리이므로 위에서 조회한 이름을 재사용
-                    String categoryName = resolvedCategoryName != null
-                            ? resolvedCategoryName
-                            : resolveCategoryName(store.getCategoryId());
-                    String regionName = resolveRegionName(store.getRegionId());
+        // categoryId로 필터링된 경우 모든 결과가 같은 카테고리이므로 위에서 조회한 이름을 재사용하고,
+        // keyword만으로 검색된 경우(가게마다 카테고리가 다를 수 있음)에만 한 번에 배치 조회해 N+1을 방지한다
+        Map<UUID, String> categoryNames = resolvedCategoryName != null
+                ? Map.of(categoryId, resolvedCategoryName)
+                : resolveCategoryNames(storePage.getContent().stream().map(Store::getCategoryId).distinct().toList());
+        Map<UUID, String> regionNames = resolveRegionNames(
+                storePage.getContent().stream().map(Store::getRegionId).distinct().toList());
 
-                    return ResSearchStoreDto.from(store, categoryName, regionName);
-                });
+        return storePage.map(store -> ResSearchStoreDto.from(
+                store,
+                requireCategoryName(categoryNames, store.getCategoryId()),
+                requireRegionName(regionNames, store.getRegionId())
+        ));
     }
 
     private String resolveCategoryName(UUID categoryId) {
@@ -206,6 +218,32 @@ public class StoreService {
         return regionRepository.findById(regionId)
                 .map(Region::getName)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+    }
+
+    private Map<UUID, String> resolveCategoryNames(List<UUID> categoryIds) {
+        return categoryRepository.findAllById(categoryIds).stream()
+                .collect(Collectors.toMap(Category::getCategoryId, Category::getName));
+    }
+
+    private Map<UUID, String> resolveRegionNames(List<UUID> regionIds) {
+        return regionRepository.findAllById(regionIds).stream()
+                .collect(Collectors.toMap(Region::getRegionId, Region::getName));
+    }
+
+    private String requireCategoryName(Map<UUID, String> categoryNames, UUID categoryId) {
+        String categoryName = categoryNames.get(categoryId);
+        if (categoryName == null) {
+            throw new BusinessException(ErrorCode.CATEGORY_NOT_FOUND);
+        }
+        return categoryName;
+    }
+
+    private String requireRegionName(Map<UUID, String> regionNames, UUID regionId) {
+        String regionName = regionNames.get(regionId);
+        if (regionName == null) {
+            throw new BusinessException(ErrorCode.REGION_NOT_FOUND);
+        }
+        return regionName;
     }
 
     // OWNER는 본인 소유 가게만, MANAGER·MASTER는 전체 접근 허용

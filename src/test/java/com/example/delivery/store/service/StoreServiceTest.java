@@ -120,6 +120,132 @@ class StoreServiceTest {
     }
 
     @Test
+    @DisplayName("전체 가게 조회 성공 - 카테고리/지역명을 배치로 조회한다")
+    void getAllStores_Success_BatchResolvesNames() {
+        // given
+        Pageable pageable = PageRequest.of(0, 10);
+        UUID categoryId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        Store store = new Store(userId, categoryId, regionId, "가게", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+
+        Category category = mock(Category.class);
+        when(category.getCategoryId()).thenReturn(categoryId);
+        when(category.getName()).thenReturn("한식");
+        Region region = mock(Region.class);
+        when(region.getRegionId()).thenReturn(regionId);
+        when(region.getName()).thenReturn("강남구");
+
+        when(storeRepository.findByStatusAndDeletedAtIsNull(StoreStatus.OPEN, pageable))
+                .thenReturn(new PageImpl<>(List.of(store)));
+        when(categoryRepository.findAllById(anyList())).thenReturn(List.of(category));
+        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region));
+
+        // when
+        Page<ResGetStoreDto> result = storeService.getAllStores(StoreStatus.OPEN, pageable);
+
+        // then
+        assertEquals(1, result.getTotalElements());
+        assertEquals("한식", result.getContent().get(0).getCategoryName());
+        assertEquals("강남구", result.getContent().get(0).getRegionName());
+        // 가게마다 개별 조회(N+1)하지 않고 배치로 한 번에 조회해야 함
+        verify(categoryRepository, never()).findById(any());
+        verify(regionRepository, never()).findById(any());
+    }
+
+    @Test
+    @DisplayName("전체 가게 조회 성공 - 결과가 여러 건이어도 카테고리/지역 배치 조회는 1번만 호출된다 (N+1 방지)")
+    void getAllStores_Success_BatchCalledOnceForMultipleStores() {
+        // given
+        Pageable pageable = PageRequest.of(0, 10);
+        UUID categoryId1 = UUID.randomUUID();
+        UUID categoryId2 = UUID.randomUUID();
+        UUID regionId1 = UUID.randomUUID();
+        UUID regionId2 = UUID.randomUUID();
+        Store store1 = new Store(userId, categoryId1, regionId1, "가게1", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+        Store store2 = new Store(userId, categoryId2, regionId2, "가게2", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+
+        Category category1 = mock(Category.class);
+        when(category1.getCategoryId()).thenReturn(categoryId1);
+        when(category1.getName()).thenReturn("한식");
+        Category category2 = mock(Category.class);
+        when(category2.getCategoryId()).thenReturn(categoryId2);
+        when(category2.getName()).thenReturn("중식");
+        Region region1 = mock(Region.class);
+        when(region1.getRegionId()).thenReturn(regionId1);
+        when(region1.getName()).thenReturn("강남구");
+        Region region2 = mock(Region.class);
+        when(region2.getRegionId()).thenReturn(regionId2);
+        when(region2.getName()).thenReturn("서초구");
+
+        when(storeRepository.findByStatusAndDeletedAtIsNull(StoreStatus.OPEN, pageable))
+                .thenReturn(new PageImpl<>(List.of(store1, store2)));
+        when(categoryRepository.findAllById(anyList())).thenReturn(List.of(category1, category2));
+        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region1, region2));
+
+        // when
+        Page<ResGetStoreDto> result = storeService.getAllStores(StoreStatus.OPEN, pageable);
+
+        // then
+        assertEquals(2, result.getTotalElements());
+        // 가게 수와 무관하게 카테고리/지역 조회는 각각 정확히 1번만 호출되어야 함 (N+1이면 가게 수만큼 호출됨)
+        verify(categoryRepository, times(1)).findAllById(argThat(ids ->
+                ((List<UUID>) ids).containsAll(List.of(categoryId1, categoryId2))));
+        verify(regionRepository, times(1)).findAllById(argThat(ids ->
+                ((List<UUID>) ids).containsAll(List.of(regionId1, regionId2))));
+    }
+
+    @Test
+    @DisplayName("가게 검색 성공 - keyword만 입력, 결과가 여러 건이어도 카테고리/지역 배치 조회는 1번만 호출된다 (N+1 방지)")
+    void searchStores_Success_KeywordOnly_BatchCalledOnceForMultipleStores() {
+        // given
+        String keyword = "떡볶이";
+        Pageable pageable = PageRequest.of(0, 10);
+        UUID categoryId1 = UUID.randomUUID();
+        UUID categoryId2 = UUID.randomUUID();
+        UUID regionId1 = UUID.randomUUID();
+        UUID regionId2 = UUID.randomUUID();
+        Store store1 = new Store(userId, categoryId1, regionId1, "떡볶이집1", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+        Store store2 = new Store(userId, categoryId2, regionId2, "떡볶이집2", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+
+        Category category1 = mock(Category.class);
+        when(category1.getCategoryId()).thenReturn(categoryId1);
+        when(category1.getName()).thenReturn("분식");
+        Category category2 = mock(Category.class);
+        when(category2.getCategoryId()).thenReturn(categoryId2);
+        when(category2.getName()).thenReturn("한식");
+        Region region1 = mock(Region.class);
+        when(region1.getRegionId()).thenReturn(regionId1);
+        when(region1.getName()).thenReturn("강남구");
+        Region region2 = mock(Region.class);
+        when(region2.getRegionId()).thenReturn(regionId2);
+        when(region2.getName()).thenReturn("서초구");
+
+        when(categoryRepository.findByNameContainingAndDeletedAtIsNull(keyword)).thenReturn(List.of());
+        when(storeRepository.searchStores(eq(keyword), isNull(), anyList(), eq(StoreStatus.OPEN), eq(pageable)))
+                .thenReturn(new PageImpl<>(List.of(store1, store2)));
+        when(categoryRepository.findAllById(anyList())).thenReturn(List.of(category1, category2));
+        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region1, region2));
+
+        // when
+        Page<ResSearchStoreDto> result = storeService.searchStores(keyword, null, StoreStatus.OPEN, pageable);
+
+        // then
+        assertEquals(2, result.getTotalElements());
+        // 가게 수와 무관하게 카테고리/지역 조회는 각각 정확히 1번만 호출되어야 함 (N+1이면 가게 수만큼 호출됨)
+        verify(categoryRepository, times(1)).findAllById(argThat(ids ->
+                ((List<UUID>) ids).containsAll(List.of(categoryId1, categoryId2))));
+        verify(regionRepository, times(1)).findAllById(argThat(ids ->
+                ((List<UUID>) ids).containsAll(List.of(regionId1, regionId2))));
+        verify(categoryRepository, never()).findById(any());
+        verify(regionRepository, never()).findById(any());
+    }
+
+    @Test
     @DisplayName("가게 검색 실패 - keyword, categoryId 둘 다 없음")
     void searchStores_Fail_NoCondition() {
         // when & then
@@ -134,16 +260,24 @@ class StoreServiceTest {
         // given
         String keyword = "떡볶이";
         Pageable pageable = PageRequest.of(0, 10);
-        Category category = new Category("분식");
-        Region region = new Region("강남구");
-        Store store = new Store(userId, UUID.randomUUID(), UUID.randomUUID(), "떡볶이집", "주소",
+        UUID categoryId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
+        Store store = new Store(userId, categoryId, regionId, "떡볶이집", "주소",
                 "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+
+        Category category = mock(Category.class);
+        when(category.getCategoryId()).thenReturn(categoryId);
+        when(category.getName()).thenReturn("분식");
+        Region region = mock(Region.class);
+        when(region.getRegionId()).thenReturn(regionId);
+        when(region.getName()).thenReturn("강남구");
 
         when(categoryRepository.findByNameContainingAndDeletedAtIsNull(keyword)).thenReturn(List.of(category));
         when(storeRepository.searchStores(eq(keyword), isNull(), anyList(), eq(StoreStatus.OPEN), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(store)));
-        when(categoryRepository.findById(store.getCategoryId())).thenReturn(Optional.of(category));
-        when(regionRepository.findById(store.getRegionId())).thenReturn(Optional.of(region));
+        // 페이지 안의 가게들의 카테고리/지역명은 store별 findById가 아니라 findAllById로 한 번에 조회됨
+        when(categoryRepository.findAllById(anyList())).thenReturn(List.of(category));
+        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region));
 
         // when
         Page<ResSearchStoreDto> result = storeService.searchStores(keyword, null, StoreStatus.OPEN, pageable);
@@ -151,7 +285,11 @@ class StoreServiceTest {
         // then
         assertEquals(1, result.getTotalElements());
         assertEquals("떡볶이집", result.getContent().get(0).getName());
+        assertEquals("분식", result.getContent().get(0).getCategoryName());
+        assertEquals("강남구", result.getContent().get(0).getRegionName());
         verify(categoryRepository, never()).findByCategoryIdAndDeletedAtIsNull(any());
+        verify(categoryRepository, never()).findById(any());
+        verify(regionRepository, never()).findById(any());
     }
 
     @Test
@@ -159,16 +297,20 @@ class StoreServiceTest {
     void searchStores_Success_CategoryOnly() {
         // given
         UUID categoryId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
         Pageable pageable = PageRequest.of(0, 10);
         Category category = new Category("한식");
-        Region region = new Region("강남구");
-        Store store = new Store(userId, categoryId, UUID.randomUUID(), "한식집", "주소",
+        Store store = new Store(userId, categoryId, regionId, "한식집", "주소",
                 "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+
+        Region region = mock(Region.class);
+        when(region.getRegionId()).thenReturn(regionId);
+        when(region.getName()).thenReturn("강남구");
 
         when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
         when(storeRepository.searchStores(isNull(), eq(categoryId), eq(List.of()), eq(StoreStatus.OPEN), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(store)));
-        when(regionRepository.findById(store.getRegionId())).thenReturn(Optional.of(region));
+        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region));
 
         // when
         Page<ResSearchStoreDto> result = storeService.searchStores(null, categoryId, StoreStatus.OPEN, pageable);
@@ -177,8 +319,10 @@ class StoreServiceTest {
         assertEquals(1, result.getTotalElements());
         assertEquals("한식집", result.getContent().get(0).getName());
         assertEquals("한식", result.getContent().get(0).getCategoryName());
-        // categoryId 필터링 시 이미 조회한 카테고리명을 재사용하므로 store별 findById는 호출되지 않아야 함
+        // categoryId 필터링 시 이미 조회한 카테고리명을 재사용하므로 store별 findById/findAllById는 호출되지 않아야 함
         verify(categoryRepository, never()).findById(any());
+        verify(categoryRepository, never()).findAllById(any());
+        verify(regionRepository, never()).findById(any());
     }
 
     @Test
@@ -203,16 +347,20 @@ class StoreServiceTest {
         // given
         String keyword = "떡볶이";
         UUID categoryId = UUID.randomUUID();
+        UUID regionId = UUID.randomUUID();
         Pageable pageable = PageRequest.of(0, 10);
         Category category = new Category("분식");
-        Region region = new Region("강남구");
-        Store store = new Store(userId, categoryId, UUID.randomUUID(), "엽기떡볶이", "주소",
+        Store store = new Store(userId, categoryId, regionId, "엽기떡볶이", "주소",
                 "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+
+        Region region = mock(Region.class);
+        when(region.getRegionId()).thenReturn(regionId);
+        when(region.getName()).thenReturn("강남구");
 
         when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
         when(storeRepository.searchStores(eq(keyword), eq(categoryId), eq(List.of()), eq(StoreStatus.OPEN), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(store)));
-        when(regionRepository.findById(store.getRegionId())).thenReturn(Optional.of(region));
+        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region));
 
         // when
         Page<ResSearchStoreDto> result = storeService.searchStores(keyword, categoryId, StoreStatus.OPEN, pageable);
@@ -221,6 +369,8 @@ class StoreServiceTest {
         assertEquals(1, result.getTotalElements());
         assertEquals("엽기떡볶이", result.getContent().get(0).getName());
         verify(categoryRepository, never()).findById(any());
+        verify(categoryRepository, never()).findAllById(any());
+        verify(regionRepository, never()).findById(any());
         // categoryId가 이미 지정된 경우엔 카테고리명으로 keyword를 재검색하지 않아야 함
         verify(categoryRepository, never()).findByNameContainingAndDeletedAtIsNull(any());
     }
