@@ -12,6 +12,8 @@ import com.example.delivery.payment.dto.response.ResPaymentDto;
 import com.example.delivery.payment.entity.Payment;
 import com.example.delivery.payment.entity.PaymentStatus;
 import com.example.delivery.payment.repository.PaymentRepository;
+import com.example.delivery.store.entity.Store;
+import com.example.delivery.store.repository.StoreRepository;
 import com.example.delivery.user.entity.Role;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -30,6 +32,7 @@ public class PaymentService {
 
     private final PaymentRepository paymentRepository;
     private final OrderRepository orderRepository;
+    private final StoreRepository storeRepository;
 
     /** 1. 결제 승인 비즈니스 로직  */
     @Transactional
@@ -98,10 +101,6 @@ public class PaymentService {
         validatePaymentAccess(payment, userId, role);
 
         Order order = payment.getOrder();
-        if (!order.getUserId().equals(userId)) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
-
         if (order.getStatus() != OrderStatus.CANCELED) {
             throw new BusinessException(ErrorCode.ORDER_STATUS_TRANSITION_INVALID); // #TODO : 에러코드 추가 요망 ORDER_NOT_CANCELED_YET
         }
@@ -119,7 +118,11 @@ public class PaymentService {
                 }
             }
             case OWNER -> {
-                // 임시로 사장님 검증 영역을 열어둠
+                Store store = storeRepository.findById(payment.getOrder().getStoreId())
+                        .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+                if (!store.getUserId().equals(userId)) {
+                    throw new BusinessException(ErrorCode.ACCESS_DENIED);
+                }
             }
             case MANAGER, MASTER -> {
                 // 전체 접근 허용
