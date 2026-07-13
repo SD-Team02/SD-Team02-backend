@@ -26,17 +26,13 @@ public class AiHistory extends BaseTimeEntity {
     @Column(name = "ai_history_id")
     private UUID aiHistoryId;
 
-    @Column(name = "menu_id", nullable = false)
-    private UUID menuId;
-
     @Column(name = "prompt", columnDefinition = "TEXT")
     private String prompt;
 
     @Column(name = "response", columnDefinition = "TEXT")
     private String response;
 
-    public AiHistory(UUID menuId, String prompt, String response) {
-        this.menuId = menuId;
+    public AiHistory(String prompt, String response) {
         this.prompt = prompt;
         this.response = response;
     }

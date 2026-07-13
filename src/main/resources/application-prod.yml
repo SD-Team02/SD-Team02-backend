@@ -8,6 +8,13 @@ spring:
     hibernate:
       ddl-auto: update # 임시: 아직 Flyway 미도입, 최초 스키마 생성을 위해 update 사용 (Flyway 도입 시 validate로 되돌릴 것)
     show-sql: false
+  ai:
+    google:
+      genai:
+        api-key: ${AI_API_KEY}
+        chat:
+          options:
+            model: gemini-2.5-flash-lite
 
 springdoc:
   swagger-ui:
@@ -21,7 +28,6 @@ app:
   ai:
     gemini:
       api-key: ${AI_API_KEY}
-
 logging:
   level:
     root: WARN

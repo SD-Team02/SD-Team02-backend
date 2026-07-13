@@ -40,14 +40,14 @@ public class ImageFile extends BaseEntity {
 
     @Column(name = "ref_id", length = 100, nullable = false)
     private String refId;
-
-    @Column(name = "image_url", nullable = false)
-    private String imageUrl;
+    // s3 object key
+    @Column(name = "image_key", nullable = false)
+    private String imageKey;
 
     @Column(name = "original_name", nullable = false)
     private String originalName;
 
-    @Column(name = "saved_name", nullable = false)
+    @Column(name = "save_name", nullable = false)
     private String savedName;
 
     @Column(name = "content_type", length = 50, nullable = false)
@@ -63,17 +63,22 @@ public class ImageFile extends BaseEntity {
     @Column(name = "display_status", nullable = false)
     private ImageDisplayStatus displayStatus;
 
-    public ImageFile(RefType refType, String refId, String imageUrl, String originalName,
+    public ImageFile(RefType refType, String refId, String imageKey, String originalName,
                       String savedName, String contentType, Long fileSize, Integer displayOrder) {
         this.refType = refType;
         this.refId = refId;
-        this.imageUrl = imageUrl;
+        this.imageKey = imageKey;
         this.originalName = originalName;
         this.savedName = savedName;
         this.contentType = contentType;
         this.fileSize = fileSize;
         this.displayOrder = displayOrder;
         this.displayStatus = ImageDisplayStatus.NORMAL;
+    }
+
+    // 메뉴 등록 수정 시 refID값 변경
+    public void changeRefId(String refId) {
+        this.refId = refId;
     }
 
     public void hide() {
