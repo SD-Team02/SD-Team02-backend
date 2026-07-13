@@ -9,6 +9,7 @@ import org.springframework.context.annotation.Import;
 import org.springframework.test.context.ActiveProfiles;
 
 import com.example.delivery.global.config.JpaAuditingConfig;
+import com.example.delivery.global.config.QuerydslConfig;
 import com.example.delivery.user.entity.Address;
 
 import jakarta.persistence.EntityManager;
@@ -17,7 +18,7 @@ import jakarta.persistence.PersistenceContext;
 @DataJpaTest
 @ActiveProfiles("test")
 @AutoConfigureTestDatabase(replace = AutoConfigureTestDatabase.Replace.NONE)
-@Import(JpaAuditingConfig.class)
+@Import({JpaAuditingConfig.class, QuerydslConfig.class})
 class BaseEntityAuditTest {
 
     @PersistenceContext

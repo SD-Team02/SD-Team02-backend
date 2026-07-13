@@ -2,6 +2,7 @@ package com.example.delivery.category.repository;
 
 import com.example.delivery.category.entity.Category;
 import com.example.delivery.global.config.JpaAuditingConfig;
+import com.example.delivery.global.config.QuerydslConfig;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -11,7 +12,7 @@ import org.springframework.context.annotation.Import;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(JpaAuditingConfig.class)
+@Import({JpaAuditingConfig.class, QuerydslConfig.class})
 class CategoryRepositoryTest {
 
     @Autowired
