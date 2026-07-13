@@ -118,7 +118,7 @@ public class ImageService {
     @Transactional
     public void deleteImage(UUID imageId, JpaAuditingConfig.CustomUserDetails userDetails) {
 
-        ImageFile imageFile = imageRepository.findByIdAndDeletedAtIsNull(imageId)
+        ImageFile imageFile = imageRepository.findByImageIdAndDeletedAtIsNull(imageId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_IMAGE_DELETE_FILE));
 
         //권한 확인
@@ -144,7 +144,7 @@ public class ImageService {
         }
 
         // 이미지 조회
-        ImageFile imageFile = imageRepository.findByIdAndDeletedAtIsNull(imageId)
+        ImageFile imageFile = imageRepository.findByImageIdAndDeletedAtIsNull(imageId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
         // 메뉴 이미지로 연결
@@ -159,7 +159,7 @@ public class ImageService {
     // LLM이 이미지 받을수 있도록 서비스 생성
     public Resource getImageResource(@NotNull(message = "메뉴 이미지 ID는 필수입니다.") UUID imageId) {
          // 이미지 조회
-        ImageFile image = imageRepository.findByIdAndDeletedAtIsNull(imageId)
+        ImageFile image = imageRepository.findByImageIdAndDeletedAtIsNull(imageId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
         // 삭제된 이미지 확인
