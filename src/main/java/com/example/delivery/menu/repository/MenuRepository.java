@@ -15,4 +15,14 @@ public interface MenuRepository extends JpaRepository<Menu, UUID>, MenuRepositor
     Optional<Menu> findByMenuIdAndDeletedAtIsNull(UUID storeId);
 
     Optional<Menu> findByIdAndDeletedAtIsNull(UUID menuId);
+<<<<<<< HEAD
+=======
+import java.util.UUID;
+
+import org.springframework.data.jpa.repository.JpaRepository;
+
+import com.example.delivery.menu.entity.Menu;
+
+public interface MenuRepository extends JpaRepository<Menu, UUID> {
+>>>>>>> a19dd7cf5f8480dc924ded3c7c292b42da20fc31
 }
