@@ -8,6 +8,7 @@ import com.example.delivery.store.dto.request.ReqUpdateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
 import com.example.delivery.store.dto.response.ResDeleteStoreDto;
 import com.example.delivery.store.dto.response.ResGetStoreDto;
+import com.example.delivery.store.dto.response.ResSearchStoreDto;
 import com.example.delivery.store.entity.StoreStatus;
 import com.example.delivery.store.service.StoreService;
 import com.example.delivery.user.security.UserDetailsImpl;
@@ -129,5 +130,30 @@ public class StoreController {
         Long userId = userDetails.getUser().getUserId();
         ResDeleteStoreDto resDeleteStoreDto = storeService.deleteStore(storeId,userId);
         return ResponseEntity.ok(ApiResponse.success("가게 삭제 성공",resDeleteStoreDto));
+    }
+
+    @Operation(summary = "가게 검색")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "가게 검색 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "검색어 또는 카테고리 중 하나는 입력해야 합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "정렬 기준이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PreAuthorize("hasAnyAuthority('CUSTOMER','OWNER','MANAGER', 'MASTER')")
+    @GetMapping("/search")
+    public ResponseEntity<ApiResponse<PageResponse<ResSearchStoreDto>>> searchStore(
+            @RequestParam(required = false) String keyword,
+            @RequestParam(required = false) UUID categoryId,
+            @RequestParam(defaultValue = "OPEN") StoreStatus status,
+            @PageableDefault(
+                    page = 0,
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            )
+            Pageable pageable){
+        Page<ResSearchStoreDto> resStores = storeService.searchStores(keyword, categoryId, status, pageable);
+        return ResponseEntity.ok(ApiResponse.success("가게 검색 성공", PageResponse.from(resStores)));
     }
 }

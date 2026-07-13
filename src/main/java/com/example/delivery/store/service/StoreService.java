@@ -1,5 +1,6 @@
 package com.example.delivery.store.service;
 
+import com.example.delivery.category.entity.Category;
 import com.example.delivery.category.repository.CategoryRepository;
 import com.example.delivery.region.repository.RegionRepository;
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
@@ -7,6 +8,7 @@ import com.example.delivery.store.dto.request.ReqUpdateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
 import com.example.delivery.store.dto.response.ResDeleteStoreDto;
 import com.example.delivery.store.dto.response.ResGetStoreDto;
+import com.example.delivery.store.dto.response.ResSearchStoreDto;
 import com.example.delivery.store.entity.Store;
 import com.example.delivery.store.entity.StoreStatus;
 import com.example.delivery.store.repository.StoreRepository;
@@ -19,6 +21,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -165,5 +168,37 @@ public class StoreService {
 
         store.softDelete(userId);
         return ResDeleteStoreDto.from(store.getStoreId(), storeName);
+    }
+
+    //가게 검색
+    @Transactional(readOnly = true)
+    public Page<ResSearchStoreDto> searchStores(String keyword, UUID categoryId, StoreStatus status, Pageable pageable) {
+        if (keyword == null && categoryId == null) {
+            throw new BusinessException(ErrorCode.STORE_SEARCH_CONDITION_REQUIRED);
+        }
+
+        // categoryId로 검색하는데 그 카테고리가 없거나 삭제됐으면 결과 없음
+        if (categoryId != null && categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId).isEmpty()) {
+            return Page.empty(pageable);
+        }
+
+        List<UUID> keywordCategoryIds = keyword == null
+                ? List.of()
+                : categoryRepository.findByNameContainingAndDeletedAtIsNull(keyword).stream()
+                        .map(Category::getCategoryId)
+                        .toList();
+
+        return storeRepository.searchStores(keyword, categoryId, keywordCategoryIds, status, pageable)
+                .map(store -> {
+                    String categoryName = categoryRepository.findById(store.getCategoryId())
+                            .map(category -> category.getName())
+                            .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+
+                    String regionName = regionRepository.findById(store.getRegionId())
+                            .map(region -> region.getName())
+                            .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+
+                    return ResSearchStoreDto.from(store, categoryName, regionName);
+                });
     }
 }
