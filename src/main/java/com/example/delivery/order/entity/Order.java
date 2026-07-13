@@ -63,16 +63,21 @@ public class Order extends BaseEntity {
         this.status = OrderStatus.REQUESTED;
     }
 
-    public void accept() {
-        this.status = OrderStatus.ACCEPTED;
+    public void changeStatus(OrderStatus status) {
+        validateStatusTransition(status);
+        this.status = status;
     }
 
-    public void changeStatus(OrderStatus status) {
-        this.status = status;
+    private void validateStatusTransition(OrderStatus nextStatus) {
+        if (!this.status.canChangeTo(nextStatus)) {
+            throw new BusinessException(ErrorCode.ORDER_STATUS_TRANSITION_INVALID);
+        }
     }
 
     /** 주문 생성 후 5분 이내에만 취소 가능 (요구사항 필수 조건). */
     public void cancel() {
+        validateStatusTransition(OrderStatus.CANCELED);
+
         if (Duration.between(getCreatedAt(), LocalDateTime.now()).toMinutes() >= CANCELABLE_MINUTES) {
             throw new BusinessException(ErrorCode.ORDER_CANCEL_TIME_EXCEEDED);
         }
