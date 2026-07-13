@@ -80,6 +80,11 @@ public class AddressService {
 
         Address addressE =  checkAddress.get();
 
+        // 삭제된 주소는 MASTER만 수정 가능
+        if (role != Role.MASTER && addressE.getDeletedAt() != null) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
+
         //Master가 아닌 사람이 다른 사람의 주소를 수정하지 못하도록
         if (role != Role.MASTER &&
                 !addressE.getUserId().equals(userId)) {
