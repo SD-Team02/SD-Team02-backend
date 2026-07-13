@@ -36,13 +36,13 @@ public class AddressController {
     private final AddressService addressService;
     private final UserService userService;
 
-    @RequestMapping("/create")
     @Operation(summary = "주소 등록")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "주소 등록 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
-    @PostMapping
+    @PostMapping("/create")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<ResCreateAddressDto>> createAddress(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @Valid @RequestBody ReqCreateAddressDto reqCreateAddressDto)
@@ -56,13 +56,14 @@ public class AddressController {
                 .body(ApiResponse.success("주소 등록 성공",resCreateAddressDto));
     }
 
-    @GetMapping
-    @PreAuthorize("isAuthenticated()")
+
+    @Operation(summary = "주소 목록 조회")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "주소 목록 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "인증 필요"),
     })
-    @Operation(summary = "주소 목록 조회")
+    @GetMapping
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<PageResponse<ResAddressListDto>>> getAddressList(
         @AuthenticationPrincipal UserDetailsImpl userDetails,
         @RequestParam(defaultValue = "0") int page,
@@ -79,14 +80,13 @@ public class AddressController {
                 .ok(ApiResponse.success("주소가 조회되었습니다." , addressList));
     }
 
-
-    @PreAuthorize("isAuthenticated()")
+    @Operation(summary = "주소 수정")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "주소 목록 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "인증 필요"),
     })
-    @PutMapping("/{addressId}")
-    @Operation(summary = "주소 수정")
+    @PutMapping("/{addressId}/update")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<ResUpdateAddressDto>> updateAddress(
             @PathVariable UUID addressId,
             @AuthenticationPrincipal UserDetailsImpl userDetails,
@@ -100,12 +100,14 @@ public class AddressController {
         return ResponseEntity.ok(ApiResponse.success("주소가 성공적으로 수정되었습니다.",resUpdateAddressDto));
     }
 
+
     @Operation(summary = "주소 삭제")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "삭제 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
-    @DeleteMapping("/delete/{addressId}")
+    @DeleteMapping("/{addressId}/delete")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<ResDeleteAddressDto>> deleteAddress(
             @PathVariable UUID addressId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
@@ -117,13 +119,14 @@ public class AddressController {
         return ResponseEntity.ok(ApiResponse.success("주소 삭제 성공",resDeleteAddressDto));
     }
 
+
     @Operation(summary = "주소 상세")
-    @PreAuthorize("isAuthenticated()")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "주소 목록 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "인증 필요"),
     })
-    @GetMapping("/{addressId}")
+    @GetMapping("/{addressId}/info")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<ResAddressListDto>> getAddress(
             @PathVariable UUID addressId,
             @AuthenticationPrincipal UserDetailsImpl userDetails

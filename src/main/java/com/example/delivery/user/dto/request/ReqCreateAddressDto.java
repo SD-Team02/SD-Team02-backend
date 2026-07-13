@@ -9,11 +9,8 @@ import lombok.Setter;
 
 @Getter
 @Setter
+@Schema(description = "주소 등록 요청")
 public class ReqCreateAddressDto {
-
-//    @NotNull
-//    @Schema(description = "주소 고유 Id", example = "aaaa-bb11-ccc")
-//    private UUID addressId;
 
     @NotBlank(message = "주소를 입력해 주세요.")
     @Size(max = 150, message = "주소는 150자 이하로 입력해주세요.")

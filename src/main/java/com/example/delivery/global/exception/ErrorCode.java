@@ -60,7 +60,7 @@ public enum ErrorCode {
     CATEGORY_ALREADY_DELETED(HttpStatus.CONFLICT, "CATEGORY_409_2", "이미 삭제된 카테고리입니다."),
 
     // Address (주소)
-    ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "USER_404_1", "주소를 찾을 수 없습니다.");
+    ADDRESS_NOT_FOUND(HttpStatus.NOT_FOUND, "ADDRESS_404_1", "주소를 찾을 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

@@ -28,8 +28,6 @@ public class AddressService {
 
     private final AddressRepository addressRepository;
 
-
-
     @Transactional
     public ResCreateAddressDto createAddress(Long userId, ReqCreateAddressDto requestDto) {
 
@@ -45,7 +43,7 @@ public class AddressService {
         return new ResCreateAddressDto(addressE.getAddressId());
     }
 
-    @Transactional
+    @Transactional(readOnly = true)
     public PageResponse<ResAddressListDto> getAddressList(Long userId, Role role, Pageable pageable) {
 
         Page<Address> addressPage;
@@ -119,8 +117,8 @@ public class AddressService {
 
     }
 
-    //주소 상세 정보 [ 주소 단건 검색]
-    @Transactional
+    //주소 상세 정보 [주소 단건 검색]
+    @Transactional(readOnly = true)
     public ResAddressListDto addressDetail(UUID addressId, Long userId, Role role) {
 
         Address address = addressRepository.findById(addressId)
