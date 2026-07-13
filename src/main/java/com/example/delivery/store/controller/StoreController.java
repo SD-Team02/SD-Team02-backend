@@ -4,6 +4,7 @@ import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.region.dto.response.ResGetRegionDto;
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
+import com.example.delivery.store.dto.request.ReqUpdateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
 import com.example.delivery.store.dto.response.ResGetStoreDto;
 import com.example.delivery.store.entity.StoreStatus;
@@ -88,5 +89,25 @@ public class StoreController {
     public ResponseEntity<ApiResponse<ResGetStoreDto>> getStore(@PathVariable UUID storeId){
         ResGetStoreDto resGetStoreDto = storeService.getStore(storeId);
         return ResponseEntity.ok(ApiResponse.success("가게 상세 조회 성공",resGetStoreDto));
+    }
+
+    @Operation(summary = "가게 수정")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "가게 수정 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 본문을 읽을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "가게를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "지역을 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PreAuthorize("hasAnyAuthority('OWNER','MANAGER', 'MASTER')")
+    @PutMapping("/{storeId}")
+    public ResponseEntity<ApiResponse<ResGetStoreDto>> updateStore(
+            @AuthenticationPrincipal UserDetailsImpl userDetails,
+            @PathVariable UUID storeId,
+            @Valid @RequestBody ReqUpdateStoreDto reqUpdateStoreDto){
+        Long userId = userDetails.getUser().getUserId();
+        ResGetStoreDto resGetStoreDto = storeService.updateStore(reqUpdateStoreDto, storeId, userId);
+        return ResponseEntity.ok(ApiResponse.success("가게 수정 성공",resGetStoreDto));
     }
 }

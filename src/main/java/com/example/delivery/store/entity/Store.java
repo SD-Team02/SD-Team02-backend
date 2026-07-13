@@ -83,7 +83,15 @@ public class Store extends BaseEntity {
         this.categoryId = categoryId;
     }
 
+    public void changeRegion(UUID regionId) {
+        this.regionId = regionId;
+    }
+
     public void changeUser(Long userId) {
         this.userId = userId;
+    }
+
+    public void changeStatus(StoreStatus status) {
+        this.status = status;
     }
 }

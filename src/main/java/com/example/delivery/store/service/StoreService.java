@@ -3,6 +3,7 @@ package com.example.delivery.store.service;
 import com.example.delivery.category.repository.CategoryRepository;
 import com.example.delivery.region.repository.RegionRepository;
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
+import com.example.delivery.store.dto.request.ReqUpdateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
 import com.example.delivery.store.dto.response.ResGetStoreDto;
 import com.example.delivery.store.entity.Store;
@@ -10,12 +11,14 @@ import com.example.delivery.store.entity.StoreStatus;
 import com.example.delivery.store.repository.StoreRepository;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Objects;
 import java.util.UUID;
 
 @Service
@@ -95,6 +98,46 @@ public class StoreService {
     public ResGetStoreDto getStore(UUID storeId) {
         Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+        String categoryName = categoryRepository.findById(store.getCategoryId())
+                .map(category -> category.getName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        String regionName = regionRepository.findById(store.getRegionId())
+                .map(region -> region.getName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+
+        return ResGetStoreDto.from(store, categoryName, regionName);
+    }
+
+    //가게 수정
+    @Transactional
+    public ResGetStoreDto updateStore(ReqUpdateStoreDto reqUpdateStoreDto, UUID storeId, Long userId) {
+        Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+        //기존 데이터와 다른 경우에만 검증 수행
+        if (!Objects.equals(store.getCategoryId(), reqUpdateStoreDto.getCategoryId())) {
+            categoryRepository.findById(reqUpdateStoreDto.getCategoryId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+            store.changeCategory(reqUpdateStoreDto.getCategoryId());
+        }
+
+        if (!Objects.equals(store.getRegionId(), reqUpdateStoreDto.getRegionId())) {
+            regionRepository.findById(reqUpdateStoreDto.getRegionId())
+                    .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+            store.changeRegion(reqUpdateStoreDto.getRegionId());
+        }
+
+        store.changeInfo(
+                reqUpdateStoreDto.getName(),
+                reqUpdateStoreDto.getAddress(),
+                reqUpdateStoreDto.getPhone(),
+                reqUpdateStoreDto.getOpenTime(),
+                reqUpdateStoreDto.getCloseTime()
+        );
+
+        store.changeStatus(reqUpdateStoreDto.getStatus());
 
         String categoryName = categoryRepository.findById(store.getCategoryId())
                 .map(category -> category.getName())
