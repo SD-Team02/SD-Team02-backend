@@ -130,7 +130,7 @@ public class PaymentController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 환불 완료되었거나 5분이 경과한 주문건입니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "결제 취소 권한 거부")
     })
-    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'OWNER', 'MANAGER')")
+    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'OWNER', 'MANAGER', 'MASTER')")
     public ResponseEntity<ApiResponse<Void>> cancelPayment(
             @PathVariable("paymentId") UUID paymentId,
             @AuthenticationPrincipal UserDetailsImpl userDetails
