@@ -60,6 +60,15 @@ public enum ErrorCode {
     CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND, "CATEGORY_404_1", "카테고리를 찾을 수 없습니다."),
     CATEGORY_ALREADY_DELETED(HttpStatus.CONFLICT, "CATEGORY_409_2", "이미 삭제된 카테고리입니다."),
 
+
+    // Region (지역 담당)
+    REGION_ALREADY_EXISTS(HttpStatus.CONFLICT, "REGION_409_1", "이미 존재하는 지역입니다."),
+    REGION_NOT_FOUND(HttpStatus.NOT_FOUND, "REGION_404_1", "지역을 찾을 수 없습니다."),
+    REGION_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "REGION_404_2", "상위 지역을 찾을 수 없습니다."),
+    REGION_ALREADY_DELETED(HttpStatus.CONFLICT, "REGION_409_2", "이미 삭제된 지역입니다."),
+    REGION_HAS_CHILDREN(HttpStatus.CONFLICT, "REGION_409_3", "하위 지역이 존재하여 삭제할 수 없습니다."),
+    REGION_CIRCULAR_REFERENCE(HttpStatus.CONFLICT, "REGION_409_4", "순환 참조가 발생하여 지역을 변경할 수 없습니다."),
+
     // Menu
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "MENU_404_1", "메뉴를 찾을 수 없습니다."),
     MENU_HIDDEN(HttpStatus.NOT_FOUND, "MENU_404_2", "메뉴가 숨김 처리 되어있습니다.");
