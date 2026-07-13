@@ -38,6 +38,7 @@ public enum ErrorCode {
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE_404_1", "가게를 찾을 수 없습니다."),
     STORE_ACCESS_DENIED(HttpStatus.FORBIDDEN, "STORE_403_1", "본인 소유의 가게가 아닙니다."),
     STORE_ALREADY_EXISTS(HttpStatus.CONFLICT, "STORE_409_1", "이미 존재하는 가게입니다."),
+    STORE_ALREADY_DELETED(HttpStatus.CONFLICT, "STORE_409_2", "이미 삭제된 가게입니다."),
 
     // Order (주문 담당 참고용 예시)
     ORDER_NOT_FOUND(HttpStatus.NOT_FOUND, "ORDER_404_1", "주문을 찾을 수 없습니다."),

@@ -5,6 +5,7 @@ import com.example.delivery.region.repository.RegionRepository;
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
 import com.example.delivery.store.dto.request.ReqUpdateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
+import com.example.delivery.store.dto.response.ResDeleteStoreDto;
 import com.example.delivery.store.dto.response.ResGetStoreDto;
 import com.example.delivery.store.entity.Store;
 import com.example.delivery.store.entity.StoreStatus;
@@ -148,5 +149,21 @@ public class StoreService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
 
         return ResGetStoreDto.from(store, categoryName, regionName);
+    }
+
+    //가게 삭제
+    @Transactional
+    public ResDeleteStoreDto deleteStore(UUID storeId, Long userId) {
+        Store store = storeRepository.findById(storeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+        if(store.isDeleted()){
+            throw new BusinessException(ErrorCode.STORE_ALREADY_DELETED);
+        }
+
+        String storeName = store.getName();
+
+        store.softDelete(userId);
+        return ResDeleteStoreDto.from(store.getStoreId(), storeName);
     }
 }
