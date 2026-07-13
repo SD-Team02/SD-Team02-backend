@@ -22,11 +22,15 @@ import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Pageable;
 
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
+import com.example.delivery.store.dto.request.ReqUpdateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
+import com.example.delivery.store.dto.response.ResDeleteStoreDto;
+import com.example.delivery.store.dto.response.ResGetStoreDto;
 import com.example.delivery.store.dto.response.ResSearchStoreDto;
 import com.example.delivery.store.entity.Store;
 import com.example.delivery.store.entity.StoreStatus;
 import com.example.delivery.store.repository.StoreRepository;
+import com.example.delivery.user.entity.Role;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -233,5 +237,102 @@ class StoreServiceTest {
 
         // then
         assertTrue(result.isEmpty());
+    }
+
+    @Test
+    @DisplayName("가게 수정 실패 - 본인 소유의 가게가 아님")
+    void updateStore_Fail_NotOwner() {
+        // given
+        UUID storeId = UUID.randomUUID();
+        Store store = new Store(1L, UUID.randomUUID(), UUID.randomUUID(), "가게", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+        when(storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)).thenReturn(Optional.of(store));
+
+        ReqUpdateStoreDto updateDto = new ReqUpdateStoreDto(
+                store.getCategoryId(), store.getRegionId(), "수정된 가게", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0), StoreStatus.OPEN
+        );
+
+        // when & then
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> storeService.updateStore(updateDto, storeId, 2L, Role.OWNER));
+        assertEquals(ErrorCode.STORE_ACCESS_DENIED, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("가게 수정 성공 - 본인 소유의 가게")
+    void updateStore_Success_Owner() {
+        // given
+        UUID storeId = UUID.randomUUID();
+        Store store = new Store(1L, UUID.randomUUID(), UUID.randomUUID(), "가게", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+        when(storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)).thenReturn(Optional.of(store));
+        when(categoryRepository.findById(store.getCategoryId())).thenReturn(Optional.of(new Category("한식")));
+        when(regionRepository.findById(store.getRegionId())).thenReturn(Optional.of(new Region("강남구")));
+
+        ReqUpdateStoreDto updateDto = new ReqUpdateStoreDto(
+                store.getCategoryId(), store.getRegionId(), "수정된 가게", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0), StoreStatus.OPEN
+        );
+
+        // when
+        ResGetStoreDto result = storeService.updateStore(updateDto, storeId, 1L, Role.OWNER);
+
+        // then
+        assertEquals("수정된 가게", result.getName());
+    }
+
+    @Test
+    @DisplayName("가게 수정 성공 - MANAGER는 본인 소유가 아니어도 수정 가능")
+    void updateStore_Success_ManagerBypassesOwnership() {
+        // given
+        UUID storeId = UUID.randomUUID();
+        Store store = new Store(1L, UUID.randomUUID(), UUID.randomUUID(), "가게", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+        when(storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)).thenReturn(Optional.of(store));
+        when(categoryRepository.findById(store.getCategoryId())).thenReturn(Optional.of(new Category("한식")));
+        when(regionRepository.findById(store.getRegionId())).thenReturn(Optional.of(new Region("강남구")));
+
+        ReqUpdateStoreDto updateDto = new ReqUpdateStoreDto(
+                store.getCategoryId(), store.getRegionId(), "수정된 가게", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0), StoreStatus.OPEN
+        );
+
+        // when
+        ResGetStoreDto result = storeService.updateStore(updateDto, storeId, 999L, Role.MANAGER);
+
+        // then
+        assertEquals("수정된 가게", result.getName());
+    }
+
+    @Test
+    @DisplayName("가게 삭제 실패 - 본인 소유의 가게가 아님")
+    void deleteStore_Fail_NotOwner() {
+        // given
+        UUID storeId = UUID.randomUUID();
+        Store store = new Store(1L, UUID.randomUUID(), UUID.randomUUID(), "가게", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+        when(storeRepository.findById(storeId)).thenReturn(Optional.of(store));
+
+        // when & then
+        BusinessException exception = assertThrows(BusinessException.class,
+                () -> storeService.deleteStore(storeId, 2L, Role.OWNER));
+        assertEquals(ErrorCode.STORE_ACCESS_DENIED, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("가게 삭제 성공 - 본인 소유의 가게")
+    void deleteStore_Success_Owner() {
+        // given
+        UUID storeId = UUID.randomUUID();
+        Store store = new Store(1L, UUID.randomUUID(), UUID.randomUUID(), "가게", "주소",
+                "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
+        when(storeRepository.findById(storeId)).thenReturn(Optional.of(store));
+
+        // when
+        ResDeleteStoreDto result = storeService.deleteStore(storeId, 1L, Role.OWNER);
+
+        // then
+        assertEquals("가게", result.getName());
     }
 }

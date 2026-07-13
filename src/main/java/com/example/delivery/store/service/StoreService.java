@@ -14,6 +14,7 @@ import com.example.delivery.store.entity.StoreStatus;
 import com.example.delivery.store.repository.StoreRepository;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
+import com.example.delivery.user.entity.Role;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -116,9 +117,11 @@ public class StoreService {
 
     //가게 수정
     @Transactional
-    public ResGetStoreDto updateStore(ReqUpdateStoreDto reqUpdateStoreDto, UUID storeId, Long userId) {
+    public ResGetStoreDto updateStore(ReqUpdateStoreDto reqUpdateStoreDto, UUID storeId, Long userId, Role role) {
         Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+        validateStoreAccess(store, userId, role);
 
         //기존 데이터와 다른 경우에만 검증 수행
         if (!Objects.equals(store.getCategoryId(), reqUpdateStoreDto.getCategoryId())) {
@@ -156,9 +159,11 @@ public class StoreService {
 
     //가게 삭제
     @Transactional
-    public ResDeleteStoreDto deleteStore(UUID storeId, Long userId) {
+    public ResDeleteStoreDto deleteStore(UUID storeId, Long userId, Role role) {
         Store store = storeRepository.findById(storeId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+        validateStoreAccess(store, userId, role);
 
         if(store.isDeleted()){
             throw new BusinessException(ErrorCode.STORE_ALREADY_DELETED);
@@ -200,5 +205,21 @@ public class StoreService {
 
                     return ResSearchStoreDto.from(store, categoryName, regionName);
                 });
+    }
+
+
+    // OWNER는 본인 소유 가게만, MANAGER·MASTER는 전체 접근 허용
+    private void validateStoreAccess(Store store, Long userId, Role role) {
+        switch (role) {
+            case OWNER -> {
+                if (!store.getUserId().equals(userId)) {
+                    throw new BusinessException(ErrorCode.STORE_ACCESS_DENIED);
+                }
+            }
+            case MANAGER, MASTER -> {
+                // 전체 접근 허용
+            }
+            default -> throw new BusinessException(ErrorCode.STORE_ACCESS_DENIED);
+        }
     }
 }

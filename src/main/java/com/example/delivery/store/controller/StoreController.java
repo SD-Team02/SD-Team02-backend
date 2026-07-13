@@ -11,6 +11,7 @@ import com.example.delivery.store.dto.response.ResGetStoreDto;
 import com.example.delivery.store.dto.response.ResSearchStoreDto;
 import com.example.delivery.store.entity.StoreStatus;
 import com.example.delivery.store.service.StoreService;
+import com.example.delivery.user.entity.Role;
 import com.example.delivery.user.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -34,7 +35,7 @@ import java.util.UUID;
 @RequiredArgsConstructor
 @Tag(name = "가게", description = "가게 API")
 public class StoreController {
-    private final StoreService storeService;;
+    private final StoreService storeService;
 
     @Operation(summary = "가게 등록")
     @ApiResponses({
@@ -60,7 +61,7 @@ public class StoreController {
 
     @Operation(summary = "전체 가게 조회")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "전체 가게 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "전체 가게 조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "정렬 기준이 올바르지 않습니다."),
     })
     @PreAuthorize("hasAnyAuthority('CUSTOMER','OWNER','MANAGER', 'MASTER')")
@@ -102,6 +103,7 @@ public class StoreController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "카테고리를 찾을 수 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "지역을 찾을 수 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "해당 요청에 대한 권한이 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 소유의 가게가 아닙니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     @PreAuthorize("hasAnyAuthority('OWNER','MANAGER', 'MASTER')")
@@ -111,7 +113,8 @@ public class StoreController {
             @PathVariable UUID storeId,
             @Valid @RequestBody ReqUpdateStoreDto reqUpdateStoreDto){
         Long userId = userDetails.getUser().getUserId();
-        ResGetStoreDto resGetStoreDto = storeService.updateStore(reqUpdateStoreDto, storeId, userId);
+        Role role = userDetails.getUser().getRole();
+        ResGetStoreDto resGetStoreDto = storeService.updateStore(reqUpdateStoreDto, storeId, userId, role);
         return ResponseEntity.ok(ApiResponse.success("가게 수정 성공",resGetStoreDto));
     }
 
@@ -120,6 +123,7 @@ public class StoreController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "가게 삭제 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 삭제된 가게입니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "해당 요청에 대한 권한이 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 소유의 가게가 아닙니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
     @PreAuthorize("hasAnyAuthority('OWNER','MANAGER', 'MASTER')")
@@ -128,7 +132,8 @@ public class StoreController {
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @PathVariable UUID storeId){
         Long userId = userDetails.getUser().getUserId();
-        ResDeleteStoreDto resDeleteStoreDto = storeService.deleteStore(storeId,userId);
+        Role role = userDetails.getUser().getRole();
+        ResDeleteStoreDto resDeleteStoreDto = storeService.deleteStore(storeId, userId, role);
         return ResponseEntity.ok(ApiResponse.success("가게 삭제 성공",resDeleteStoreDto));
     }
 

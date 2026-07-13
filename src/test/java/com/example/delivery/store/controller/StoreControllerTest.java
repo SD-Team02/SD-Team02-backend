@@ -9,6 +9,7 @@ import com.example.delivery.store.dto.response.ResGetStoreDto;
 import com.example.delivery.store.dto.response.ResSearchStoreDto;
 import com.example.delivery.store.entity.StoreStatus;
 import com.example.delivery.store.service.StoreService;
+import com.example.delivery.user.entity.Role;
 import com.example.delivery.user.entity.User;
 import com.example.delivery.user.security.UserDetailsImpl;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -113,6 +114,7 @@ public class StoreControllerTest {
     private SecurityContextImpl ownerSecurityContext() {
         User user = mock(User.class);
         when(user.getUserId()).thenReturn(1L);
+        when(user.getRole()).thenReturn(Role.OWNER);
         UserDetailsImpl userDetails = new UserDetailsImpl(user);
 
         UsernamePasswordAuthenticationToken authentication = new UsernamePasswordAuthenticationToken(
@@ -192,7 +194,7 @@ public class StoreControllerTest {
                 .name("수정된 가게")
                 .status(StoreStatus.OPEN)
                 .build();
-        when(storeService.updateStore(any(ReqUpdateStoreDto.class), eq(storeId), any(Long.class))).thenReturn(resDto);
+        when(storeService.updateStore(any(ReqUpdateStoreDto.class), eq(storeId), any(Long.class), any(Role.class))).thenReturn(resDto);
 
         mockMvc.perform(put("/api/stores/{storeId}", storeId)
                         .with(securityContext(ownerSecurityContext()))
@@ -209,7 +211,7 @@ public class StoreControllerTest {
         ReqUpdateStoreDto dto = new ReqUpdateStoreDto(
                 UUID.randomUUID(), UUID.randomUUID(), "가게", "주소", "010-1234-5678", LocalTime.now(), LocalTime.now(), StoreStatus.OPEN
         );
-        when(storeService.updateStore(any(ReqUpdateStoreDto.class), eq(storeId), any(Long.class)))
+        when(storeService.updateStore(any(ReqUpdateStoreDto.class), eq(storeId), any(Long.class), any(Role.class)))
                 .thenThrow(new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
         mockMvc.perform(put("/api/stores/{storeId}", storeId)
@@ -217,6 +219,23 @@ public class StoreControllerTest {
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(objectMapper.writeValueAsString(dto)))
                 .andExpect(status().isNotFound());
+    }
+
+    @Test
+    @DisplayName("가게 수정 실패 - 본인 소유의 가게가 아님")
+    void updateStore_Fail_NotOwner() throws Exception {
+        UUID storeId = UUID.randomUUID();
+        ReqUpdateStoreDto dto = new ReqUpdateStoreDto(
+                UUID.randomUUID(), UUID.randomUUID(), "가게", "주소", "010-1234-5678", LocalTime.now(), LocalTime.now(), StoreStatus.OPEN
+        );
+        when(storeService.updateStore(any(ReqUpdateStoreDto.class), eq(storeId), any(Long.class), any(Role.class)))
+                .thenThrow(new BusinessException(ErrorCode.STORE_ACCESS_DENIED));
+
+        mockMvc.perform(put("/api/stores/{storeId}", storeId)
+                        .with(securityContext(ownerSecurityContext()))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(dto)))
+                .andExpect(status().isForbidden());
     }
 
     @Test
@@ -232,12 +251,24 @@ public class StoreControllerTest {
     void deleteStore_Success_OwnerAccess() throws Exception {
         UUID storeId = UUID.randomUUID();
         ResDeleteStoreDto resDto = ResDeleteStoreDto.from(storeId, "가게");
-        when(storeService.deleteStore(eq(storeId), any(Long.class))).thenReturn(resDto);
+        when(storeService.deleteStore(eq(storeId), any(Long.class), any(Role.class))).thenReturn(resDto);
 
         mockMvc.perform(delete("/api/stores/{storeId}", storeId)
                         .with(securityContext(ownerSecurityContext())))
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.data.name").value("가게"));
+    }
+
+    @Test
+    @DisplayName("가게 삭제 실패 - 본인 소유의 가게가 아님")
+    void deleteStore_Fail_NotOwner() throws Exception {
+        UUID storeId = UUID.randomUUID();
+        when(storeService.deleteStore(eq(storeId), any(Long.class), any(Role.class)))
+                .thenThrow(new BusinessException(ErrorCode.STORE_ACCESS_DENIED));
+
+        mockMvc.perform(delete("/api/stores/{storeId}", storeId)
+                        .with(securityContext(ownerSecurityContext())))
+                .andExpect(status().isForbidden());
     }
 
     @Test
