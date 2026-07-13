@@ -172,7 +172,7 @@ class PaymentServiceTest {
         BusinessException exception = assertThrows(BusinessException.class, () -> {
             paymentService.cancel(paymentId, userId, role);
         });
-        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_STATUS_TRANSITION_INVALID);
+        assertThat(exception.getErrorCode()).isEqualTo(ErrorCode.ORDER_NOT_CANCELED_YET);
     }
 
     @Test
