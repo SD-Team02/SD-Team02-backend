@@ -48,7 +48,7 @@ class StoreServiceTest {
     void setUp() {
         userId = 1L;
         reqDto = new ReqCreateStoreDto(
-            UUID.randomUUID(), UUID.randomUUID(), "가게이름", "주소", "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0), null
+                UUID.randomUUID(), UUID.randomUUID(), "가게이름", "주소", "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0), null
         );
     }
 
@@ -59,7 +59,7 @@ class StoreServiceTest {
         when(storeRepository.findByName(reqDto.getName())).thenReturn(Optional.empty());
         when(categoryRepository.findById(reqDto.getCategoryId())).thenReturn(Optional.of(new Category("한식")));
         when(regionRepository.findById(reqDto.getRegionId())).thenReturn(Optional.of(new Region("강남구")));
-        
+
         // when
         ResCreateStoreDto result = storeService.createStore(userId, reqDto);
 

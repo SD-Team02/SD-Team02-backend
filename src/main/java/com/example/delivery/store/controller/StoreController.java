@@ -1,8 +1,11 @@
 package com.example.delivery.store.controller;
 
 import com.example.delivery.global.common.response.ApiResponse;
+import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
+import com.example.delivery.store.dto.response.ResGetStoreDto;
+import com.example.delivery.store.entity.StoreStatus;
 import com.example.delivery.store.service.StoreService;
 import com.example.delivery.user.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
@@ -10,14 +13,15 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequestMapping("/api/stores")
@@ -45,5 +49,27 @@ public class StoreController {
         return ResponseEntity
                 .status(HttpStatus.CREATED)
                 .body(ApiResponse.success("가게 등록 성공",resCreateStoreDto));
+    }
+
+    @Operation(summary = "전체 가게 조회")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "전체 가게 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "정렬 기준이 올바르지 않습니다."),
+    })
+    @PreAuthorize("hasAnyAuthority('CUSTOMER','OWNER','MANAGER', 'MASTER')")
+    @GetMapping
+    ResponseEntity<ApiResponse<PageResponse<?>>> getAllStores(
+            @RequestParam(defaultValue = "OPEN")StoreStatus status,
+            @PageableDefault(
+                    page = 0,
+                    size = 10,
+                    sort = "createdAt",
+                    direction = Sort.Direction.DESC
+            )
+            Pageable pageable){
+
+        Page<ResGetStoreDto> resStores = storeService.getAllStores(status,pageable);
+
+        return ResponseEntity.ok(ApiResponse.success("전체 가게 조회 성공", PageResponse.from(resStores)));
     }
 }
