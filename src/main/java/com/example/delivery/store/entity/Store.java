@@ -39,7 +39,7 @@ public class Store extends BaseEntity {
     @Column(name = "region_id", nullable = false)
     private UUID regionId;
 
-    @Column(name = "name", length = 100, nullable = false)
+    @Column(name = "name", length = 100, nullable = false, unique = true)
     private String name;
 
     @Column(name = "address", nullable = false)
@@ -81,5 +81,9 @@ public class Store extends BaseEntity {
 
     public void changeCategory(UUID categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public void changeUser(Long userId) {
+        this.userId = userId;
     }
 }

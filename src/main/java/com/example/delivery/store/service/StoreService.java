@@ -1,8 +1,66 @@
 package com.example.delivery.store.service;
 
+import com.example.delivery.category.repository.CategoryRepository;
+import com.example.delivery.store.dto.request.ReqCreateStoreDto;
+import com.example.delivery.store.dto.response.ResCreateStoreDto;
+import com.example.delivery.store.entity.Store;
+import com.example.delivery.store.repository.StoreRepository;
+import com.example.delivery.global.exception.BusinessException;
+import com.example.delivery.global.exception.ErrorCode;
+import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
+@RequiredArgsConstructor
 public class StoreService {
+    private final StoreRepository storeRepository;
+    private final CategoryRepository categoryRepository;
 
+    //가게 등록
+    @Transactional
+    public ResCreateStoreDto createStore(Long userId, ReqCreateStoreDto reqCreateStoreDto) {
+        
+        Store store = storeRepository.findByName(reqCreateStoreDto.getName())
+                .map(existingStore -> {
+                    if (!existingStore.isDeleted()) {
+                        throw new BusinessException(ErrorCode.STORE_ALREADY_EXISTS);
+                    }
+                    existingStore.restore(); // CASE3: deletedAt != null 인 경우 복구
+                    
+                    // 기존 엔티티라면 정보 갱신
+                    existingStore.changeInfo(
+                        reqCreateStoreDto.getName(),
+                        reqCreateStoreDto.getAddress(),
+                        reqCreateStoreDto.getPhone(),
+                        reqCreateStoreDto.getOpenTime(),
+                        reqCreateStoreDto.getCloseTime()
+                    );
+                    existingStore.changeCategory(reqCreateStoreDto.getCategoryId());
+                    existingStore.changeUser(userId);
+                    return existingStore;
+                })
+                .orElseGet(() -> new Store(
+                        userId,
+                        reqCreateStoreDto.getCategoryId(),
+                        reqCreateStoreDto.getRegionId(),
+                        reqCreateStoreDto.getName(),
+                        reqCreateStoreDto.getAddress(),
+                        reqCreateStoreDto.getPhone(),
+                        reqCreateStoreDto.getOpenTime(),
+                        reqCreateStoreDto.getCloseTime()
+                ));
+
+        storeRepository.save(store);
+
+        // 3. 응답 DTO 반환
+        String categoryName = categoryRepository.findById(store.getCategoryId())
+                .map(category -> category.getName())
+                .orElse(null);
+        
+        //TODO : RegionRepository가 아직 없으므로 임시로 ID 사용
+        String regionName = "강남구";
+
+        return ResCreateStoreDto.from(store, categoryName, regionName);
+    }
 }
