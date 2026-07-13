@@ -2,6 +2,7 @@ package com.example.delivery.store.controller;
 
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
+import com.example.delivery.region.dto.response.ResGetRegionDto;
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
 import com.example.delivery.store.dto.response.ResGetStoreDto;
@@ -22,6 +23,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.UUID;
 
 @RestController
 @RequestMapping("/api/stores")
@@ -71,5 +74,19 @@ public class StoreController {
         Page<ResGetStoreDto> resStores = storeService.getAllStores(status,pageable);
 
         return ResponseEntity.ok(ApiResponse.success("전체 가게 조회 성공", PageResponse.from(resStores)));
+    }
+
+    @Operation(summary = "가게 상세 조회")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "가게 상세 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "가게를 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
+    })
+    @PreAuthorize("hasAnyAuthority('CUSTOMER','OWNER','MANAGER', 'MASTER')")
+    @GetMapping("/{storeId}")
+    public ResponseEntity<ApiResponse<ResGetStoreDto>> getStore(@PathVariable UUID storeId){
+        ResGetStoreDto resGetStoreDto = storeService.getStore(storeId);
+        return ResponseEntity.ok(ApiResponse.success("가게 상세 조회 성공",resGetStoreDto));
     }
 }

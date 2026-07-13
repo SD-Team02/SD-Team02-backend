@@ -16,6 +16,8 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.UUID;
+
 @Service
 @RequiredArgsConstructor
 public class StoreService {
@@ -86,5 +88,22 @@ public class StoreService {
 
                     return ResGetStoreDto.from(store, categoryName, regionName);
                 });
+    }
+
+    //가게 상세 조회
+    @Transactional(readOnly = true)
+    public ResGetStoreDto getStore(UUID storeId) {
+        Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+        String categoryName = categoryRepository.findById(store.getCategoryId())
+                .map(category -> category.getName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        String regionName = regionRepository.findById(store.getRegionId())
+                .map(region -> region.getName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
+
+        return ResGetStoreDto.from(store, categoryName, regionName);
     }
 }
