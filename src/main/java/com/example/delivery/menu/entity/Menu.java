@@ -64,6 +64,10 @@ public class Menu extends BaseEntity {
         this.price = price;
     }
 
+    public void changeName(String menuName) {
+        this.menuName = menuName;
+    }
+
     /** 상품 숨김. soft delete(삭제)와는 별개의 상태 전환이다. */
     public void hide() {
         this.menuStatus = MenuStatus.HIDDEN;
