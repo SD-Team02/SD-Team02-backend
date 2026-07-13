@@ -16,6 +16,7 @@ import com.example.delivery.region.entity.RegionStatus;
 import com.querydsl.core.Tuple;
 import com.querydsl.core.types.Order;
 import com.querydsl.core.types.OrderSpecifier;
+import com.querydsl.core.types.dsl.BooleanExpression;
 import com.querydsl.jpa.impl.JPAQueryFactory;
 
 import lombok.RequiredArgsConstructor;
@@ -39,7 +40,7 @@ public class RegionRepositoryImpl implements RegionRepositoryCustom {
                         region.parentRegionId.eq(parent.regionId)
                                 .and(parent.deletedAt.isNull()))
                 .where(
-                        region.status.eq(status),
+                        statusEq(status),
                         region.deletedAt.isNull()
                 )
                 .orderBy(toOrderSpecifiers(pageable))
@@ -55,13 +56,18 @@ public class RegionRepositoryImpl implements RegionRepositoryCustom {
                 .select(region.count())
                 .from(region)
                 .where(
-                        region.status.eq(status),
+                        statusEq(status),
                         region.deletedAt.isNull()
                 )
                 .fetchOne();
 
         return new PageImpl<>(content, pageable, total != null ? total : 0L);
     }
+
+    private BooleanExpression statusEq(RegionStatus status) {
+        return status != null ? region.status.eq(status) : null;
+    }
+
 
     // Pageable의 정렬을 QueryDSL OrderSpecifier로 변환 (허용 필드만, 기본값 createdAt DESC)
     private OrderSpecifier<?>[] toOrderSpecifiers(Pageable pageable) {
