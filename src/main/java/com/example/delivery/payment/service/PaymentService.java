@@ -48,12 +48,12 @@ public class PaymentService {
 
         // 주문 가격과 실제 결제 가격 비교
         if (!order.getTotalPrice().equals(requestDto.getAmount())) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);      //#TODO : 에러코드 추가 요망 PAYMENT_AMOUNT_MISMATCH
+            throw new BusinessException(ErrorCode.PAYMENT_AMOUNT_MISMATCH);
         }
 
         // 주분 결제 중복 검사
         if (paymentRepository.existsByOrderOrderId(requestDto.getOrderId())) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);     //#TODO : 에러코드 추가 요망 PAYMENT_ALREADY_EXISTS
+            throw new BusinessException(ErrorCode.PAYMENT_ALREADY_EXISTS);
         }
 
         Payment payment = new Payment(order, requestDto.getPaymentMethod(), requestDto.getCardCompany(), requestDto.getAmount());
@@ -102,14 +102,14 @@ public class PaymentService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.PAYMENT_NOT_FOUND));
 
         if (payment.getStatus() == PaymentStatus.CANCELED) {
-            throw new BusinessException(ErrorCode.ENTITY_NOT_FOUND); // #TODO : 에러코드 추가 요망 ALREADY_CANCELED_PAYMENT
+            throw new BusinessException(ErrorCode.ALREADY_CANCELED_PAYMENT);
         }
 
         validatePaymentAccess(payment, userId, role);
 
         Order order = payment.getOrder();
         if (order.getStatus() != OrderStatus.CANCELED) {
-            throw new BusinessException(ErrorCode.ORDER_STATUS_TRANSITION_INVALID); // #TODO : 에러코드 추가 요망 ORDER_NOT_CANCELED_YET
+            throw new BusinessException(ErrorCode.ORDER_NOT_CANCELED_YET);
         }
 
         payment.softDelete(userId);
