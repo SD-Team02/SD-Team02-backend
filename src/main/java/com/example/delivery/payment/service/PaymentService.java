@@ -16,6 +16,7 @@ import com.example.delivery.store.entity.Store;
 import com.example.delivery.store.repository.StoreRepository;
 import com.example.delivery.user.entity.Role;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -47,11 +48,17 @@ public class PaymentService {
 
         // 주문 가격과 실제 결제 가격 비교
         if (!order.getTotalPrice().equals(requestDto.getAmount())) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);      //#TODO : 에러코드 추가 요망 PAYMENT_AMOUNT_MISMATCH
+        }
+
+        // 주분 결제 중복 검사
+        if (paymentRepository.existsByOrderOrderId(requestDto.getOrderId())) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);     //#TODO : 에러코드 추가 요망 PAYMENT_ALREADY_EXISTS
         }
 
         Payment payment = new Payment(order, requestDto.getPaymentMethod(), requestDto.getCardCompany(), requestDto.getAmount());
         payment.approve();
+
         paymentRepository.save(payment);
         order.changeStatus(OrderStatus.ACCEPTED); // 주문 상태 ACCEPTED 처리
 

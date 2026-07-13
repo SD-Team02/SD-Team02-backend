@@ -17,6 +17,8 @@ import java.util.UUID;
 @Repository
 public interface PaymentRepository extends JpaRepository<Payment, UUID> {
 
+    boolean existsByOrderOrderId(UUID orderId);
+
     @EntityGraph(attributePaths = {"order"})
     Optional<Payment> findByPaymentIdAndDeletedAtIsNull(UUID paymentId);
 
