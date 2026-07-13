@@ -101,8 +101,9 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom{
 
     // 상태 필터링 - menuStatus 기준
     private BooleanExpression menuStatusEq(String menuStatus) {
-
-        if (!StringUtils.hasText(menuStatus) || menuStatus.equals("ALL")) {
+        // 2026-07-13
+        // 코드리뷰 수정
+        if (!StringUtils.hasText(menuStatus) || menuStatus.equals("ALL") || menuStatus.equals("null")) {
             return null; // 필터 없음 - 전체 조회
         }
 

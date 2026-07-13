@@ -30,14 +30,19 @@ public class ImageService {
     private final ImageRepository imageRepository;
     private final S3StorageService s3StorageService;
 
+    // 2026-07-13
+    // 코드리뷰 수정
     @Transactional
     public List<ImageResponseDto> imageUpLoad (ImageRequestDto request, List<MultipartFile> files) {
-        // 이미지를 S3에 업로드
-        List<S3UploadResult> uploadResults = s3StorageService.upload(files);
 
-        List<ImageResponseDto> responses = new ArrayList<>();
+        List<S3UploadResult> uploadResults = new ArrayList<>();
 
         try {
+            // 이미지를 S3에 업로드
+            uploadResults = s3StorageService.upload(files);
+
+            List<ImageResponseDto> responses = new ArrayList<>();
+
             // 이미지 엔티티 생성
            for (int i = 0; i < uploadResults.size(); i++) {
                S3UploadResult uploadResult = uploadResults.get(i);
@@ -53,6 +58,9 @@ public class ImageService {
                        uploadResult.fileSize(),
                        i+1
                );
+               // 업로드가 먼저 되었을때 숨김 처리
+               if(StringUtils.hasText(imageFile.getRefId())) imageFile.hide();
+
                // 이미지 정보를 DB에 저장
                ImageFile savedImage = imageRepository.save(imageFile);
 
@@ -110,25 +118,23 @@ public class ImageService {
     @Transactional
     public void deleteImage(UUID imageId, JpaAuditingConfig.CustomUserDetails userDetails) {
 
-        ImageFile image = imageRepository.findById(imageId)
+        ImageFile imageFile = imageRepository.findByIdAndDeletedAtIsNull(imageId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_IMAGE_DELETE_FILE));
 
         //권한 확인
-        if(!(userDetails.getUserId()).equals(image.getCreatedBy()) /*|| !("MASTER").equals(userDetails.getRole) || !("MANAGER").equals(userDetails.getRole)*/){
+        if(!(userDetails.getUserId()).equals(imageFile.getCreatedBy()) /*|| !("MASTER").equals(userDetails.getRole) || !("MANAGER").equals(userDetails.getRole)*/){
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
         // 2. 이미 삭제된 이미지라면 다시 삭제할 수 없도록 막는다.
-        if (image.isDeleted() || image.getDisplayStatus() == ImageDisplayStatus.HIDDEN) {
+        if (imageFile.isDeleted() || imageFile.getDisplayStatus() == ImageDisplayStatus.HIDDEN) {
             throw new BusinessException(ErrorCode.IMAGE_DELETE_FILE);
         }
 
-        image.hide();
-
-        image.softDelete(userDetails.getUserId());
+        imageFile.softDelete(userDetails.getUserId());
 
     }
-    // 업로드된 이미지에 refId 값넣가
+    // 업로드된 이미지에 refId 값넣기
     @Transactional
     public void connectMenuImage(UUID imageId, String refId) {
 
@@ -138,18 +144,22 @@ public class ImageService {
         }
 
         // 이미지 조회
-        ImageFile imageFile = imageRepository.findById(imageId)
+        ImageFile imageFile = imageRepository.findByIdAndDeletedAtIsNull(imageId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
         // 메뉴 이미지로 연결
         imageFile.changeRefId(
                 refId
         );
+
+        // refId 들어왔을때 이미지 보이게 변경
+        if(!StringUtils.hasText(imageFile.getRefId())) imageFile.show();
+
     }
     // LLM이 이미지 받을수 있도록 서비스 생성
     public Resource getImageResource(@NotNull(message = "메뉴 이미지 ID는 필수입니다.") UUID imageId) {
          // 이미지 조회
-        ImageFile image = imageRepository.findById(imageId)
+        ImageFile image = imageRepository.findByIdAndDeletedAtIsNull(imageId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ENTITY_NOT_FOUND));
 
         // 삭제된 이미지 확인

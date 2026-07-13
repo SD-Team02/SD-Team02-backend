@@ -7,12 +7,14 @@ import com.example.delivery.menu.dto.request.AiGenerateRequestDto;
 import com.example.delivery.menu.dto.request.AiHistoryRequestDto;
 import com.example.delivery.menu.dto.response.AiHistoryResponseDto;
 import com.example.delivery.menu.service.AiHistoryServices;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -29,18 +31,25 @@ public class AiHistoryController {
 
     // 사용자 AI 히스토리 검색
     @GetMapping("/aihistory")
+    @Tag(name = "AI 히스토리", description = "AI 히스토리 조회 API")
     public ResponseEntity<ApiResponse<List<AiHistoryResponseDto>>> getAiHistoryList(
-           @RequestParam Long createdBy){
+           @RequestParam Long createdBy,
+           @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails){
+
 
         log.info("사용자 AI 히스토리 검색 createdBy : " + createdBy);
-        List<AiHistoryResponseDto> aiHistoryList = aiHistoryServices.getAiHistoryList(createdBy);
+        List<AiHistoryResponseDto> aiHistoryList = aiHistoryServices.getAiHistoryList(createdBy,userDetails);
 
         return ResponseEntity.ok(
                 ApiResponse.success("AI 히스토리 조회가 되었습니다", aiHistoryList)
         );
     }
     // 관리자 AI 히스토리 검색
+    // 2026-07-13
+    // 코드리뷰 수정
     @GetMapping("/aihistory/admin")
+    @PreAuthorize("hasAnyAuthority('MANAGER','MASTER')")
+    @Tag(name = "AI 히스토리", description = "관리자용 AI 히스토리 조회 API")
     public ResponseEntity<ApiResponse<PageResponse<AiHistoryResponseDto>>> getAminAiHistoryList(
            AiHistoryRequestDto aiHistoryRequestDto,
            @PageableDefault(size = 10) Pageable pageable,

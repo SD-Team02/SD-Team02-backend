@@ -6,6 +6,7 @@ import com.example.delivery.image.dto.response.ImageResponseDto;
 import com.example.delivery.image.service.ImageService;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.HttpStatus;
@@ -28,6 +29,7 @@ public class ImageController {
     private final ObjectMapper objectMapper;
 
     @PostMapping(value = "/images", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    @Tag(name = "이미지", description = "이미지 업로드 API")
     public ResponseEntity<List<ImageResponseDto>> imageUpload(
             @RequestPart("imageRequestDto") String imageRequestDtoJson,
             @RequestPart("files") List<MultipartFile> files
@@ -44,12 +46,14 @@ public class ImageController {
     }
     //이미지 가져오기
     @GetMapping("/images")
+    @Tag(name = "이미지", description = "이미지 조회 API")
     public ResponseEntity<List<ImageResponseDto>> getImages(
             ImageRequestDto imageRequestDto
     ) {
         return ResponseEntity.ok(imageService.getImages(imageRequestDto));
     }
     //이미지 삭제
+    @Tag(name = "이미지", description = "이미지 삭제 API")
     @DeleteMapping("/images/{imageId}")
     public ResponseEntity<Void> deleteImage(
             @PathVariable UUID imageId,

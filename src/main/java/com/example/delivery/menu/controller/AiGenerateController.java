@@ -4,6 +4,7 @@ import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.config.JpaAuditingConfig;
 import com.example.delivery.menu.dto.request.AiGenerateRequestDto;
 import com.example.delivery.menu.service.AiGenerateService;
+import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -24,6 +25,7 @@ public class AiGenerateController {
 
     // AI 답변생성
     @PostMapping("/generate-description")
+    @Tag(name = "AI 답변", description = "AI 답변 API")
     public ResponseEntity<ApiResponse<String>> generateDescription(
             @RequestBody @Valid AiGenerateRequestDto aiGenerateRequestDto,
             @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails){

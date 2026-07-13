@@ -59,6 +59,7 @@ public enum ErrorCode {
     MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "MENU_404_1", "메뉴를 찾을 수 없습니다."),
     MENU_HIDDEN(HttpStatus.BAD_REQUEST, "MENU_400_2","주문한 메뉴가 숨김 처리 되어있습니다."),
     INVALID_MENU_STATUS(HttpStatus.BAD_REQUEST, "MENU_400_3","잘못된 값이 들어왔습니다."),
+    MENU_IS_DELETE(HttpStatus.BAD_REQUEST, "MENU_400_4","메뉴가 이미 삭제되었습니다."),
     MENU_SERVER_ERROR(HttpStatus.INTERNAL_SERVER_ERROR, "MENU_500_1","메뉴 등록에 실패 하였습니다."),
     // image
     INVALID_IMAGE_FILE(HttpStatus.BAD_REQUEST, "IMAGE_400_1", "업로드할 이미지가 없습니다."),

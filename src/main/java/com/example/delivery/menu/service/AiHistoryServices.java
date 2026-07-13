@@ -2,6 +2,8 @@ package com.example.delivery.menu.service;
 
 import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.config.JpaAuditingConfig;
+import com.example.delivery.global.exception.BusinessException;
+import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.menu.dto.request.AiHistoryRequestDto;
 import com.example.delivery.menu.dto.response.AiHistoryResponseDto;
 import com.example.delivery.menu.entity.AiHistory;
@@ -19,9 +21,16 @@ public class AiHistoryServices {
 
     private final AiHistoryRepository aiHistoryRepository;
 
-    public List<AiHistoryResponseDto> getAiHistoryList(Long createdBy) {
+    public List<AiHistoryResponseDto> getAiHistoryList(Long createdBy, JpaAuditingConfig.CustomUserDetails userDetails) {
 
         List<AiHistory> histories = aiHistoryRepository.findTop3ByCreatedByOrderByCreatedAtDesc(createdBy);
+
+        // 권한 확인
+        // 2026-07-13
+        // 코드리뷰 수정
+        if (userDetails.getUserId().equals(histories.get(0).getCreatedBy())) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
 
         return histories.stream()
                 .map(AiHistoryResponseDto::from)

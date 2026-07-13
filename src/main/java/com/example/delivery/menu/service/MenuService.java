@@ -36,10 +36,12 @@ public class MenuService {
         // 일딴 확인 없이 create
         // store테이블 에서 sotorId 검색 없으면 에러출력
         // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
-        //Store store = storeRepository.findById(menuRequestDto.getStoreId())
-        //    .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
-
-        //validateMenuAccess(store, userDetails);
+        // 2026-07-13
+        // 코드리뷰 수정
+//        Store store = storeRepository.findByIdAndDeletedAtIsNull(menuRequestDto.getStoreId())
+//            .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+//
+//        validateMenuAccess(store, userDetails);
 
          Menu menu = new Menu(
             menuRequestDto.getStoreId(),        // UUID
@@ -91,10 +93,10 @@ public class MenuService {
         // 일딴 확인 없이 update
         // menu테이블 에서 menuId 검색 없으면 에러출력
         // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
-        Menu menu = menuRepository.findById(menuRequestDto.getMenuId())
+        Menu menu = menuRepository.findByIdAndDeletedAtIsNull(menuRequestDto.getMenuId())
             .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
-        //Store store = storeRepository.findById(menu.getStoreId())
+        //Store store = storeRepository.findByIdAndDeletedAtIsNull(menu.getStoreId())
         //         .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
         //validateMenuAccess(store, userDetails);
 
@@ -113,9 +115,11 @@ public class MenuService {
             menu.changeName(menuRequestDto.getMenuName());
         }
 
-        if ("HIDDEN".equals(menuRequestDto.getMenuStatus())) {
+        // 2026-07-13
+        // 코드리뷰 수정
+        if ("HIDDEN".equals(menuRequestDto.getMenuStatus().toString())) {
             menu.hide();
-        } else if ("NORMAL".equals(menuRequestDto.getMenuStatus())) {
+        } else if ("NORMAL".equals(menuRequestDto.getMenuStatus().toString())) {
             menu.show();
         }
 
@@ -124,15 +128,21 @@ public class MenuService {
     @Transactional
     public void deleteMenu(UUID menuId, JpaAuditingConfig.CustomUserDetails userDetails) {
         // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
-        Menu menu = menuRepository.findById(menuId)
+        Menu menu = menuRepository.findByIdAndDeletedAtIsNull(menuId)
             .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
-        //Store store = storeRepository.findById(menu.getStoreId())
+        //Store store = storeRepository.findByIdAndDeletedAtIsNull(menu.getStoreId())
         //        .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
         //validateMenuAccess(store, userDetails);
 
-        menu.softDelete(userDetails.getUserId());
+        // 2026-07-13
+        // 코드리뷰 수정
+        if(!menu.isDeleted()) {
+            menu.softDelete(userDetails.getUserId());
+        }else{
+            throw new BusinessException(ErrorCode.MENU_IS_DELETE);
+        }
     }
 
     // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
