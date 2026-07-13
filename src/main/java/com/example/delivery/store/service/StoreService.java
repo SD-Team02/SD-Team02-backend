@@ -1,6 +1,7 @@
 package com.example.delivery.store.service;
 
 import com.example.delivery.category.repository.CategoryRepository;
+import com.example.delivery.region.repository.RegionRepository;
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
 import com.example.delivery.store.entity.Store;
@@ -16,6 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class StoreService {
     private final StoreRepository storeRepository;
     private final CategoryRepository categoryRepository;
+    private final RegionRepository regionRepository;
 
     //가게 등록
     @Transactional
@@ -56,10 +58,11 @@ public class StoreService {
         // 3. 응답 DTO 반환
         String categoryName = categoryRepository.findById(store.getCategoryId())
                 .map(category -> category.getName())
-                .orElse(null);
-        
-        //TODO : RegionRepository가 아직 없으므로 임시로 ID 사용
-        String regionName = "강남구";
+                .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
+
+        String regionName = regionRepository.findById(store.getRegionId())
+                .map(region -> region.getName())
+                .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
 
         return ResCreateStoreDto.from(store, categoryName, regionName);
     }
