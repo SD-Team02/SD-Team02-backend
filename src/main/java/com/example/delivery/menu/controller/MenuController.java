@@ -44,14 +44,17 @@ public class MenuController {
             ApiResponse.successMessage("메뉴 등록이 완료되었습니다.")
         );
     }
-    // 사용자 메뉴 검색
+    // 사용자 가게 메뉴 검색, 단건 검색
     @GetMapping("/menus")
-    @Tag(name = "메뉴", description = "메뉴 조회 API")
+    @Tag(name = "메뉴", description = "가게 메뉴 조회 API")
     public ResponseEntity<ApiResponse<List<MenuResponseDto>>> getMenuList(
-           @RequestParam UUID storeId){
+            @RequestParam(required = false) UUID storeId,
+            @RequestParam(required = false) UUID menuId){
 
         log.info("사용자 메뉴 검색 storeId : " + storeId);
-        List<MenuResponseDto> menuList = menuService.getMenuList(storeId);
+        log.info("사용자 메뉴 검색 menuId : " + menuId);
+
+        List<MenuResponseDto> menuList = menuService.getMenuList(storeId, menuId);
 
         return ResponseEntity.ok(
                 ApiResponse.success("메뉴 조회가 되었습니다", menuList)
@@ -92,7 +95,7 @@ public class MenuController {
             ApiResponse.successMessage("메뉴 수정이 완료되었습니다.")
         );
     }
-    //메뉴삭제
+    // 메뉴삭제
     // 2026-07-13
     // 코드리뷰 수정
     @DeleteMapping("/menus")

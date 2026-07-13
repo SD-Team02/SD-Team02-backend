@@ -12,6 +12,7 @@ public interface MenuRepository extends JpaRepository<Menu, UUID>, MenuRepositor
 
     // 메뉴 가져오기
     List<Menu> findByStoreIdAndDeletedAtIsNull(UUID storeId);
+    Optional<Menu> findByMenuIdAndDeletedAtIsNull(UUID storeId);
 
     Optional<Menu> findByIdAndDeletedAtIsNull(UUID menuId);
 }

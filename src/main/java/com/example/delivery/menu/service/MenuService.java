@@ -4,8 +4,6 @@ import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.config.JpaAuditingConfig;
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
-import com.example.delivery.image.entity.ImageFile;
-import com.example.delivery.image.repository.ImageRepository;
 import com.example.delivery.image.service.ImageService;
 import com.example.delivery.menu.dto.request.MenuRequestDto;
 import com.example.delivery.menu.dto.response.MenuResponseDto;
@@ -27,7 +25,6 @@ import java.util.UUID;
 public class MenuService {
 
     private final MenuRepository menuRepository;
-    private final AiHistoryRepository aiHistoryRepository;
     private final ImageService imageService;
 
     @Transactional
@@ -66,13 +63,21 @@ public class MenuService {
     }
 
     @Transactional(readOnly = true)
-    public List<MenuResponseDto> getMenuList(UUID storeId) {
+    public List<MenuResponseDto> getMenuList(UUID storeId, UUID menuId) {
 
-        List<Menu> menus = menuRepository.findByStoreIdAndDeletedAtIsNull(storeId);
+        if(menuId != null) {
+            Menu menu = menuRepository.findByMenuIdAndDeletedAtIsNull(menuId)
+                    .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
+            return List.of(MenuResponseDto.from(menu));
+        }
 
-        return menus.stream()
+        if(storeId != null) {
+            return menuRepository.findByStoreIdAndDeletedAtIsNull(storeId).stream()
                 .map(MenuResponseDto::from)
                 .toList();
+        }
+
+        throw new BusinessException(ErrorCode.INVALID_MENU_STATUS);
     }
 
     @Transactional(readOnly = true)
