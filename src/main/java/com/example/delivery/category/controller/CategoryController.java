@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
@@ -38,6 +39,7 @@ public class CategoryController {
 //            #TO-DO : 모든 인증이 필요한 API에 공통으로 적용되는 어노테이션을 별도로 생성하거나, 전역 필터 단에서 처리되도록 구조화하는 방식을 고려
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @PostMapping
     public ResponseEntity<ApiResponse<ResCreateCategoryDto>> createCategory(@Valid @RequestBody ReqCreateCategoryDto reqCreateCategoryDto){
         ResCreateCategoryDto resCreateCategoryDto = categoryService.createCategory(reqCreateCategoryDto);
@@ -94,6 +96,7 @@ public class CategoryController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 본문을 읽을 수 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @PutMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<ResUpdateCategoryDto>> updateCategory(
             @PathVariable UUID categoryId,
@@ -109,6 +112,7 @@ public class CategoryController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "요청 타입이 올바르지 않습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
+    @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @DeleteMapping("/{categoryId}")
     public ResponseEntity<ApiResponse<ResDeleteCategoryDto>> deleteCategory(@PathVariable UUID categoryId) {
         ResDeleteCategoryDto resDeleteCategoryDto = categoryService.deleteCategory(categoryId);
