@@ -112,7 +112,6 @@ public class PaymentService {
             throw new BusinessException(ErrorCode.ORDER_NOT_CANCELED_YET);
         }
 
-        payment.softDelete(userId);
         payment.cancel();
     }
 
