@@ -8,6 +8,13 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+  autoconfigure:
+    exclude:
+      # 테스트는 H2를 쓰고(pgvector 미지원), CI에서 Transformers ONNX 임베딩 모델 로딩이
+      # 실패할 수 있어(ORT_INVALID_PROTOBUF) 두 자동 설정을 테스트에서 제외한다.
+      # 대신 TestAiConfig(src/test)가 가짜 EmbeddingModel/VectorStore 빈을 등록한다.
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+      - org.springframework.ai.model.transformers.autoconfigure.TransformersEmbeddingModelAutoConfiguration
 
 app:
   jwt:
