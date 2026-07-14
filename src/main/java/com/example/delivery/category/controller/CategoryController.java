@@ -11,6 +11,7 @@ import com.example.delivery.category.service.CategoryService;
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
 import com.example.delivery.global.common.util.PageableFactory;
+import com.example.delivery.user.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 import java.util.UUID;
 
@@ -114,8 +116,11 @@ public class CategoryController {
     })
     @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
     @DeleteMapping("/{categoryId}")
-    public ResponseEntity<ApiResponse<ResDeleteCategoryDto>> deleteCategory(@PathVariable UUID categoryId) {
-        ResDeleteCategoryDto resDeleteCategoryDto = categoryService.deleteCategory(categoryId);
+    public ResponseEntity<ApiResponse<ResDeleteCategoryDto>> deleteCategory(
+            @PathVariable UUID categoryId,
+            @AuthenticationPrincipal UserDetailsImpl userDetails) {
+        Long userId = userDetails.getUser().getUserId();
+        ResDeleteCategoryDto resDeleteCategoryDto = categoryService.deleteCategory(categoryId, userId);
         return ResponseEntity.ok(ApiResponse.success("카테고리 삭제 성공", resDeleteCategoryDto));
     }
 }
