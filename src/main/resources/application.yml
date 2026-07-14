@@ -10,6 +10,7 @@ spring:
     open-in-view: false
     hibernate:
       ddl-auto: validate
+    defer-datasource-initialization: true # Hibernate가 테이블 만든 "후" schema.sql이 실행되도록 순서 보장 (부분 유니크 인덱스용)
     properties:
       hibernate:
         format_sql: true

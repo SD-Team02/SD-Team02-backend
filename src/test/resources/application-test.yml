@@ -15,6 +15,12 @@ spring:
       # 대신 TestAiConfig(src/test)가 가짜 EmbeddingModel/VectorStore 빈을 등록한다.
       - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
       - org.springframework.ai.model.transformers.autoconfigure.TransformersEmbeddingModelAutoConfiguration
+      # 테스트엔 실제 AI_API_KEY가 없어서 Google GenAI Chat 클라이언트 생성이 실패한다
+      # (project-id/키 없이는 아예 빈 생성이 안 됨). TestAiConfig가 가짜 ChatModel을 등록한다.
+      - org.springframework.ai.model.google.genai.autoconfigure.chat.GoogleGenAiChatAutoConfiguration
+  sql:
+    init:
+      mode: never
 
 app:
   jwt:
