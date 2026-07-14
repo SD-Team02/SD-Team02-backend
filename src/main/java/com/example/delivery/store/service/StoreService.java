@@ -22,6 +22,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.util.StringUtils;
 
 import java.util.List;
 import java.util.Map;
@@ -167,7 +168,7 @@ public class StoreService {
     //가게 검색
     @Transactional(readOnly = true)
     public Page<ResSearchStoreDto> searchStores(String keyword, UUID categoryId, StoreStatus status, Pageable pageable) {
-        if (keyword == null && categoryId == null) {
+        if (!StringUtils.hasText(keyword) && categoryId == null) {
             throw new BusinessException(ErrorCode.STORE_SEARCH_CONDITION_REQUIRED);
         }
 
