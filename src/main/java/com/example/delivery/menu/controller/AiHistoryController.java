@@ -33,6 +33,7 @@ public class AiHistoryController {
     // 사용자 AI 히스토리 검색
     @GetMapping("/aihistory")
     @Tag(name = "AI 히스토리", description = "AI 히스토리 조회 API")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<AiHistoryResponseDto>>> getAiHistoryList(
            @RequestParam Long createdBy,
            @AuthenticationPrincipal UserDetailsImpl userDetails){

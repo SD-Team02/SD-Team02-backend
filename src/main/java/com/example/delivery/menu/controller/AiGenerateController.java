@@ -28,7 +28,7 @@ public class AiGenerateController {
     // AI 답변생성
     @PostMapping("/generate-description")
     @Tag(name = "AI 답변", description = "AI 답변 API")
-    @PreAuthorize("hasAnyAuthority('CUSTOMER','OWNER','MANAGER','MASTER')")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<String>> generateDescription(
             @RequestBody @Valid AiGenerateRequestDto aiGenerateRequestDto
 //            @AuthenticationPrincipal UserDetailsImpl userDetails
