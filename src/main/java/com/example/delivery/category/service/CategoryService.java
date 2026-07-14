@@ -57,7 +57,8 @@ public class CategoryService {
     //카테고리 수정
     @Transactional
     public ResUpdateCategoryDto updateCategory(UUID categoryId, ReqUpdateCategoryDto reqUpdateCategoryDto) {
-        Category category = categoryRepository.findById(categoryId)
+        // 삭제된 카테고리는 수정 대상에서 제외 (soft delete 정합성)
+        Category category = categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
         if (!category.getName().equals(reqUpdateCategoryDto.getName())) {
@@ -74,7 +75,7 @@ public class CategoryService {
 
     //카테고리 삭제
     @Transactional
-    public ResDeleteCategoryDto deleteCategory(UUID categoryId) {
+    public ResDeleteCategoryDto deleteCategory(UUID categoryId, Long userId) {
         Category category = categoryRepository.findById(categoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
@@ -82,7 +83,7 @@ public class CategoryService {
             throw new BusinessException(ErrorCode.CATEGORY_ALREADY_DELETED);
         }
 
-        category.softDelete(0L); // TODO: 실제 로그인한 유저 ID를 넣어주어야 함
+        category.softDelete(userId);
         return ResDeleteCategoryDto.from(category);
     }
 
