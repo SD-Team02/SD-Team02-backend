@@ -58,6 +58,8 @@ public class StoreService {
                     );
                     existingStore.changeCategory(reqCreateStoreDto.getCategoryId());
                     existingStore.changeUser(userId);
+                    existingStore.changeRegion(reqCreateStoreDto.getRegionId());
+                    existingStore.changeStatus(reqCreateStoreDto.getStatus());
                     return existingStore;
                 })
                 .orElseGet(() -> new Store(
