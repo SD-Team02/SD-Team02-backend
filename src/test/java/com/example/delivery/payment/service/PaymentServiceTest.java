@@ -125,7 +125,7 @@ class PaymentServiceTest {
     }
 
     @Test
-    @DisplayName("결제 취소(Soft Delete) - 성공")
+    @DisplayName("결제 취소 - 성공")
     void cancelPayment_Success() {
         // given
         UUID paymentId = UUID.randomUUID();
@@ -134,10 +134,10 @@ class PaymentServiceTest {
 
         Order order = new Order(userId, UUID.randomUUID(), "서울 주소", "상세 주소", 25000);
         ReflectionTestUtils.setField(order, "orderId", UUID.randomUUID());
-        ReflectionTestUtils.setField(order, "status", OrderStatus.CANCELED); // 주문 취소 완료 상태 선결
+        ReflectionTestUtils.setField(order, "status", OrderStatus.CANCELED); // 주문은 이미 취소된 상태
 
         Payment payment = new Payment(order, "CARD", "국민카드", 25000);
-        payment.approve();
+        payment.approve(); // 처음은 SUCCESS 상태
         ReflectionTestUtils.setField(payment, "paymentId", paymentId);
 
         when(paymentRepository.findByPaymentIdAndDeletedAtIsNull(paymentId)).thenReturn(Optional.of(payment));
@@ -147,12 +147,10 @@ class PaymentServiceTest {
 
         // then
         assertThat(payment.getStatus()).isEqualTo(PaymentStatus.CANCELED);
-        assertThat(payment.getDeletedAt()).isNotNull();
-        assertThat(payment.getDeletedBy()).isEqualTo(userId);
     }
 
     @Test
-    @DisplayName("결제 취소(Soft Delete) - 주문이 취소 상태가 아닐 때 환불 거부 에러")
+    @DisplayName("결제 취소 - 주문이 취소 상태가 아닐 때 환불 거부 에러")
     void cancelPayment_ThrowException_OrderNotCanceled() {
         // given
         UUID paymentId = UUID.randomUUID();
@@ -161,7 +159,7 @@ class PaymentServiceTest {
 
         Order order = new Order(userId, UUID.randomUUID(), "서울 주소", "상세 주소", 25000);
         ReflectionTestUtils.setField(order, "orderId", UUID.randomUUID());
-        ReflectionTestUtils.setField(order, "status", OrderStatus.ACCEPTED); // 주문 접수 상태 오류 연출
+        ReflectionTestUtils.setField(order, "status", OrderStatus.ACCEPTED); // 주문이 여전히 ACCEPTED 상태인 상황
 
         Payment payment = new Payment(order, "CARD", "국민카드", 25000);
         ReflectionTestUtils.setField(payment, "paymentId", paymentId);
