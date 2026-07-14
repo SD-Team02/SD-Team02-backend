@@ -116,13 +116,8 @@ public class ImageService {
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_IMAGE_DELETE_FILE));
 
         //권한 확인
-        if(!(userDetails.getUser().getUserId()).equals(imageFile.getCreatedBy()) /*|| !("MASTER").equals(userDetails.getRole) || !("MANAGER").equals(userDetails.getRole)*/){
+        if(!(userDetails.getUser().getUserId()).equals(imageFile.getCreatedBy())){
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
-
-        // 2. 이미 삭제된 이미지라면 다시 삭제할 수 없도록 막는다.
-        if (imageFile.isDeleted() || imageFile.getDisplayStatus() == ImageDisplayStatus.HIDDEN) {
-            throw new BusinessException(ErrorCode.IMAGE_DELETE_FILE);
         }
 
         imageFile.softDelete(userDetails.getUser().getUserId());

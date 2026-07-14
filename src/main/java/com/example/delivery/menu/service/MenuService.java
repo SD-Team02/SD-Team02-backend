@@ -85,13 +85,7 @@ public class MenuService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<MenuResponseDto> getAdminMenuList(MenuRequestDto menuRequestDto, UserDetailsImpl userDetails, Pageable pageable) {
-        // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
-        Role role = userDetails.getUser().getRole();
-
-        if ("CUSTOMER".equals(role) || "OWNER".equals(role)) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
+    public PageResponse<MenuResponseDto> getAdminMenuList(MenuRequestDto menuRequestDto, Pageable pageable) {
 
         Page<Menu> menus = menuRepository.searchAdminMenus(menuRequestDto, pageable);
         Page<MenuResponseDto> dtoPage = menus.map(MenuResponseDto::new);
@@ -158,10 +152,9 @@ public class MenuService {
 
     // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
     private void validateMenuAccess(Store store, UserDetailsImpl userDetails) {
-        boolean isAdmin = "MASTER".equals(userDetails.getUser().getRole()) || "MANAGER".equals(userDetails.getUser().getRole());
         boolean isOwner = store.getUserId().equals(userDetails.getUser().getUserId());
 
-        if (!isAdmin && !isOwner) {
+        if (!isOwner) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
     }

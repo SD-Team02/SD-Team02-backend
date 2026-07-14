@@ -69,11 +69,10 @@ public class MenuController {
     @Tag(name = "메뉴", description = "관리자용 메뉴 조회 API")
     public ResponseEntity<ApiResponse<PageResponse<MenuResponseDto>>> getAdminMenuList(
            MenuRequestDto menuRequestDto,
-           @PageableDefault(size = 10) Pageable pageable,
-           @AuthenticationPrincipal UserDetailsImpl userDetails){
+           @PageableDefault(size = 10) Pageable pageable){
 
         log.info("관리자 메뉴 검색 menuRequestDto : " + menuRequestDto + "\nuserDetails : userDetails" + "\npageable : " + pageable);
-        PageResponse<MenuResponseDto> menuList = menuService.getAdminMenuList(menuRequestDto, userDetails, pageable);
+        PageResponse<MenuResponseDto> menuList = menuService.getAdminMenuList(menuRequestDto, pageable);
 
         return ResponseEntity.ok(
                 ApiResponse.success("메뉴 조회가 되었습니다", menuList)

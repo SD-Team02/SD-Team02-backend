@@ -39,10 +39,7 @@ public class AiHistoryServices {
     }
 
     public PageResponse<AiHistoryResponseDto> getAminAiHistoryList(AiHistoryRequestDto aiHistoryRequestDto, UserDetailsImpl userDetails, Pageable pageable) {
-        // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
-        if ("CUSTOMER".equals(userDetails.getUser().getRole()) || "OWNER".equals(userDetails.getUser().getRole())) {
-            throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        }
+
         Page<AiHistory> histories = aiHistoryRepository.searchAdminAiHistory(aiHistoryRequestDto, pageable);
         Page<AiHistoryResponseDto> dtoPage = histories.map(AiHistoryResponseDto::new);
         return PageResponse.from(dtoPage);
