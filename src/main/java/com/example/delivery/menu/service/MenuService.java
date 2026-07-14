@@ -98,7 +98,7 @@ public class MenuService {
         // 일딴 확인 없이 update
         // menu테이블 에서 menuId 검색 없으면 에러출력
         // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
-        Menu menu = menuRepository.findByIdAndDeletedAtIsNull(menuRequestDto.getMenuId())
+        Menu menu = menuRepository.findByMenuIdAndDeletedAtIsNull(menuRequestDto.getMenuId())
             .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
         //Store store = storeRepository.findByIdAndDeletedAtIsNull(menu.getStoreId())
@@ -133,7 +133,7 @@ public class MenuService {
     @Transactional
     public void deleteMenu(UUID menuId, JpaAuditingConfig.CustomUserDetails userDetails) {
         // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
-        Menu menu = menuRepository.findByIdAndDeletedAtIsNull(menuId)
+        Menu menu = menuRepository.findByMenuIdAndDeletedAtIsNull(menuId)
             .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
         //Store store = storeRepository.findByIdAndDeletedAtIsNull(menu.getStoreId())

@@ -6,7 +6,7 @@ spring:
     driver-class-name: org.postgresql.Driver
   jpa:
     hibernate:
-      ddl-auto: validate
+      ddl-auto: update # 임시: 아직 Flyway 미도입, 최초 스키마 생성을 위해 update 사용 (Flyway 도입 시 validate로 되돌릴 것)
     show-sql: false
   ai:
     google:
@@ -18,17 +18,16 @@ spring:
 
 springdoc:
   swagger-ui:
-    enabled: false # 운영 환경에서는 Swagger UI 비활성화 (또는 접근 제한 후 활성화)
+    enabled: true # 데모용으로 임시 활성화 (데모 끝나면 false로 되돌리는 것 권장)
   api-docs:
-    enabled: false
+    enabled: true
 
 app:
   jwt:
     secret: ${JWT_SECRET} # 기본값 없음: 운영에 값 안 넣으면 기동 자체가 실패하도록 함
-#  ai:
-#    gemini:
-#      api-key: ${GEMINI_API_KEY}
-
+  ai:
+    gemini:
+      api-key: ${AI_API_KEY}
 logging:
   level:
     root: WARN

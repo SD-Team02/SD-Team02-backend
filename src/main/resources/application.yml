@@ -41,13 +41,9 @@ app:
     token:
       master: ${MASTER_TOKEN}
       manager: ${MANAGER_TOKEN}
-<<<<<<< HEAD
       owner : ${OWNER_TOKEN}
-=======
-      owner: ${OWNER_TOKEN}
->>>>>>> a19dd7cf5f8480dc924ded3c7c292b42da20fc31
   ai:
-    max-input-length: 300 # 요청 텍스트 글자수 제한 (사용량 절감)
+      max-input-length: 300 # 요청 텍스트 글자수 제한 (사용량 절감)
 
   pagination:
     allowed-sizes: [10, 30, 50]

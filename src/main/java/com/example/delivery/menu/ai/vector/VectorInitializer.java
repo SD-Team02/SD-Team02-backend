@@ -7,6 +7,7 @@ import org.springframework.ai.reader.markdown.MarkdownDocumentReader;
 import org.springframework.ai.vectorstore.VectorStore;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
+import org.springframework.context.annotation.Profile;
 import org.springframework.stereotype.Component;
 
 import java.util.HashMap;
@@ -15,6 +16,7 @@ import java.util.Map;
 
 @Slf4j
 @Component
+@Profile("!test")
 @RequiredArgsConstructor
 public class VectorInitializer implements ApplicationRunner {
 

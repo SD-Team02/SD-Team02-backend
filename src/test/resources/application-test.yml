@@ -11,12 +11,26 @@ spring:
 
 app:
   jwt:
-    secret: test-secret-key-for-junit-only-not-for-production-use
+    secret: testsecretkeyforjunitonlynotforproductionuse
     access-token-expire-ms: 3600000
     refresh-token-expire-ms: 1209600000
+  auth:
+    token:
+      master: test-master-token
+      manager: test-manager-token
+      owner: test-owner-token
   ai:
     gemini:
       api-key: test-key
       model: gemini-2.5-flash-lite
       base-url: https://generativelanguage.googleapis.com/v1beta
       max-input-length: 300
+
+cloud:
+  aws:
+    access-key: test-access-key
+    secret-key: test-secret-key
+    region: ap-northeast-2
+    s3:
+      bucket: test-bucket
+      presigned-url-expiration: 1h
