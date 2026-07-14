@@ -4,14 +4,7 @@ import java.util.UUID;
 
 import com.example.delivery.global.common.entity.BaseEntity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -19,6 +12,7 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(name = "p_menu")
+@AttributeOverride(name = "createdBy", column = @Column(name = "created_by", nullable = false, updatable = false))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class Menu extends BaseEntity {
 

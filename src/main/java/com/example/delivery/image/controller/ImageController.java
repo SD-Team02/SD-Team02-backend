@@ -34,7 +34,7 @@ public class ImageController {
     @Tag(name = "이미지", description = "이미지 업로드 API")
     @PreAuthorize("isAuthenticated()")
     public ResponseEntity<List<ImageResponseDto>> imageUpload(
-            @RequestPart("imageRequestDto") String imageRequestDtoJson,
+            @RequestPart("imageRequestDto") String imageRequestDtoJson, // multipart 요청형식 때문에 String 사용 {"refType" : "MENU"}
             @RequestPart("files") List<MultipartFile> files
     ){
         // JSON 문자열을 요청 DTO로 변환
