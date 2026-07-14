@@ -212,24 +212,24 @@ public class StoreService {
     }
 
     private String resolveCategoryName(UUID categoryId) {
-        return categoryRepository.findById(categoryId)
+        return categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)
                 .map(Category::getName)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
     }
 
     private String resolveRegionName(UUID regionId) {
-        return regionRepository.findById(regionId)
+        return regionRepository.findByRegionIdAndDeletedAtIsNull(regionId)
                 .map(Region::getName)
                 .orElseThrow(() -> new BusinessException(ErrorCode.REGION_NOT_FOUND));
     }
 
     private Map<UUID, String> resolveCategoryNames(List<UUID> categoryIds) {
-        return categoryRepository.findAllById(categoryIds).stream()
+        return categoryRepository.findByCategoryIdInAndDeletedAtIsNull(categoryIds).stream()
                 .collect(Collectors.toMap(Category::getCategoryId, Category::getName));
     }
 
     private Map<UUID, String> resolveRegionNames(List<UUID> regionIds) {
-        return regionRepository.findAllById(regionIds).stream()
+        return regionRepository.findByRegionIdInAndDeletedAtIsNull(regionIds).stream()
                 .collect(Collectors.toMap(Region::getRegionId, Region::getName));
     }
 

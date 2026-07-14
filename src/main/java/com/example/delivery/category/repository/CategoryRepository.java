@@ -18,4 +18,5 @@ public interface CategoryRepository extends JpaRepository<Category, UUID> {
     Page<Category> findAllByStatusAndDeletedAtIsNull(CategoryStatus status, Pageable pageable);
     Optional<Category> findByCategoryIdAndDeletedAtIsNull(UUID categoryId);
     List<Category> findByNameContainingAndDeletedAtIsNull(String name);
+    List<Category> findByCategoryIdInAndDeletedAtIsNull(List<UUID> categoryIds);
 }
