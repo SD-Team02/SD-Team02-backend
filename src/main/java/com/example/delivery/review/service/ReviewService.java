@@ -47,7 +47,7 @@ public class ReviewService {
 	public ResCreateReviewDto createReview(Long userId, UUID orderId, ReqCreateReviewDto request) {
 
 		Order order = orderRepository.findById(orderId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
+				.orElseThrow(() -> new BusinessException(ErrorCode.ORDER_NOT_FOUND));
 
 		if (!order.getUserId().equals(userId)) {
 			throw new BusinessException(ErrorCode.ACCESS_DENIED);
@@ -62,11 +62,11 @@ public class ReviewService {
 		}
 
 		Review review = new Review(
-			order.getStoreId(),
-			orderId,
-			userId,
-			request.getRating(),
-			request.getContent()
+				order.getStoreId(),
+				orderId,
+				userId,
+				request.getRating(),
+				request.getContent()
 		);
 
 		// 최종 방어선은 DB 부분 유니크 인덱스(order_id where deleted_at is null)이며,
@@ -86,18 +86,18 @@ public class ReviewService {
 
 		// 가게 존재 검증
 		storeRepository.findById(storeId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+				.orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
 		Page<Review> reviewPage = reviewRepository.findByStoreIdAndDeletedAtIsNull(storeId, pageable);
 
 		// 페이지 내 작성자를 한 번에 조회해 Map으로 재사용 (username 건별 조회 N+1 방지)
 		List<Long> userIds = reviewPage.getContent().stream()
-			.map(Review::getUserId)
-			.distinct()
-			.toList();
+				.map(Review::getUserId)
+				.distinct()
+				.toList();
 
 		Map<Long, User> userMap = userRepository.findAllById(userIds).stream()
-			.collect(Collectors.toMap(User::getUserId, Function.identity()));
+				.collect(Collectors.toMap(User::getUserId, Function.identity()));
 
 		Page<ResReviewListDto> reviews = reviewPage.map(review -> {
 
@@ -107,12 +107,12 @@ public class ReviewService {
 			}
 
 			return ResReviewListDto.builder()
-				.reviewId(review.getReviewId())
-				.username(user.getUsername())
-				.rating(review.getRating())
-				.content(review.getContent())
-				.createdAt(review.getCreatedAt())
-				.build();
+					.reviewId(review.getReviewId())
+					.username(user.getUsername())
+					.rating(review.getRating())
+					.content(review.getContent())
+					.createdAt(review.getCreatedAt())
+					.build();
 		});
 
 		return PageResponse.from(reviews);
@@ -125,19 +125,19 @@ public class ReviewService {
 	public ResReviewDto getReview(UUID reviewId) {
 
 		Review review = reviewRepository.findByReviewIdAndDeletedAtIsNull(reviewId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+				.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
 		User user = userRepository.findById(review.getUserId())
-			.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
+				.orElseThrow(() -> new BusinessException(ErrorCode.USER_NOT_FOUND));
 
 		return ResReviewDto.builder()
-			.reviewId(review.getReviewId())
-			.storeId(review.getStoreId())
-			.username(user.getUsername())
-			.rating(review.getRating())
-			.content(review.getContent())
-			.createdAt(review.getCreatedAt())
-			.build();
+				.reviewId(review.getReviewId())
+				.storeId(review.getStoreId())
+				.username(user.getUsername())
+				.rating(review.getRating())
+				.content(review.getContent())
+				.createdAt(review.getCreatedAt())
+				.build();
 	}
 
 
@@ -145,7 +145,7 @@ public class ReviewService {
 	public ResUpdateReviewDto updateReview(Long userId, UUID reviewId, ReqUpdateReviewDto request) {
 
 		Review review = reviewRepository.findByReviewIdAndDeletedAtIsNull(reviewId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+				.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
 		// 본인 리뷰만 수정 가능 (CUSTOMER)
 		if (!review.getUserId().equals(userId)) {
@@ -163,7 +163,7 @@ public class ReviewService {
 	public void deleteReview(Long userId, Role role, UUID reviewId) {
 
 		Review review = reviewRepository.findByReviewIdAndDeletedAtIsNull(reviewId)
-			.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
+				.orElseThrow(() -> new BusinessException(ErrorCode.REVIEW_NOT_FOUND));
 
 		// CUSTOMER는 본인 리뷰만, MANAGER·MASTER는 전체 삭제 가능
 		if (role == Role.CUSTOMER && !review.getUserId().equals(userId)) {

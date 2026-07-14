@@ -7,6 +7,7 @@ import com.example.delivery.menu.dto.request.AiGenerateRequestDto;
 import com.example.delivery.menu.dto.request.AiHistoryRequestDto;
 import com.example.delivery.menu.dto.response.AiHistoryResponseDto;
 import com.example.delivery.menu.service.AiHistoryServices;
+import com.example.delivery.user.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -32,9 +33,10 @@ public class AiHistoryController {
     // 사용자 AI 히스토리 검색
     @GetMapping("/aihistory")
     @Tag(name = "AI 히스토리", description = "AI 히스토리 조회 API")
+    @PreAuthorize("isAuthenticated()")
     public ResponseEntity<ApiResponse<List<AiHistoryResponseDto>>> getAiHistoryList(
            @RequestParam Long createdBy,
-           @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails){
+           @AuthenticationPrincipal UserDetailsImpl userDetails){
 
 
         log.info("사용자 AI 히스토리 검색 createdBy : " + createdBy);
@@ -53,7 +55,7 @@ public class AiHistoryController {
     public ResponseEntity<ApiResponse<PageResponse<AiHistoryResponseDto>>> getAminAiHistoryList(
            AiHistoryRequestDto aiHistoryRequestDto,
            @PageableDefault(size = 10) Pageable pageable,
-           @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails){
+           @AuthenticationPrincipal UserDetailsImpl userDetails){
 
         log.info("관리자 AI 히스토리 검색 aiRequestDto : " + aiHistoryRequestDto + "\nuserDetails : userDetails" + "\npageable : " + pageable);
         PageResponse<AiHistoryResponseDto> aiHistoryList = aiHistoryServices.getAminAiHistoryList(aiHistoryRequestDto, userDetails, pageable);

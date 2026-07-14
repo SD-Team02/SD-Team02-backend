@@ -1,5 +1,9 @@
 package com.example.delivery.global.config;
 
+import org.springframework.ai.chat.messages.AssistantMessage;
+import org.springframework.ai.chat.model.ChatModel;
+import org.springframework.ai.chat.model.ChatResponse;
+import org.springframework.ai.chat.model.Generation;
 import org.springframework.ai.document.Document;
 import org.springframework.ai.embedding.Embedding;
 import org.springframework.ai.embedding.EmbeddingModel;
@@ -52,5 +56,15 @@ public class TestAiConfig {
     @Bean
     public VectorStore vectorStore(EmbeddingModel embeddingModel) {
         return SimpleVectorStore.builder(embeddingModel).build();
+    }
+
+    // AiConfig.chatClient(ChatModel)가 빈을 요구하는데, 테스트엔 실제 AI_API_KEY/GCP project-id가
+    // 없어서 GoogleGenAiChatAutoConfiguration이 실패한다(application-test.yml에서 제외 처리함).
+    // 대신 이 가짜 ChatModel로 컨텍스트 로딩만 통과시킨다 (실제 생성 품질 테스트 목적 아님).
+    @Bean
+    public ChatModel chatModel() {
+        return prompt -> new ChatResponse(
+                List.of(new Generation(new AssistantMessage("test response")))
+        );
     }
 }

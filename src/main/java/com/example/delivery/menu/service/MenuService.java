@@ -11,6 +11,9 @@ import com.example.delivery.menu.entity.Menu;
 import com.example.delivery.menu.repository.AiHistoryRepository;
 import com.example.delivery.menu.repository.MenuRepository;
 import com.example.delivery.store.entity.Store;
+import com.example.delivery.store.repository.StoreRepository;
+import com.example.delivery.user.entity.Role;
+import com.example.delivery.user.security.UserDetailsImpl;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -26,19 +29,20 @@ public class MenuService {
 
     private final MenuRepository menuRepository;
     private final ImageService imageService;
+    private final StoreRepository storeRepository;
 
     @Transactional
-    public void createMenu(MenuRequestDto menuRequestDto, JpaAuditingConfig.CustomUserDetails userDetails) {
+    public void createMenu(MenuRequestDto menuRequestDto, UserDetailsImpl userDetails) {
 
         // 일딴 확인 없이 create
         // store테이블 에서 sotorId 검색 없으면 에러출력
         // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
         // 2026-07-13
         // 코드리뷰 수정
-//        Store store = storeRepository.findByIdAndDeletedAtIsNull(menuRequestDto.getStoreId())
-//            .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
-//
-//        validateMenuAccess(store, userDetails);
+        Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(menuRequestDto.getStoreId())
+            .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+
+        validateMenuAccess(store, userDetails);
 
          Menu menu = new Menu(
             menuRequestDto.getStoreId(),        // UUID
@@ -81,11 +85,7 @@ public class MenuService {
     }
 
     @Transactional(readOnly = true)
-    public PageResponse<MenuResponseDto> getAdminMenuList(MenuRequestDto menuRequestDto, JpaAuditingConfig.CustomUserDetails userDetails, Pageable pageable) {
-        // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
-        //if ("CUSTOMER".equals(userDetails.getRole()) || "OWNER".equals(userDetails.getRole())) {
-        //    throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        //}
+    public PageResponse<MenuResponseDto> getAdminMenuList(MenuRequestDto menuRequestDto, Pageable pageable) {
 
         Page<Menu> menus = menuRepository.searchAdminMenus(menuRequestDto, pageable);
         Page<MenuResponseDto> dtoPage = menus.map(MenuResponseDto::new);
@@ -94,16 +94,16 @@ public class MenuService {
     }
 
     @Transactional
-    public void updateMenu(MenuRequestDto menuRequestDto, JpaAuditingConfig.CustomUserDetails userDetails) {
+    public void updateMenu(MenuRequestDto menuRequestDto, UserDetailsImpl userDetails) {
         // 일딴 확인 없이 update
         // menu테이블 에서 menuId 검색 없으면 에러출력
         // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
         Menu menu = menuRepository.findByMenuIdAndDeletedAtIsNull(menuRequestDto.getMenuId())
             .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
-        //Store store = storeRepository.findByIdAndDeletedAtIsNull(menu.getStoreId())
-        //         .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
-        //validateMenuAccess(store, userDetails);
+        Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(menu.getStoreId())
+                 .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+        validateMenuAccess(store, userDetails);
 
         // 엔티티가 가진 도메인 메서드로 필드만 변경
         // JPA가 자동으로 변경감지 Dirty Checking
@@ -131,33 +131,32 @@ public class MenuService {
     }
 
     @Transactional
-    public void deleteMenu(UUID menuId, JpaAuditingConfig.CustomUserDetails userDetails) {
+    public void deleteMenu(UUID menuId, UserDetailsImpl userDetails) {
         // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
         Menu menu = menuRepository.findByMenuIdAndDeletedAtIsNull(menuId)
             .orElseThrow(() -> new BusinessException(ErrorCode.MENU_NOT_FOUND));
 
-        //Store store = storeRepository.findByIdAndDeletedAtIsNull(menu.getStoreId())
-        //        .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
+        Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(menu.getStoreId())
+                .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-        //validateMenuAccess(store, userDetails);
+        validateMenuAccess(store, userDetails);
 
         // 2026-07-13
         // 코드리뷰 수정
         if(!menu.isDeleted()) {
-            menu.softDelete(userDetails.getUserId());
+            menu.softDelete(userDetails.getUser().getUserId());
         }else{
             throw new BusinessException(ErrorCode.MENU_IS_DELETE);
         }
     }
 
     // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
-    private void validateMenuAccess(Store store, JpaAuditingConfig.CustomUserDetails userDetails) {
-        //boolean isAdmin = "MASTER".equals(userDetails.getRole()) || "MANAGER".equals(userDetails.getRole());
-        //boolean isOwner = store.getUserId().equals(userDetails.getUserId());
+    private void validateMenuAccess(Store store, UserDetailsImpl userDetails) {
+        boolean isOwner = store.getUserId().equals(userDetails.getUser().getUserId());
 
-        //if (!isAdmin && !isOwner) {
-        //    throw new BusinessException(ErrorCode.ACCESS_DENIED);
-        //}
+        if (!isOwner) {
+            throw new BusinessException(ErrorCode.ACCESS_DENIED);
+        }
     }
 
 }

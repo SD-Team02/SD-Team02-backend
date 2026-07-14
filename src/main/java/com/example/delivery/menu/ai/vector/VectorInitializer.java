@@ -25,16 +25,22 @@ public class VectorInitializer implements ApplicationRunner {
     @Override
     public void run(ApplicationArguments args) {
 
-        load("korean.md", "korean");
-        load("chinese.md", "chinese");
-        load("japanese.md", "japanese");
-        load("western.md", "western");
-        load("chicken.md", "chicken");
-        load("pizza.md", "pizza");
-        load("snack.md", "snack");
-        load("dessert.md", "dessert");
-        load("cafe.md", "cafe");
-//        load("beverage.md", "beverage");
+        load("korean.md", "한식");
+        load("chinese.md", "중식");
+        load("japanese.md", "일식");
+        load("western.md", "양식");
+        load("chicken.md", "치킨");
+        load("pizza.md", "피자");
+        load("cafe_dessert.md", "카페_디저트");
+        load("donkatsu_sashimi.md", "돈까스_회");
+        load("fast_food.md", "패스트푸드");
+        load("jjim_tang.md", "찜_탕");
+        load("jokbal_bossam.md", "족발_보쌈");
+        load("bunsik.md", "분식");
+        load("meat.md", "고기");
+        load("asian.md", "아시안");
+        load("late_night.md", "야식");
+        load("dosirak.md", "도시락");
 
         log.info("RAG 초기화 완료");
     }
@@ -57,16 +63,6 @@ public class VectorInitializer implements ApplicationRunner {
             document.getMetadata().put("category", category);
             document.getMetadata().put("file", fileName);
         });
-//        docs.forEach(document -> {
-//
-//            Map<String,Object> metadata = new HashMap<>();
-//
-//            metadata.put("category", category);
-//            metadata.put("file", fileName);
-//
-//            document.getMetadata().putAll(metadata);
-//
-//        });
 
         vectorStore.add(docs);
 

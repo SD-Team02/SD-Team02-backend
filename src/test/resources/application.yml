@@ -1,0 +1,10 @@
+# 프로필(test 등)을 지정하지 않은 슬라이스 테스트(@DataJpaTest, @WebMvcTest 등)에도
+# 무조건 적용되는 공통 테스트 설정. src/main/resources/application.yml보다 우선 적용된다.
+#
+# schema.sql(부분 유니크 인덱스 등)은 H2가 문법을 지원하지 않아 여기서 항상 꺼둔다.
+# (application-test.yml에도 동일 설정이 있지만, @ActiveProfiles("test")가 없는
+#  테스트는 그쪽을 안 타므로 이 파일에서 한 번 더 보장한다.)
+spring:
+  sql:
+    init:
+      mode: never

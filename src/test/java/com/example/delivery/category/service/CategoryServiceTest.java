@@ -153,7 +153,7 @@ class CategoryServiceTest {
         ReflectionTestUtils.setField(dto, "name", "일식");
         ReflectionTestUtils.setField(dto, "status", CategoryStatus.INACTIVE);
 
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
 
         // when
         ResUpdateCategoryDto result = categoryService.updateCategory(categoryId, dto);
@@ -172,7 +172,7 @@ class CategoryServiceTest {
         ReflectionTestUtils.setField(dto, "name", "일식");
         ReflectionTestUtils.setField(dto, "status", CategoryStatus.ACTIVE);
         
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> categoryService.updateCategory(categoryId, dto))
@@ -192,7 +192,7 @@ class CategoryServiceTest {
         ReflectionTestUtils.setField(dto, "name", "일식");
         ReflectionTestUtils.setField(dto, "status", CategoryStatus.ACTIVE);
 
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
         when(categoryRepository.existsByNameAndCategoryIdNot("일식", categoryId)).thenReturn(true);
 
         // when & then
@@ -212,11 +212,12 @@ class CategoryServiceTest {
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
 
         // when
-        ResDeleteCategoryDto result = categoryService.deleteCategory(categoryId);
+        ResDeleteCategoryDto result = categoryService.deleteCategory(categoryId, 1L);
 
         // then
         assertThat(result.getName()).isEqualTo("한식");
         assertThat(category.isDeleted()).isTrue();
+        assertThat(category.getDeletedBy()).isEqualTo(1L);
     }
 
     @Test
@@ -228,7 +229,7 @@ class CategoryServiceTest {
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
 
         // when & then
-        assertThatThrownBy(() -> categoryService.deleteCategory(categoryId))
+        assertThatThrownBy(() -> categoryService.deleteCategory(categoryId, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.CATEGORY_NOT_FOUND.getMessage());
     }
@@ -245,7 +246,7 @@ class CategoryServiceTest {
         when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
 
         // when & then
-        assertThatThrownBy(() -> categoryService.deleteCategory(categoryId))
+        assertThatThrownBy(() -> categoryService.deleteCategory(categoryId, 1L))
                 .isInstanceOf(BusinessException.class)
                 .hasMessageContaining(ErrorCode.CATEGORY_ALREADY_DELETED.getMessage());
     }
