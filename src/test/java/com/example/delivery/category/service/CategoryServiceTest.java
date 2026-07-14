@@ -153,7 +153,7 @@ class CategoryServiceTest {
         ReflectionTestUtils.setField(dto, "name", "일식");
         ReflectionTestUtils.setField(dto, "status", CategoryStatus.INACTIVE);
 
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
 
         // when
         ResUpdateCategoryDto result = categoryService.updateCategory(categoryId, dto);
@@ -172,7 +172,7 @@ class CategoryServiceTest {
         ReflectionTestUtils.setField(dto, "name", "일식");
         ReflectionTestUtils.setField(dto, "status", CategoryStatus.ACTIVE);
         
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.empty());
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.empty());
 
         // when & then
         assertThatThrownBy(() -> categoryService.updateCategory(categoryId, dto))
@@ -192,7 +192,7 @@ class CategoryServiceTest {
         ReflectionTestUtils.setField(dto, "name", "일식");
         ReflectionTestUtils.setField(dto, "status", CategoryStatus.ACTIVE);
 
-        when(categoryRepository.findById(categoryId)).thenReturn(Optional.of(category));
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
         when(categoryRepository.existsByNameAndCategoryIdNot("일식", categoryId)).thenReturn(true);
 
         // when & then

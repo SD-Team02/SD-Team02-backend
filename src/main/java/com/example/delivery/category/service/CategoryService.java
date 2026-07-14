@@ -57,7 +57,8 @@ public class CategoryService {
     //카테고리 수정
     @Transactional
     public ResUpdateCategoryDto updateCategory(UUID categoryId, ReqUpdateCategoryDto reqUpdateCategoryDto) {
-        Category category = categoryRepository.findById(categoryId)
+        // 삭제된 카테고리는 수정 대상에서 제외 (soft delete 정합성)
+        Category category = categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.CATEGORY_NOT_FOUND));
 
         if (!category.getName().equals(reqUpdateCategoryDto.getName())) {
