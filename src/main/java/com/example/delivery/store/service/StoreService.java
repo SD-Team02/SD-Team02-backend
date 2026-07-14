@@ -73,11 +73,11 @@ public class StoreService {
                         reqCreateStoreDto.getCloseTime()
                 ));
 
-        storeRepository.save(store);
-
         // 3. 응답 DTO 반환
         String categoryName = resolveCategoryName(store.getCategoryId());
         String regionName = resolveRegionName(store.getRegionId());
+
+        storeRepository.save(store);
 
         return ResCreateStoreDto.from(store, categoryName, regionName);
     }
