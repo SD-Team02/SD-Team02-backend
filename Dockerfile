@@ -11,7 +11,9 @@ COPY . .
 RUN gradle clean build -x test --no-daemon
 
 # 2단계: 실행 전용 이미지 - JRE + JAR만 포함, 소스코드/빌드도구 제외
-FROM eclipse-temurin:17-jre-alpine
+# alpine(musl libc) 대신 glibc 기반(jammy) 사용: RAG의 DJL tokenizer 네이티브 라이브러리(libtokenizers.so)가
+# glibc를 요구해서 alpine에서는 libstdc++만 깔아도 다른 심볼 누락으로 계속 깨짐 (DJL 자체에 알려진 이슈).
+FROM eclipse-temurin:17-jre-jammy
 WORKDIR /app
 
 # 헬스체크/타임존 등 최소 유틸만 필요시 추가 (지금은 생략)
