@@ -7,7 +7,6 @@ import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
-import com.example.delivery.global.config.JpaAuditingConfig.CustomUserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -20,11 +19,6 @@ public class UserDetailsImpl implements UserDetails, JpaAuditingConfig.CustomUse
         this.user = user;
     }
 
-    @Override
-    public Long getUserId() {
-        return user.getUserId();
-    }
-    
     @Override
     public String getPassword() {
         return user.getPassword();
