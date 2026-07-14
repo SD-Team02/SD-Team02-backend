@@ -15,6 +15,13 @@ spring:
         chat:
           options:
             model: gemini-2.5-flash-lite
+    vectorstore:
+      pgvector:
+        initialize-schema: true # local엔 있었는데 prod에 누락됨: 없으면 RDS에 vector_store 테이블/extension이 안 만들어져서 VectorInitializer가 시작 시점에 크래시남
+  servlet: # 이미지 저장 용량 (기본값 1MB라 사진 업로드가 대부분 실패함, local과 동일하게 맞춤)
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
 
 springdoc:
   swagger-ui:
@@ -28,6 +35,16 @@ app:
   ai:
     gemini:
       api-key: ${AI_API_KEY}
+
+cloud: # aws s3 이미지 저장 (application-local.yml과 동일 구조)
+  aws:
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+    region: ${AWS_REGION}
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+      presigned-url-expiration: 1h
+
 logging:
   level:
     root: WARN
