@@ -9,6 +9,7 @@ import com.example.delivery.menu.ai.rag.RagService;
 import com.example.delivery.menu.dto.request.AiGenerateRequestDto;
 import com.example.delivery.menu.entity.AiHistory;
 import com.example.delivery.menu.repository.AiHistoryRepository;
+import com.example.delivery.user.security.UserDetailsImpl;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -32,7 +33,7 @@ public class AiGenerateService {
     //ai history repository 가져오기
     private final AiHistoryRepository aiHistoryRepository;
 
-    public String generateDescription(@Valid AiGenerateRequestDto aiGenerateRequestDto, JpaAuditingConfig.CustomUserDetails userDetails) {
+    public String generateDescription(@Valid AiGenerateRequestDto aiGenerateRequestDto/*, UserDetailsImpl userDetails*/) {
 
         Resource image = imageService.getImageResource(aiGenerateRequestDto.getImageId());
 

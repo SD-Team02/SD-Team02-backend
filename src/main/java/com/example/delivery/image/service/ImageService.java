@@ -9,6 +9,7 @@ import com.example.delivery.image.dto.response.ImageResponseDto;
 import com.example.delivery.image.entity.ImageDisplayStatus;
 import com.example.delivery.image.entity.ImageFile;
 import com.example.delivery.image.repository.ImageRepository;
+import com.example.delivery.user.security.UserDetailsImpl;
 import jakarta.validation.constraints.NotNull;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.io.Resource;
@@ -99,13 +100,6 @@ public class ImageService {
         // 조건에 맞는 이미지 조회
         List<ImageFile> images = imageRepository.findImages(imageRequestDto);
 
-//        try {
-//            return new UrlResource(
-//                "https://media.istockphoto.com/id/183752521/ko/%EC%82%AC%EC%A7%84/%EB%B9%84%EB%B9%84%EB%B0%A5.jpg?s=1024x1024&w=is&k=20&c=jLN0v90BRQcE_2j307HzS7R7CH39IhbLJXQNOosEQio="
-//            );
-//        } catch (MalformedURLException e) {
-//            throw new IllegalArgumentException("이미지 URL이 올바르지 않습니다.");
-//        }
         return images.stream()
             .map(image -> {
                 // S3 이미지에 접근할 수 있는 임시 URL 생성
@@ -116,13 +110,13 @@ public class ImageService {
     }
     // 이미지 삭제
     @Transactional
-    public void deleteImage(UUID imageId, JpaAuditingConfig.CustomUserDetails userDetails) {
+    public void deleteImage(UUID imageId, UserDetailsImpl userDetails) {
 
         ImageFile imageFile = imageRepository.findByImageIdAndDeletedAtIsNull(imageId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.INVALID_IMAGE_DELETE_FILE));
 
         //권한 확인
-        if(!(userDetails.getUserId()).equals(imageFile.getCreatedBy()) /*|| !("MASTER").equals(userDetails.getRole) || !("MANAGER").equals(userDetails.getRole)*/){
+        if(!(userDetails.getUser().getUserId()).equals(imageFile.getCreatedBy()) /*|| !("MASTER").equals(userDetails.getRole) || !("MANAGER").equals(userDetails.getRole)*/){
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
@@ -131,7 +125,7 @@ public class ImageService {
             throw new BusinessException(ErrorCode.IMAGE_DELETE_FILE);
         }
 
-        imageFile.softDelete(userDetails.getUserId());
+        imageFile.softDelete(userDetails.getUser().getUserId());
 
     }
     // 업로드된 이미지에 refId 값넣기

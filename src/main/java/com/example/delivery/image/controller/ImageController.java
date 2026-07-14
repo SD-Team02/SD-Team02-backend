@@ -4,6 +4,7 @@ import com.example.delivery.global.config.JpaAuditingConfig;
 import com.example.delivery.image.dto.request.ImageRequestDto;
 import com.example.delivery.image.dto.response.ImageResponseDto;
 import com.example.delivery.image.service.ImageService;
+import com.example.delivery.user.security.UserDetailsImpl;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import io.swagger.v3.oas.annotations.tags.Tag;
@@ -57,7 +58,7 @@ public class ImageController {
     @DeleteMapping("/images/{imageId}")
     public ResponseEntity<Void> deleteImage(
             @PathVariable UUID imageId,
-            @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ) {
         imageService.deleteImage(imageId, userDetails);
         return ResponseEntity.noContent().build();
