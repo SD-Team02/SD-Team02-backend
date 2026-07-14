@@ -29,7 +29,7 @@ public class AiHistoryServices {
         // 권한 확인
         // 2026-07-13
         // 코드리뷰 수정
-        if (userDetails.getUser().getUserId().equals(histories.get(0).getCreatedBy())) {
+        if (!userDetails.getUser().getUserId().equals(histories.get(0).getCreatedBy())) {
             throw new BusinessException(ErrorCode.ACCESS_DENIED);
         }
 
