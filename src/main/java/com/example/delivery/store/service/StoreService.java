@@ -18,6 +18,7 @@ import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.user.entity.Role;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -41,43 +42,34 @@ public class StoreService {
     @Transactional
     public ResCreateStoreDto createStore(Long userId, ReqCreateStoreDto reqCreateStoreDto) {
 
-        Store store = storeRepository.findByName(reqCreateStoreDto.getName())
-                .map(existingStore -> {
-                    if (!existingStore.isDeleted()) {
-                        throw new BusinessException(ErrorCode.STORE_ALREADY_EXISTS);
-                    }
-                    existingStore.restore(); // CASE3: deletedAt != null 인 경우 복구
+        // 삭제된(soft-deleted) 가게는 복구하지 않고 항상 새 레코드로 등록한다.
+        // 삭제되지 않은 가게 중 동일 지역+동일 이름이 있는지만 검증한다.
+        if (storeRepository.existsByNameAndRegionIdAndDeletedAtIsNull(
+                reqCreateStoreDto.getName(), reqCreateStoreDto.getRegionId())) {
+            throw new BusinessException(ErrorCode.STORE_ALREADY_EXISTS);
+        }
 
-                    // 기존 엔티티라면 정보 갱신
-                    existingStore.changeInfo(
-                            reqCreateStoreDto.getName(),
-                            reqCreateStoreDto.getAddress(),
-                            reqCreateStoreDto.getPhone(),
-                            reqCreateStoreDto.getOpenTime(),
-                            reqCreateStoreDto.getCloseTime()
-                    );
-                    existingStore.changeCategory(reqCreateStoreDto.getCategoryId());
-                    existingStore.changeUser(userId);
-                    existingStore.changeRegion(reqCreateStoreDto.getRegionId());
-                    existingStore.changeStatus(reqCreateStoreDto.getStatus());
-                    return existingStore;
-                })
-                .orElseGet(() -> new Store(
-                        userId,
-                        reqCreateStoreDto.getCategoryId(),
-                        reqCreateStoreDto.getRegionId(),
-                        reqCreateStoreDto.getName(),
-                        reqCreateStoreDto.getAddress(),
-                        reqCreateStoreDto.getPhone(),
-                        reqCreateStoreDto.getOpenTime(),
-                        reqCreateStoreDto.getCloseTime()
-                ));
+        Store store = new Store(
+                userId,
+                reqCreateStoreDto.getCategoryId(),
+                reqCreateStoreDto.getRegionId(),
+                reqCreateStoreDto.getName(),
+                reqCreateStoreDto.getAddress(),
+                reqCreateStoreDto.getPhone(),
+                reqCreateStoreDto.getOpenTime(),
+                reqCreateStoreDto.getCloseTime()
+        );
 
-        // 3. 응답 DTO 반환
         String categoryName = resolveCategoryName(store.getCategoryId());
         String regionName = resolveRegionName(store.getRegionId());
 
-        storeRepository.save(store);
+        // 최종 방어선은 DB 부분 유니크 인덱스(name, region_id where deleted_at is null)이며,
+        // 위반 시 saveAndFlush에서 예외가 발생하므로 중복 에러로 변환한다.
+        try {
+            storeRepository.saveAndFlush(store);
+        } catch (DataIntegrityViolationException e) {
+            throw new BusinessException(ErrorCode.STORE_ALREADY_EXISTS);
+        }
 
         return ResCreateStoreDto.from(store, categoryName, regionName);
     }

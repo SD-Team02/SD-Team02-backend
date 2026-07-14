@@ -16,6 +16,7 @@ import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
 import java.util.List;
 
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -69,9 +70,12 @@ class StoreServiceTest {
     @DisplayName("가게 등록 성공 - 신규 생성")
     void createStore_Success_New() {
         // given
-        when(storeRepository.findByName(reqDto.getName())).thenReturn(Optional.empty());
-        when(categoryRepository.findById(reqDto.getCategoryId())).thenReturn(Optional.of(new Category("한식")));
-        when(regionRepository.findById(reqDto.getRegionId())).thenReturn(Optional.of(new Region("강남구")));
+        when(storeRepository.existsByNameAndRegionIdAndDeletedAtIsNull(reqDto.getName(), reqDto.getRegionId()))
+                .thenReturn(false);
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(reqDto.getCategoryId()))
+                .thenReturn(Optional.of(new Category("한식")));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(reqDto.getRegionId()))
+                .thenReturn(Optional.of(new Region("강남구")));
 
         // when
         ResCreateStoreDto result = storeService.createStore(userId, reqDto);
@@ -79,27 +83,30 @@ class StoreServiceTest {
         // then
         assertNotNull(result);
         assertEquals(reqDto.getName(), result.getName());
-        verify(storeRepository, times(1)).save(any(Store.class));
+        verify(storeRepository, times(1)).saveAndFlush(any(Store.class));
     }
 
     @Test
-    @DisplayName("가게 등록 실패 - 이미 존재하는 가게")
+    @DisplayName("가게 등록 실패 - 이미 존재하는 가게 (동일 지역에 동일 이름의 삭제되지 않은 가게가 있음)")
     void createStore_Fail_AlreadyExists() {
         // given
-        Store existingStore = new Store(userId, reqDto.getCategoryId(), reqDto.getRegionId(), reqDto.getName(), reqDto.getAddress(), reqDto.getPhone(), reqDto.getOpenTime(), reqDto.getCloseTime());
-        when(storeRepository.findByName(reqDto.getName())).thenReturn(Optional.of(existingStore));
+        when(storeRepository.existsByNameAndRegionIdAndDeletedAtIsNull(reqDto.getName(), reqDto.getRegionId()))
+                .thenReturn(true);
 
         // when & then
         BusinessException exception = assertThrows(BusinessException.class, () -> storeService.createStore(userId, reqDto));
         assertEquals(ErrorCode.STORE_ALREADY_EXISTS, exception.getErrorCode());
+        verify(storeRepository, never()).saveAndFlush(any(Store.class));
     }
 
     @Test
     @DisplayName("가게 등록 실패 - 존재하지 않는 카테고리")
     void createStore_Fail_CategoryNotFound() {
         // given
-        when(storeRepository.findByName(reqDto.getName())).thenReturn(Optional.empty());
-        when(categoryRepository.findById(reqDto.getCategoryId())).thenReturn(Optional.empty());
+        when(storeRepository.existsByNameAndRegionIdAndDeletedAtIsNull(reqDto.getName(), reqDto.getRegionId()))
+                .thenReturn(false);
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(reqDto.getCategoryId()))
+                .thenReturn(Optional.empty());
 
         // when & then
         BusinessException exception = assertThrows(BusinessException.class, () -> storeService.createStore(userId, reqDto));
@@ -110,13 +117,34 @@ class StoreServiceTest {
     @DisplayName("가게 등록 실패 - 존재하지 않는 지역")
     void createStore_Fail_RegionNotFound() {
         // given
-        when(storeRepository.findByName(reqDto.getName())).thenReturn(Optional.empty());
-        when(categoryRepository.findById(reqDto.getCategoryId())).thenReturn(Optional.of(new Category("한식")));
-        when(regionRepository.findById(reqDto.getRegionId())).thenReturn(Optional.empty());
+        when(storeRepository.existsByNameAndRegionIdAndDeletedAtIsNull(reqDto.getName(), reqDto.getRegionId()))
+                .thenReturn(false);
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(reqDto.getCategoryId()))
+                .thenReturn(Optional.of(new Category("한식")));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(reqDto.getRegionId()))
+                .thenReturn(Optional.empty());
 
         // when & then
         BusinessException exception = assertThrows(BusinessException.class, () -> storeService.createStore(userId, reqDto));
         assertEquals(ErrorCode.REGION_NOT_FOUND, exception.getErrorCode());
+    }
+
+    @Test
+    @DisplayName("가게 등록 실패 - 사전 검증은 통과했지만 저장 시점에 DB 부분 유니크 인덱스 위반 (동시 요청)")
+    void createStore_Fail_ConcurrentDuplicate() {
+        // given
+        when(storeRepository.existsByNameAndRegionIdAndDeletedAtIsNull(reqDto.getName(), reqDto.getRegionId()))
+                .thenReturn(false);
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(reqDto.getCategoryId()))
+                .thenReturn(Optional.of(new Category("한식")));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(reqDto.getRegionId()))
+                .thenReturn(Optional.of(new Region("강남구")));
+        when(storeRepository.saveAndFlush(any(Store.class)))
+                .thenThrow(new DataIntegrityViolationException("duplicate key"));
+
+        // when & then
+        BusinessException exception = assertThrows(BusinessException.class, () -> storeService.createStore(userId, reqDto));
+        assertEquals(ErrorCode.STORE_ALREADY_EXISTS, exception.getErrorCode());
     }
 
     @Test
@@ -138,8 +166,8 @@ class StoreServiceTest {
 
         when(storeRepository.findByStatusAndDeletedAtIsNull(StoreStatus.OPEN, pageable))
                 .thenReturn(new PageImpl<>(List.of(store)));
-        when(categoryRepository.findAllById(anyList())).thenReturn(List.of(category));
-        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region));
+        when(categoryRepository.findByCategoryIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(category));
+        when(regionRepository.findByRegionIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(region));
 
         // when
         Page<ResGetStoreDto> result = storeService.getAllStores(StoreStatus.OPEN, pageable);
@@ -182,8 +210,8 @@ class StoreServiceTest {
 
         when(storeRepository.findByStatusAndDeletedAtIsNull(StoreStatus.OPEN, pageable))
                 .thenReturn(new PageImpl<>(List.of(store1, store2)));
-        when(categoryRepository.findAllById(anyList())).thenReturn(List.of(category1, category2));
-        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region1, region2));
+        when(categoryRepository.findByCategoryIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(category1, category2));
+        when(regionRepository.findByRegionIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(region1, region2));
 
         // when
         Page<ResGetStoreDto> result = storeService.getAllStores(StoreStatus.OPEN, pageable);
@@ -191,9 +219,9 @@ class StoreServiceTest {
         // then
         assertEquals(2, result.getTotalElements());
         // 가게 수와 무관하게 카테고리/지역 조회는 각각 정확히 1번만 호출되어야 함 (N+1이면 가게 수만큼 호출됨)
-        verify(categoryRepository, times(1)).findAllById(argThat(ids ->
+        verify(categoryRepository, times(1)).findByCategoryIdInAndDeletedAtIsNull(argThat(ids ->
                 ((List<UUID>) ids).containsAll(List.of(categoryId1, categoryId2))));
-        verify(regionRepository, times(1)).findAllById(argThat(ids ->
+        verify(regionRepository, times(1)).findByRegionIdInAndDeletedAtIsNull(argThat(ids ->
                 ((List<UUID>) ids).containsAll(List.of(regionId1, regionId2))));
     }
 
@@ -228,8 +256,8 @@ class StoreServiceTest {
         when(categoryRepository.findByNameContainingAndDeletedAtIsNull(keyword)).thenReturn(List.of());
         when(storeRepository.searchStores(eq(keyword), isNull(), anyList(), eq(StoreStatus.OPEN), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(store1, store2)));
-        when(categoryRepository.findAllById(anyList())).thenReturn(List.of(category1, category2));
-        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region1, region2));
+        when(categoryRepository.findByCategoryIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(category1, category2));
+        when(regionRepository.findByRegionIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(region1, region2));
 
         // when
         Page<ResSearchStoreDto> result = storeService.searchStores(keyword, null, StoreStatus.OPEN, pageable);
@@ -237,9 +265,9 @@ class StoreServiceTest {
         // then
         assertEquals(2, result.getTotalElements());
         // 가게 수와 무관하게 카테고리/지역 조회는 각각 정확히 1번만 호출되어야 함 (N+1이면 가게 수만큼 호출됨)
-        verify(categoryRepository, times(1)).findAllById(argThat(ids ->
+        verify(categoryRepository, times(1)).findByCategoryIdInAndDeletedAtIsNull(argThat(ids ->
                 ((List<UUID>) ids).containsAll(List.of(categoryId1, categoryId2))));
-        verify(regionRepository, times(1)).findAllById(argThat(ids ->
+        verify(regionRepository, times(1)).findByRegionIdInAndDeletedAtIsNull(argThat(ids ->
                 ((List<UUID>) ids).containsAll(List.of(regionId1, regionId2))));
         verify(categoryRepository, never()).findById(any());
         verify(regionRepository, never()).findById(any());
@@ -276,8 +304,8 @@ class StoreServiceTest {
         when(storeRepository.searchStores(eq(keyword), isNull(), anyList(), eq(StoreStatus.OPEN), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(store)));
         // 페이지 안의 가게들의 카테고리/지역명은 store별 findById가 아니라 findAllById로 한 번에 조회됨
-        when(categoryRepository.findAllById(anyList())).thenReturn(List.of(category));
-        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region));
+        when(categoryRepository.findByCategoryIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(category));
+        when(regionRepository.findByRegionIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(region));
 
         // when
         Page<ResSearchStoreDto> result = storeService.searchStores(keyword, null, StoreStatus.OPEN, pageable);
@@ -310,7 +338,7 @@ class StoreServiceTest {
         when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
         when(storeRepository.searchStores(isNull(), eq(categoryId), eq(List.of()), eq(StoreStatus.OPEN), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(store)));
-        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region));
+        when(regionRepository.findByRegionIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(region));
 
         // when
         Page<ResSearchStoreDto> result = storeService.searchStores(null, categoryId, StoreStatus.OPEN, pageable);
@@ -321,7 +349,7 @@ class StoreServiceTest {
         assertEquals("한식", result.getContent().get(0).getCategoryName());
         // categoryId 필터링 시 이미 조회한 카테고리명을 재사용하므로 store별 findById/findAllById는 호출되지 않아야 함
         verify(categoryRepository, never()).findById(any());
-        verify(categoryRepository, never()).findAllById(any());
+        verify(categoryRepository, never()).findByCategoryIdInAndDeletedAtIsNull(any());
         verify(regionRepository, never()).findById(any());
     }
 
@@ -360,7 +388,7 @@ class StoreServiceTest {
         when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(categoryId)).thenReturn(Optional.of(category));
         when(storeRepository.searchStores(eq(keyword), eq(categoryId), eq(List.of()), eq(StoreStatus.OPEN), eq(pageable)))
                 .thenReturn(new PageImpl<>(List.of(store)));
-        when(regionRepository.findAllById(anyList())).thenReturn(List.of(region));
+        when(regionRepository.findByRegionIdInAndDeletedAtIsNull(anyList())).thenReturn(List.of(region));
 
         // when
         Page<ResSearchStoreDto> result = storeService.searchStores(keyword, categoryId, StoreStatus.OPEN, pageable);
@@ -369,7 +397,7 @@ class StoreServiceTest {
         assertEquals(1, result.getTotalElements());
         assertEquals("엽기떡볶이", result.getContent().get(0).getName());
         verify(categoryRepository, never()).findById(any());
-        verify(categoryRepository, never()).findAllById(any());
+        verify(categoryRepository, never()).findByCategoryIdInAndDeletedAtIsNull(any());
         verify(regionRepository, never()).findById(any());
         // categoryId가 이미 지정된 경우엔 카테고리명으로 keyword를 재검색하지 않아야 함
         verify(categoryRepository, never()).findByNameContainingAndDeletedAtIsNull(any());
@@ -420,8 +448,8 @@ class StoreServiceTest {
         Store store = new Store(1L, UUID.randomUUID(), UUID.randomUUID(), "가게", "주소",
                 "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
         when(storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)).thenReturn(Optional.of(store));
-        when(categoryRepository.findById(store.getCategoryId())).thenReturn(Optional.of(new Category("한식")));
-        when(regionRepository.findById(store.getRegionId())).thenReturn(Optional.of(new Region("강남구")));
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(store.getCategoryId())).thenReturn(Optional.of(new Category("한식")));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(store.getRegionId())).thenReturn(Optional.of(new Region("강남구")));
 
         ReqUpdateStoreDto updateDto = new ReqUpdateStoreDto(
                 store.getCategoryId(), store.getRegionId(), "수정된 가게", "주소",
@@ -443,8 +471,8 @@ class StoreServiceTest {
         Store store = new Store(1L, UUID.randomUUID(), UUID.randomUUID(), "가게", "주소",
                 "010-1234-5678", LocalTime.of(9, 0), LocalTime.of(22, 0));
         when(storeRepository.findByStoreIdAndDeletedAtIsNull(storeId)).thenReturn(Optional.of(store));
-        when(categoryRepository.findById(store.getCategoryId())).thenReturn(Optional.of(new Category("한식")));
-        when(regionRepository.findById(store.getRegionId())).thenReturn(Optional.of(new Region("강남구")));
+        when(categoryRepository.findByCategoryIdAndDeletedAtIsNull(store.getCategoryId())).thenReturn(Optional.of(new Category("한식")));
+        when(regionRepository.findByRegionIdAndDeletedAtIsNull(store.getRegionId())).thenReturn(Optional.of(new Region("강남구")));
 
         ReqUpdateStoreDto updateDto = new ReqUpdateStoreDto(
                 store.getCategoryId(), store.getRegionId(), "수정된 가게", "주소",

@@ -18,7 +18,8 @@ public interface StoreRepository extends JpaRepository<Store, UUID> {
 	// OWNER가 소유한(삭제되지 않은) 가게 목록
 	List<Store> findByUserIdAndDeletedAtIsNull(Long userId);
 
-	Optional<Store> findByName(String name);
+	// 삭제되지 않은 가게 중 동일 지역에 동일한 이름이 있는지 확인 (등록 시 중복 검증용)
+	boolean existsByNameAndRegionIdAndDeletedAtIsNull(String name, UUID regionId);
 
 	Page<Store> findByStatusAndDeletedAtIsNull(StoreStatus status, Pageable pageable);
 
