@@ -39,6 +39,8 @@ public class Store extends BaseEntity {
     @Column(name = "region_id", nullable = false)
     private UUID regionId;
 
+    // soft delete 후 같은 가게 등록을 허용하기 위해 DB UNIQUE 제약을 두지 않는다.
+    // (삭제되지 않은 가게 중복 방지는 서비스에서 existsByNameAndRegionIdAndDeletedAtIsNull로 처리)
     @Column(name = "name", length = 100, nullable = false)
     private String name;
 
@@ -81,5 +83,17 @@ public class Store extends BaseEntity {
 
     public void changeCategory(UUID categoryId) {
         this.categoryId = categoryId;
+    }
+
+    public void changeRegion(UUID regionId) {
+        this.regionId = regionId;
+    }
+
+    public void changeUser(Long userId) {
+        this.userId = userId;
+    }
+
+    public void changeStatus(StoreStatus status) {
+        this.status = status;
     }
 }

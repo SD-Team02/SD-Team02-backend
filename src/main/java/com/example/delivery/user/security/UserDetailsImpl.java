@@ -5,17 +5,23 @@ import com.example.delivery.user.entity.User;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
+import com.example.delivery.global.config.JpaAuditingConfig.CustomUserDetails;
 
 import java.util.ArrayList;
 import java.util.Collection;
 
-public class UserDetailsImpl implements UserDetails {
-
+public class UserDetailsImpl implements UserDetails, CustomUserDetails {
+    
     private final User user;
     public UserDetailsImpl(User user) {
         this.user = user;
     }
 
+    @Override
+    public Long getUserId() {
+        return user.getUserId();
+    }
+    
     @Override
     public String getPassword() {
         return user.getPassword();
