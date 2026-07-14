@@ -1,5 +1,14 @@
 package com.example.delivery.region.service;
 
+import java.util.Objects;
+import java.util.UUID;
+
+import org.springframework.dao.DataIntegrityViolationException;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import com.example.delivery.global.exception.BusinessException;
 import com.example.delivery.global.exception.ErrorCode;
 import com.example.delivery.region.dto.request.ReqCreateRegionDto;
@@ -11,16 +20,9 @@ import com.example.delivery.region.dto.response.ResUpdateRegionDto;
 import com.example.delivery.region.entity.Region;
 import com.example.delivery.region.entity.RegionStatus;
 import com.example.delivery.region.repository.RegionRepository;
+
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.Pageable;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
-import java.util.Objects;
-import java.util.UUID;
 
 @Service
 @RequiredArgsConstructor
@@ -53,14 +55,10 @@ public class RegionService {
         }
     }
 
-    //전체 지역 조회
+    //전체 지역 조회 (상위 지역명을 self-join으로 한 번에 조회 → 기존 건별 조회 N+1 제거)
     @Transactional(readOnly = true)
     public Page<ResGetRegionDto> getAllRegions(RegionStatus status, Pageable pageable) {
-        return regionRepository.findAllByStatusAndDeletedAtIsNull(status, pageable)
-                .map(region -> {
-                    String parentName = getParentRegionName(region.getParentRegionId());
-                    return ResGetRegionDto.from(region, parentName);
-                });
+        return regionRepository.findAllWithParentName(status, pageable);
     }
 
     //지역 상세 조회

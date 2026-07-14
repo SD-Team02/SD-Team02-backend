@@ -8,15 +8,36 @@ spring:
     hibernate:
       ddl-auto: create-drop
     show-sql: true
+  autoconfigure:
+    exclude:
+      # 테스트는 H2를 쓰고(pgvector 미지원), CI에서 Transformers ONNX 임베딩 모델 로딩이
+      # 실패할 수 있어(ORT_INVALID_PROTOBUF) 두 자동 설정을 테스트에서 제외한다.
+      # 대신 TestAiConfig(src/test)가 가짜 EmbeddingModel/VectorStore 빈을 등록한다.
+      - org.springframework.ai.vectorstore.pgvector.autoconfigure.PgVectorStoreAutoConfiguration
+      - org.springframework.ai.model.transformers.autoconfigure.TransformersEmbeddingModelAutoConfiguration
 
 app:
   jwt:
-    secret: test-secret-key-for-junit-only-not-for-production-use
+    secret: testsecretkeyforjunitonlynotforproductionuse
     access-token-expire-ms: 3600000
     refresh-token-expire-ms: 1209600000
+  auth:
+    token:
+      master: test-master-token
+      manager: test-manager-token
+      owner: test-owner-token
   ai:
     gemini:
       api-key: test-key
       model: gemini-2.5-flash-lite
       base-url: https://generativelanguage.googleapis.com/v1beta
       max-input-length: 300
+
+cloud:
+  aws:
+    access-key: test-access-key
+    secret-key: test-secret-key
+    region: ap-northeast-2
+    s3:
+      bucket: test-bucket
+      presigned-url-expiration: 1h

@@ -1,0 +1,10 @@
+.env
+.env.*
+.git
+.gitignore
+build
+.gradle
+*.log
+Dockerfile
+.dockerignore
+README.md
