@@ -1,6 +1,7 @@
 package com.example.delivery.store.repository;
 
 import com.example.delivery.global.config.JpaAuditingConfig;
+import com.example.delivery.global.config.QuerydslConfig;
 import com.example.delivery.store.entity.Store;
 import com.example.delivery.store.entity.StoreStatus;
 import org.junit.jupiter.api.DisplayName;
@@ -19,7 +20,8 @@ import java.util.UUID;
 import static org.assertj.core.api.Assertions.assertThat;
 
 @DataJpaTest
-@Import(JpaAuditingConfig.class)
+// QueryDSL을 쓰기 위해 QuerydslConfig.class도 같이 import 해줘야 함
+@Import({JpaAuditingConfig.class, QuerydslConfig.class})
 class StoreRepositoryTest {
 
     @Autowired
