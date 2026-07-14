@@ -44,12 +44,8 @@ app:
     token:
       master: ${MASTER_TOKEN}
       manager: ${MANAGER_TOKEN}
-      owner: ${OWNER_TOKEN}
+      owner : ${OWNER_TOKEN}
   ai:
-    gemini:
-      api-key: ${AI_API_KEY:}
-      model: gemini-2.5-flash-lite
-      base-url: https://generativelanguage.googleapis.com/v1beta
       max-input-length: 300 # 요청 텍스트 글자수 제한 (사용량 절감)
 
   pagination:

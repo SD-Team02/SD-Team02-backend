@@ -6,6 +6,7 @@ import com.example.delivery.global.config.JpaAuditingConfig;
 import com.example.delivery.menu.dto.request.MenuRequestDto;
 import com.example.delivery.menu.dto.response.MenuResponseDto;
 import com.example.delivery.menu.service.MenuService;
+import com.example.delivery.user.security.UserDetailsImpl;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -35,7 +36,7 @@ public class MenuController {
     @Tag(name = "메뉴", description = "메뉴 등록 API")
     public ResponseEntity<ApiResponse<Void>> createMenu(
             @RequestBody MenuRequestDto menuRequestDto,
-            @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails){
+            @AuthenticationPrincipal UserDetailsImpl userDetails){
         log.info("메뉴 등록 menuRequestDto : " + menuRequestDto);
 
         menuService.createMenu(menuRequestDto, userDetails);
@@ -68,11 +69,10 @@ public class MenuController {
     @Tag(name = "메뉴", description = "관리자용 메뉴 조회 API")
     public ResponseEntity<ApiResponse<PageResponse<MenuResponseDto>>> getAdminMenuList(
            MenuRequestDto menuRequestDto,
-           @PageableDefault(size = 10) Pageable pageable,
-           @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails){
+           @PageableDefault(size = 10) Pageable pageable){
 
         log.info("관리자 메뉴 검색 menuRequestDto : " + menuRequestDto + "\nuserDetails : userDetails" + "\npageable : " + pageable);
-        PageResponse<MenuResponseDto> menuList = menuService.getAdminMenuList(menuRequestDto, userDetails, pageable);
+        PageResponse<MenuResponseDto> menuList = menuService.getAdminMenuList(menuRequestDto, pageable);
 
         return ResponseEntity.ok(
                 ApiResponse.success("메뉴 조회가 되었습니다", menuList)
@@ -86,7 +86,7 @@ public class MenuController {
     @Tag(name = "메뉴", description = "메뉴 수정 API")
     public ResponseEntity<ApiResponse<Void>> updateMenu(
             @RequestBody MenuRequestDto menuRequestDto,
-            @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails){
+            @AuthenticationPrincipal UserDetailsImpl userDetails){
         log.info("메뉴 수정 menuRequestDto : " + menuRequestDto + "\n userDetails : " + userDetails);
 
         menuService.updateMenu(menuRequestDto, userDetails);
@@ -103,7 +103,7 @@ public class MenuController {
     @Tag(name = "메뉴", description = "메뉴 삭제 API")
     public ResponseEntity<ApiResponse<Void>> deleteMenu(
             @RequestParam UUID menuId,
-            @AuthenticationPrincipal JpaAuditingConfig.CustomUserDetails userDetails
+            @AuthenticationPrincipal UserDetailsImpl userDetails
     ){
         log.info("메뉴 삭제 menuId : " + menuId + "\n userDetails : " + userDetails);
 
