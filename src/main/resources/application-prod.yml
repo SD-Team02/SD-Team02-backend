@@ -1,0 +1,36 @@
+spring:
+  datasource:
+    url: ${DB_URL} # 예: jdbc:postgresql://<RDS 엔드포인트>:5432/delivery
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # 임시: 아직 Flyway 미도입, 최초 스키마 생성을 위해 update 사용 (Flyway 도입 시 validate로 되돌릴 것)
+    show-sql: false
+  ai:
+    google:
+      genai:
+        api-key: ${AI_API_KEY}
+        chat:
+          options:
+            model: gemini-2.5-flash-lite
+
+springdoc:
+  swagger-ui:
+    enabled: true # 데모용으로 임시 활성화 (데모 끝나면 false로 되돌리는 것 권장)
+  api-docs:
+    enabled: true
+
+app:
+  jwt:
+    secret: ${JWT_SECRET} # 기본값 없음: 운영에 값 안 넣으면 기동 자체가 실패하도록 함
+  ai:
+    gemini:
+      api-key: ${AI_API_KEY}
+logging:
+  level:
+    root: WARN
+    com.example.delivery: INFO
+  file:
+    name: /var/log/delivery-platform/app.log

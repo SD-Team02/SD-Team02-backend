@@ -1,0 +1,33 @@
+spring:
+  datasource:
+#    url: jdbc:postgresql://localhost:5432/delivery_local
+    url: jdbc:postgresql://localhost:5433/delivery_local
+    username: ${DB_USERNAME:postgres}
+    password: ${DB_PASSWORD:1234}
+    driver-class-name: org.postgresql.Driver
+  jpa:
+    hibernate:
+      ddl-auto: update # 로컬 개발 편의용. dev/prod에서는 validate + Flyway/Liquibase 권장
+    show-sql: true
+  ai:
+    vectorstore:
+      pgvector:
+        initialize-schema: true
+  servlet: # 이미지 저장 용량
+    multipart:
+      max-file-size: 10MB
+      max-request-size: 10MB
+logging:
+  level:
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
+
+cloud: # aws s3 이미지 저장
+  aws:
+    access-key: ${AWS_ACCESS_KEY_ID}
+    secret-key: ${AWS_SECRET_ACCESS_KEY}
+
+    s3:
+      bucket: ${AWS_S3_BUCKET}
+      presigned-url-expiration: 1h
+    region: ${AWS_REGION}

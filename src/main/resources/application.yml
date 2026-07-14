@@ -1,0 +1,63 @@
+server:
+  port: 8081
+
+spring:
+  application:
+    name: delivery
+  profiles:
+    active: local
+  jpa:
+    open-in-view: false
+    hibernate:
+      ddl-auto: validate
+    properties:
+      hibernate:
+        format_sql: true
+        default_batch_fetch_size: 100 # 가게 목록 조회시 평균 평점 등 연관 조회 N+1 완화
+  ai: # spring ai 사용하여 변경
+    google:
+      genai:
+        api-key: ${AI_API_KEY}
+        chat:
+          options:
+            model: gemini-2.5-flash-lite
+        embedding:
+          options:
+            model: text-embedding-004
+
+springdoc:
+  swagger-ui:
+    path: /swagger-ui.html
+    operations-sorter: method
+    tags-sorter: alpha
+  api-docs:
+    path: /v3/api-docs
+  default-consumes-media-type: application/json
+  default-produces-media-type: application/json
+
+app:
+  jwt:
+    secret: ${JWT_SECRET}
+    access-token-expire-ms: 3600000       # 1시간
+    refresh-token-expire-ms: 1209600000   # 14일
+  auth:
+    token:
+      master: ${MASTER_TOKEN}
+      manager: ${MANAGER_TOKEN}
+      owner: ${OWNER_TOKEN}
+  ai:
+    gemini:
+      api-key: ${AI_API_KEY:}
+      model: gemini-2.5-flash-lite
+      base-url: https://generativelanguage.googleapis.com/v1beta
+      max-input-length: 300 # 요청 텍스트 글자수 제한 (사용량 절감)
+
+  pagination:
+    allowed-sizes: [10, 30, 50]
+    default-size: 10
+    default-sort: createdAt,desc
+
+logging:
+  level:
+    root: INFO
+    com.example.delivery: DEBUG
