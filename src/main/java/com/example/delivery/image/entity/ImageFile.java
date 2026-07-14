@@ -4,14 +4,7 @@ import java.util.UUID;
 
 import com.example.delivery.global.common.entity.BaseEntity;
 
-import jakarta.persistence.Column;
-import jakarta.persistence.Entity;
-import jakarta.persistence.EnumType;
-import jakarta.persistence.Enumerated;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
-import jakarta.persistence.Id;
-import jakarta.persistence.Table;
+import jakarta.persistence.*;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
@@ -38,7 +31,7 @@ public class ImageFile extends BaseEntity {
     @Column(name = "ref_type", length = 100, nullable = false)
     private RefType refType;
 
-    @Column(name = "ref_id", length = 100, nullable = false)
+    @Column(name = "ref_id", length = 100)
     private String refId;
     // s3 object key
     @Column(name = "image_key", nullable = false)
