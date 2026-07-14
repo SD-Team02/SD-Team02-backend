@@ -11,6 +11,9 @@ spring:
     hibernate:
       ddl-auto: validate
     defer-datasource-initialization: true # Hibernate가 테이블 만든 "후" schema.sql이 실행되도록 순서 보장 (부분 유니크 인덱스용)
+  sql:
+    init:
+      mode: always # 기본값(embedded)은 H2 등 임베디드 DB에서만 schema.sql을 실행함. local/prod는 진짜 PostgreSQL이라 always로 명시해야 실행됨
     properties:
       hibernate:
         format_sql: true
