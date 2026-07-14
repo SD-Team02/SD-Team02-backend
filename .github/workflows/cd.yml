@@ -1,0 +1,140 @@
+name: CD - Build & Push Docker Image, Deploy to EC2
+
+# main 브랜치에 merge되면:
+#   1) GitHub Actions에서 테스트 실행 + Docker 이미지 빌드 (EC2가 아닌 CI 러너에서 빌드 — 이유는 README/문서 참고: EC2 RAM 1GB + 버스터블 CPU 크레딧 보호, 빌드 툴체인을 프로덕션 서버에 안 두어 공격 표면 축소)
+#   2) 빌드한 이미지를 Docker Hub(public repo)로 push
+#   3) EC2에 SSH로 접속해 최신 이미지를 pull 받아 컨테이너 재실행
+#
+# 보안 참고: Docker Hub가 public repo라 이미지 내용은 누구나 pull 가능하다.
+#   - 이미지 자체에는 시크릿(DB_URL, JWT_SECRET, AI_API_KEY 등)을 절대 포함하지 않는다.
+#   - 모든 시크릿은 EC2에서 컨테이너를 "실행하는 시점"에 -e 옵션으로만 주입한다 (Dockerfile/이미지 레이어에는 없음).
+#   - 멀티스테이지 빌드로 최종 이미지에는 소스코드/Gradle 캐시가 남지 않는다 (JRE + JAR만 존재).
+#
+# 사전 준비 (GitHub Repo Settings > Secrets and variables > Actions):
+#   DOCKERHUB_USERNAME, DOCKERHUB_TOKEN     - Docker Hub 로그인 정보 (TOKEN은 Access Token, 비밀번호 아님)
+#   EC2_HOST, EC2_USERNAME, EC2_SSH_KEY     - EC2 접속 정보
+#   DB_URL, DB_USERNAME, DB_PASSWORD        - 운영 DB 접속 정보 (RDS)
+#   JWT_SECRET, AI_API_KEY              - 운영 시크릿 값
+#   MASTER_TOKEN, MANAGER_TOKEN, OWNER_TOKEN - 역할별 정적 인증 토큰
+#   AWS_ACCESS_KEY_ID, AWS_SECRET_ACCESS_KEY, AWS_S3_BUCKET, AWS_REGION - S3 이미지 업로드용
+#
+# EC2 사전 세팅 (최초 1회, 수동):
+#   - Docker 설치 (sudo apt install docker.io 또는 공식 스크립트)
+#   - 기존 JAR 직접실행용 systemd 서비스(delivery-app.service)는 제거/비활성화
+
+on:
+  push:
+    branches: [ "main" ]
+
+env:
+  IMAGE_NAME: ${{ secrets.DOCKERHUB_USERNAME }}/sd-team02-backend
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: JDK 17 세팅
+        uses: actions/setup-java@v4
+        with:
+          java-version: '17'
+          distribution: 'temurin'
+
+      - name: Gradle 캐시
+        uses: actions/cache@v4
+        with:
+          path: |
+            ~/.gradle/caches
+            ~/.gradle/wrapper
+          key: ${{ runner.os }}-gradle-${{ hashFiles('**/*.gradle*') }}
+
+      - name: gradlew 실행 권한 부여
+        run: chmod +x gradlew
+
+      - name: 테스트 실행 (배포 전 게이트)
+        run: ./gradlew test
+
+  build-and-push:
+    needs: test
+    runs-on: ubuntu-latest
+    steps:
+      - name: 소스 체크아웃
+        uses: actions/checkout@v4
+
+      - name: Docker Hub 로그인
+        uses: docker/login-action@v3
+        with:
+          username: ${{ secrets.DOCKERHUB_USERNAME }}
+          password: ${{ secrets.DOCKERHUB_TOKEN }}
+
+      - name: Docker Buildx 세팅
+        uses: docker/setup-buildx-action@v3
+
+      - name: Docker 이미지 빌드 & 푸시
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          push: true
+          tags: |
+            ${{ env.IMAGE_NAME }}:latest
+            ${{ env.IMAGE_NAME }}:${{ github.sha }}
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+  deploy:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    steps:
+      - name: EC2 접속 → 이미지 pull → 컨테이너 재배포
+        uses: appleboy/ssh-action@v1.0.3
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          envs: DB_URL,DB_USERNAME,DB_PASSWORD,JWT_SECRET,AI_API_KEY,MASTER_TOKEN,MANAGER_TOKEN,OWNER_TOKEN,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_S3_BUCKET,AWS_REGION
+          script: |
+            docker pull ${{ env.IMAGE_NAME }}:latest
+
+            docker stop delivery-app || true
+            docker rm delivery-app || true
+
+            # 시크릿은 이미지가 아니라 여기서 컨테이너 실행 시점에만 주입된다.
+            docker run -d \
+              --name delivery-app \
+              --restart unless-stopped \
+              -p 127.0.0.1:8080:8080 \
+              -e SPRING_PROFILES_ACTIVE=prod \
+              -e DB_URL="$DB_URL" \
+              -e DB_USERNAME="$DB_USERNAME" \
+              -e DB_PASSWORD="$DB_PASSWORD" \
+              -e JWT_SECRET="$JWT_SECRET" \
+              -e AI_API_KEY="$AI_API_KEY" \
+              -e MASTER_TOKEN="$MASTER_TOKEN" \
+              -e MANAGER_TOKEN="$MANAGER_TOKEN" \
+              -e OWNER_TOKEN="$OWNER_TOKEN" \
+              -e AWS_ACCESS_KEY_ID="$AWS_ACCESS_KEY_ID" \
+              -e AWS_SECRET_ACCESS_KEY="$AWS_SECRET_ACCESS_KEY" \
+              -e AWS_S3_BUCKET="$AWS_S3_BUCKET" \
+              -e AWS_REGION="$AWS_REGION" \
+              ${{ env.IMAGE_NAME }}:latest
+
+            # 헬스체크: 컨테이너가 뜨자마자 크래시해도 여기서 실패로 잡아낸다.
+            # actuator 등 별도 헬스 엔드포인트가 없어도, "포트가 응답하는지"만 봐도
+            # JVM이 죽었는지(연결 자체가 안 됨) vs 살아있는지(401/403이라도 응답함)는 구분 가능하다.
+            echo "헬스체크 시작..."
+            for i in $(seq 1 10); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080 || echo "000")
+              if [ "$STATUS" != "000" ]; then
+                echo "앱 정상 응답 확인 (HTTP $STATUS), 배포 성공"
+                docker image prune -f
+                exit 0
+              fi
+              echo "응답 없음, 3초 후 재시도... ($i/10)"
+              sleep 3
+            done
+
+            echo "10회 재시도 후에도 응답 없음 — 배포 실패로 처리, 워크플로우를 실패시킨다"
+            docker logs --tail 100 delivery-app || true
+            exit 1

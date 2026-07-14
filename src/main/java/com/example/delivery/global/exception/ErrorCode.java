@@ -81,9 +81,7 @@ public enum ErrorCode {
     IMAGE_DELETE_FILE(HttpStatus.BAD_REQUEST, "IMAGE_400_5", "이미 삭제된 이미지 입니다."),
     IMAGE_UPLOAD_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_1", "이미지 업로드에 실패했습니다."),
     IMAGE_DELETE_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_2", "이미지 삭제에 실패했습니다."),
-    IMAGE_URL_GENERATION_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_3", "이미지 접근 URL 생성에 실패했습니다.");
-
-    AI_API_CALL_FAILED(HttpStatus.BAD_GATEWAY, "AI_502_1", "AI API 호출에 실패했습니다."),
+    IMAGE_URL_GENERATION_FAILED(HttpStatus.BAD_REQUEST, "IMAGE_500_3", "이미지 접근 URL 생성에 실패했습니다."),
 
     // Category (카테고리 담당)
     CATEGORY_ALREADY_EXISTS(HttpStatus.CONFLICT, "CATEGORY_409_1", "이미 존재하는 카테고리입니다."),
@@ -99,11 +97,7 @@ public enum ErrorCode {
     REGION_PARENT_NOT_FOUND(HttpStatus.NOT_FOUND, "REGION_404_2", "상위 지역을 찾을 수 없습니다."),
     REGION_ALREADY_DELETED(HttpStatus.CONFLICT, "REGION_409_2", "이미 삭제된 지역입니다."),
     REGION_HAS_CHILDREN(HttpStatus.CONFLICT, "REGION_409_3", "하위 지역이 존재하여 삭제할 수 없습니다."),
-    REGION_CIRCULAR_REFERENCE(HttpStatus.CONFLICT, "REGION_409_4", "순환 참조가 발생하여 지역을 변경할 수 없습니다."),
-
-    // Menu
-    MENU_NOT_FOUND(HttpStatus.NOT_FOUND, "MENU_404_1", "메뉴를 찾을 수 없습니다."),
-    MENU_HIDDEN(HttpStatus.NOT_FOUND, "MENU_404_2", "메뉴가 숨김 처리 되어있습니다.");
+    REGION_CIRCULAR_REFERENCE(HttpStatus.CONFLICT, "REGION_409_4", "순환 참조가 발생하여 지역을 변경할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;

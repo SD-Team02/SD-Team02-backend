@@ -40,7 +40,7 @@ public class SecurityConfig {
         http
                 .csrf(csrf -> csrf.disable())
                 .authorizeHttpRequests(auth -> auth
-                        .requestMatchers("/swagger-ui/**", "/v3/api-docs/**").permitAll()
+                        .requestMatchers("/swagger-ui/**", "/swagger-ui.html", "/v3/api-docs/**").permitAll()
                         // 로그인 페이지, 회원가입 페이지, 회원가입 API 등 누구나 접근 가능한 경로 명시
                         .requestMatchers("/api/login-page", "/api/signup", "/api/login").permitAll()
                         .requestMatchers("/api/user/info/**", "/api/user/update/**").authenticated()
