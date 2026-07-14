@@ -66,7 +66,7 @@ public class StoreController {
     })
     @PreAuthorize("hasAnyAuthority('CUSTOMER','OWNER','MANAGER', 'MASTER')")
     @GetMapping
-    ResponseEntity<ApiResponse<PageResponse<?>>> getAllStores(
+    ResponseEntity<ApiResponse<PageResponse<ResGetStoreDto>>> getAllStores(
             @RequestParam(defaultValue = "OPEN")StoreStatus status,
             @PageableDefault(
                     page = 0,
