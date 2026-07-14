@@ -19,7 +19,6 @@ import lombok.NoArgsConstructor;
 @Getter
 @Entity
 @Table(name = "p_image_file")
-@AttributeOverride(name = "createdBy", column = @Column(name = "created_by", nullable = false, updatable = false))
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 public class ImageFile extends BaseEntity {
 

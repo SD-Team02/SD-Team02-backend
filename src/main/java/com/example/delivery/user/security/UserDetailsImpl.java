@@ -3,6 +3,7 @@ package com.example.delivery.user.security;
 import com.example.delivery.global.config.JpaAuditingConfig;
 import com.example.delivery.user.entity.Role;
 import com.example.delivery.user.entity.User;
+import lombok.Getter;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -10,6 +11,7 @@ import org.springframework.security.core.userdetails.UserDetails;
 import java.util.ArrayList;
 import java.util.Collection;
 
+@Getter
 public class UserDetailsImpl implements UserDetails, JpaAuditingConfig.CustomUserDetails {
 
     private final User user;
@@ -29,10 +31,6 @@ public class UserDetailsImpl implements UserDetails, JpaAuditingConfig.CustomUse
 
     @Override
     public Long getUserId() { return user.getUserId(); }
-
-    public User getUser() {
-        return user;
-    }
 
     @Override
     public Collection<? extends GrantedAuthority> getAuthorities() {
