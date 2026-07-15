@@ -39,6 +39,7 @@ public enum ErrorCode {
     INVALID_MANAGER(HttpStatus.BAD_REQUEST, "USER_400_4", "MANAGER 토큰이 올바르지 않습니다."),
     INVALID_OWNER(HttpStatus.BAD_REQUEST, "USER_400_5", "OWNER 토큰이 올바르지 않습니다."),
     INVALID_PHONE(HttpStatus.BAD_REQUEST, "USER_400_6", "전화번호 형식이 올바르지 않습니다."),
+    INVALID_USERNAME(HttpStatus.BAD_REQUEST, "USER_400_7", "username 형식이 올바르지 않습니다."),
 
     // Store (가게 담당 참고용 예시)
     STORE_NOT_FOUND(HttpStatus.NOT_FOUND, "STORE_404_1", "가게를 찾을 수 없습니다."),
