@@ -64,7 +64,7 @@ public class RegionController {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "정렬 기준이 올바르지 않습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증 필요")
     })
-    @PreAuthorize("hasAnyAuthority('MANAGER', 'MASTER')")
+    @PreAuthorize("hasAnyAuthority('CUSTOMER', 'OWNER', 'MANAGER', 'MASTER')")
     @GetMapping
     public ResponseEntity<ApiResponse<PageResponse<ResGetRegionDto>>> getAllRegions(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
