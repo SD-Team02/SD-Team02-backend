@@ -79,8 +79,10 @@ public class AiHistoryRepositoryImpl implements AiHistoryRepositoryCustom{
     // orderType, sortBy에 따라 정렬 분기
     private OrderSpecifier<?> getOrderSpecifier(String orderType, String sortBy) {
         boolean isDesc = !"ASC".equalsIgnoreCase(orderType); // 기본값 DESC
+        // 2026-07-15 nullPoint오류수정
+        String sort = (sortBy == null || sortBy.isBlank()) ? "CREATED" : sortBy;
 
-        ComparableExpressionBase<?> targetColumn = switch (sortBy) {
+        ComparableExpressionBase<?> targetColumn = switch (sort) {
             case "USER_NICKNAME" -> user.nickname;
             case "CREATED" -> aiHistory.createdAt;
             default -> aiHistory.createdAt; // 기본 정렬 기준

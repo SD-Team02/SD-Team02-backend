@@ -1,5 +1,6 @@
 package com.example.delivery.menu.dto.request;
 
+import com.example.delivery.menu.entity.MenuStatus;
 import lombok.Getter;
 import lombok.Setter;
 
@@ -17,7 +18,7 @@ public class MenuRequestDto {
     private Integer price;              // 메뉴 가격
     private String description;         // 메뉴 설명
     private Boolean aiGenerated;        // AI 설명 생성 여부
-    private Enum menuStatus;            // 메뉴 상태값 (정상: NORMAL,숨김: HIDDEN, 삭제: DELETE)
+    private MenuStatus menuStatus;      // 메뉴 상태값 (정상: NORMAL,숨김: HIDDEN, 삭제: DELETE)
     private String searchDateType;      // 검색할 날짜 상태 값 (생성날짜, 수정날짜, 삭제날짜)
     private LocalDate minDate;          // 검색 날짜 의 최솟 값
     private LocalDate maxDate;          // 검색 날짜 의 최댓 값
