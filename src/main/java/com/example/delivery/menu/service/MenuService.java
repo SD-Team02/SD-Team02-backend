@@ -34,7 +34,6 @@ public class MenuService {
     @Transactional
     public void createMenu(MenuRequestDto menuRequestDto, UserDetailsImpl userDetails) {
 
-        // 일딴 확인 없이 create
         // store테이블 에서 sotorId 검색 없으면 에러출력
         // 권한 확인 (주석 처리된 부분 - 나중에 활성화)
         // 2026-07-13
