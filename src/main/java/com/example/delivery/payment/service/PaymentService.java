@@ -16,7 +16,6 @@ import com.example.delivery.store.entity.Store;
 import com.example.delivery.store.repository.StoreRepository;
 import com.example.delivery.user.entity.Role;
 import lombok.RequiredArgsConstructor;
-import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
@@ -112,7 +111,6 @@ public class PaymentService {
             throw new BusinessException(ErrorCode.ORDER_NOT_CANCELED_YET);
         }
 
-        payment.softDelete(userId);
         payment.cancel();
     }
 
