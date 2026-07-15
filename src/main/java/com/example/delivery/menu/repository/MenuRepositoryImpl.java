@@ -122,8 +122,10 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom{
     // orderType, sortBy에 따라 정렬 분기
     private OrderSpecifier<?> getOrderSpecifier(String orderType, String sortBy) {
         boolean isDesc = !"ASC".equalsIgnoreCase(orderType); // 기본값 DESC
+        // 2026-07-15 nullPoint오류수정
+        String sort = (sortBy == null || sortBy.isBlank()) ? "CREATED" : sortBy;
 
-        ComparableExpressionBase<?> targetColumn = switch (sortBy) {
+        ComparableExpressionBase<?> targetColumn = switch (sort) {
             case "MENU_NAME" -> menu.menuName;
             case "PRICE" -> menu.price;
             case "CREATED" -> menu.createdAt;

@@ -53,10 +53,10 @@ public class UserService {
 
         //username 정규식 [알파벳 소문자와 숫자, 4자이상 10자 이하]
         if(username.length() <4 || username.length() >10)
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+            throw new BusinessException(ErrorCode.INVALID_USERNAME);
         if(!username.matches("^[a-z0-9]+$"))
         {
-            throw new BusinessException(ErrorCode.INVALID_PASSWORD);
+            throw new BusinessException(ErrorCode.INVALID_USERNAME);
         }
 
         //비밀번호 정규식 [8자이상 15자 이하, 영어대소문자, 숫자, 특수문자]

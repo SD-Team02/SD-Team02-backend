@@ -13,7 +13,7 @@ import org.springframework.web.bind.annotation.GetMapping;
 public class SignupRequestDto {
 
     @NotBlank(message = "username을 입력해 주세요.")
-    @Size(min = 4,max = 10, message = "닉네임 20자 이하로 입력해주세요.")
+    @Size(min = 4,max = 10, message = "유저명을 10자 이하로 입력해주세요.")
     @Schema(description = "유저명", example = "test1234")
     private String username;
 
