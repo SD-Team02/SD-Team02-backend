@@ -28,6 +28,11 @@ spring:
         embedding:
           options:
             model: text-embedding-004
+    model:
+      embedding: transformers
+    vectorstore:
+      pgvector:
+        dimensions: 384
 
 springdoc:
   swagger-ui:
