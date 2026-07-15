@@ -51,3 +51,6 @@ logging:
     com.example.delivery: INFO
   file:
     name: /var/log/delivery-platform/app.log
+
+server:
+  forward-headers-strategy: framework
