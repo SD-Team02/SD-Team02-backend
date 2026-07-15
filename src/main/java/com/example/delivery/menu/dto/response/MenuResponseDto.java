@@ -1,6 +1,7 @@
 package com.example.delivery.menu.dto.response;
 
 import com.example.delivery.menu.entity.Menu;
+import com.example.delivery.menu.entity.MenuStatus;
 import lombok.Getter;
 
 import java.time.LocalDateTime;
@@ -14,7 +15,7 @@ public class MenuResponseDto {
     private Integer price;              // 메뉴 가격
     private String description;         // 메뉴 설명
     private Boolean aiGenerated;        // AI 설명 생성 여부
-    private Enum menuStatus;            // 메뉴 상태값 (정상: NORMAL,숨김: HIDDEN)
+    private MenuStatus menuStatus;      // 메뉴 상태값 (정상: NORMAL,숨김: HIDDEN)
     private LocalDateTime createdAt;    // 생성날짜
     private Long createdBy;             // 생성자
     private LocalDateTime updatedAt;    // 수정날짜
