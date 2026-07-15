@@ -2,6 +2,7 @@ package com.example.delivery.region.controller;
 
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
+import com.example.delivery.global.common.util.PageableFactory;
 import com.example.delivery.region.dto.request.ReqCreateRegionDto;
 import com.example.delivery.region.dto.request.ReqUpdateRegionDto;
 import com.example.delivery.region.dto.response.ResCreateRegionDto;
@@ -69,13 +70,11 @@ public class RegionController {
     public ResponseEntity<ApiResponse<PageResponse<ResGetRegionDto>>> getAllRegions(
             @AuthenticationPrincipal UserDetailsImpl userDetails,
             @RequestParam(defaultValue = "ACTIVE")RegionStatus status,
-            @PageableDefault(
-                    page = 0,
-                    size = 10,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            )
-            Pageable pageable){
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction){
+        Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
         Page<ResGetRegionDto> resRegions = regionService.getAllRegions(status,pageable);
 
         return ResponseEntity.ok(ApiResponse.success("전체 지역 조회 성공", PageResponse.from(resRegions)));
