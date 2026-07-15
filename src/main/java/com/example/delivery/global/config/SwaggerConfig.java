@@ -1,5 +1,7 @@
 package com.example.delivery.global.config;
 
+import java.util.List;
+
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 
@@ -9,6 +11,7 @@ import io.swagger.v3.oas.models.info.Contact;
 import io.swagger.v3.oas.models.info.Info;
 import io.swagger.v3.oas.models.security.SecurityRequirement;
 import io.swagger.v3.oas.models.security.SecurityScheme;
+import io.swagger.v3.oas.models.servers.Server;
 
 /**
  * springdoc-openapi 설정.
@@ -37,6 +40,10 @@ public class SwaggerConfig {
         SecurityRequirement securityRequirement = new SecurityRequirement().addList(JWT_SCHEME_NAME);
 
         return new OpenAPI()
+                .servers(List.of(
+                    new Server().url("https://meogjago.shop").description("실제 서버"),
+                    new Server().url("http://localhost:8080").description("로컬 개발")
+                ))
                 .info(apiInfo())
                 .components(new Components().addSecuritySchemes(JWT_SCHEME_NAME, jwtScheme))
                 .addSecurityItem(securityRequirement);
