@@ -2,6 +2,7 @@ package com.example.delivery.store.controller;
 
 import com.example.delivery.global.common.response.ApiResponse;
 import com.example.delivery.global.common.response.PageResponse;
+import com.example.delivery.global.common.util.PageableFactory;
 import com.example.delivery.store.dto.request.ReqCreateStoreDto;
 import com.example.delivery.store.dto.request.ReqUpdateStoreDto;
 import com.example.delivery.store.dto.response.ResCreateStoreDto;
@@ -19,8 +20,6 @@ import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
-import org.springframework.data.domain.Sort;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -67,13 +66,11 @@ public class StoreController {
     @GetMapping
     ResponseEntity<ApiResponse<PageResponse<ResGetStoreDto>>> getAllStores(
             @RequestParam(defaultValue = "OPEN")StoreStatus status,
-            @PageableDefault(
-                    page = 0,
-                    size = 10,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            )
-            Pageable pageable){
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction){
+        Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
 
         Page<ResGetStoreDto> resStores = storeService.getAllStores(status,pageable);
 
@@ -150,13 +147,11 @@ public class StoreController {
             @RequestParam(required = false) String keyword,
             @RequestParam(required = false) UUID categoryId,
             @RequestParam(defaultValue = "OPEN") StoreStatus status,
-            @PageableDefault(
-                    page = 0,
-                    size = 10,
-                    sort = "createdAt",
-                    direction = Sort.Direction.DESC
-            )
-            Pageable pageable){
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(required = false) Integer size,
+            @RequestParam(defaultValue = "createdAt") String sortBy,
+            @RequestParam(defaultValue = "DESC") String direction){
+        Pageable pageable = PageableFactory.of(page, size, sortBy, direction);
         /*
         [가게 검색] - categoryId & keyword
         CASE1) categoryId 만 전달 : 해당 카테고리에 속하는 모든 가게들을 검색
