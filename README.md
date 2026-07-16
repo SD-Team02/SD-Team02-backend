@@ -95,7 +95,7 @@
 - **Soft Delete + 부분 유니크 인덱스:** 논리 삭제 후 재등록/재작성을 허용하기 위해 `WHERE deleted_at IS NULL` 조건의 partial unique index 활용 (리뷰-주문, 가게-지역명)
 
 ```mermaid
-graph TD
+graph LR
     User((사용자)) -->|"① 443/80"| Nginx
  
     subgraph EC2["EC2 · Public Subnet (Docker 컨테이너 1개)"]
@@ -132,7 +132,6 @@ graph TD
     class S3,Gemini ext;
     class GitHub,Actions,Hub ci;
 ```
-
 ---
 
 ## 🚀 배포 구조
