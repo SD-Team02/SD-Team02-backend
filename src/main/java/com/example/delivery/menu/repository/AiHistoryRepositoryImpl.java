@@ -31,6 +31,7 @@ public class AiHistoryRepositoryImpl implements AiHistoryRepositoryCustom{
 
         List<AiHistory> content = queryFactory
                 .select(aiHistory)
+                .from(aiHistory)
                 .join(user).on(aiHistory.createdBy.eq(user.userId))
                 .where(
                     createByEq(aiHistoryRequestDto.getCreatedBy()),
