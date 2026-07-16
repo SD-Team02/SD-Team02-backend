@@ -26,6 +26,13 @@ public class AiHistoryServices {
 
         List<AiHistory> histories = aiHistoryRepository.findTop3ByCreatedByOrderByCreatedAtDesc(createdBy);
 
+        // 검색된게 없으면 빈객체 전달
+        if(histories.isEmpty()) {
+            return histories.stream()
+                    .map(AiHistoryResponseDto::from)
+                    .toList();
+        }
+
         // 권한 확인
         // 2026-07-13
         // 코드리뷰 수정

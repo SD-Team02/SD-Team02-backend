@@ -34,6 +34,7 @@ public class MenuRepositoryImpl implements MenuRepositoryCustom{
 
         List<Menu> content = queryFactory
                 .select(menu)
+                .from(menu)
                 .join(store).on(menu.storeId.eq(store.storeId))
                 .where(
                     storeIdEq(menuRequestDto.getStoreId()),

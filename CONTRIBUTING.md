@@ -63,7 +63,8 @@ com.example.delivery
 
 ## 5. 권한 체크 규칙
 
-- 컨트롤러 메서드에 `@PreAuthorize("hasRole('OWNER')")` 등으로 명시적으로 권한을 건다. 권한 상수는 인증 담당자가 정의하는 `Role` enum을 그대로 사용한다.
+- 컨트롤러 메서드에 @PreAuthorize("hasAuthority('OWNER')") / @PreAuthorize("hasAnyAuthority('OWNER','MANAGER','MASTER')") 등으로 명시적으로 권한을 건다. 권한 상수는 인증 담당자가 정의하는 Role enum을 그대로 사용한다.
+  - hasRole(...)는 쓰지 않는다 — Spring Security의 hasRole()은 내부적으로 "ROLE_" 접두사가 붙은 권한을 찾는데, UserDetailsImpl이 Role enum 값을 접두사 없이("OWNER" 등) GrantedAuthority로 등록하기 때문에 hasRole()을 쓰면 항상 인가에 실패한다.
 - 필드 단위 권한: 예를 들어 주문 상태(`status`)는 `OWNER`/`MANAGER`/`MASTER`만 수정 가능하고 `CUSTOMER`는 불가하다. 이런 경우 요청 DTO를 역할별로 분리하거나(`ReqUpdateOrderStatusDto`는 OWNER 전용), Service 계층에서 현재 로그인 유저의 role을 검사해 `BusinessException(ErrorCode.ACCESS_DENIED)`를 던진다. Setter로 값이 그대로 반영되지 않도록 주의.
 - 본인 소유 리소스 체크(예: 가게 주인이 본인 가게만 수정 가능)는 Service 계층에서 `store.getOwnerUsername().equals(currentUsername)` 형태로 검증한다.
 
