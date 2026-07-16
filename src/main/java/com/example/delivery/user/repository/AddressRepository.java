@@ -14,5 +14,5 @@ public interface AddressRepository extends JpaRepository<Address, UUID> {
 
     Page<Address> findByDeletedAtIsNull(Pageable pageable);
 
-    Optional<Address> findByIdAndDeletedAtIsNull(UUID addressId);
+    Optional<Address> findByAddressIdAndDeletedAtIsNull(UUID addressId);
 }
