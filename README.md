@@ -13,8 +13,8 @@
 ---
 ## 🔗 API
 
-- **Base URL:** https://meogjago.shop
-- **Swagger UI:** https://meogjago.shop/swagger-ui/index.html
+- [**Base URL**](https://meogjago.shop)
+- [**Swagger UI**](https://meogjago.shop/swagger-ui/index.html)
 ---
 
 ## 🚀 프로젝트 소개 (Introduction)
@@ -47,7 +47,7 @@
   <tr>
     <td nowrap>🏪 가게/카테고리/지역</td>
     <td nowrap><b>황지호</b>&nbsp;&nbsp;&nbsp;</td>
-    <td>가게 CRUD(등록·수정·폐업·검색·주문내역·평균평점), 카테고리·지역 CRUD 및 필터링</td>
+    <td>가게 CRUD(등록·수정·폐업·검색), 카테고리·지역 CRUD 및 필터링</td>
   </tr>
   <tr>
     <td nowrap>🍔 메뉴 + AI 연동</td>
@@ -70,6 +70,11 @@
     <td>응답구조/예외처리/코드 컨벤션 통일, Swagger, CI/CD, 인프라 설계, 배포</td>
   </tr>
 </table>
+
+---
+
+## 🔗 [ERD](https://www.erdcloud.com/d/aTwrnMKbmobj8osHj)
+<img width="3130" height="1242" alt="image" src="https://github.com/user-attachments/assets/61b28a68-41be-477b-b143-ec030e768a3c" />
 
 ---
 
