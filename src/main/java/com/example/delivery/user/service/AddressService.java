@@ -121,7 +121,7 @@ public class AddressService {
     @Transactional(readOnly = true)
     public ResAddressListDto addressDetail(UUID addressId, Long userId, Role role) {
 
-        Address address = addressRepository.findById(addressId)
+        Address address = addressRepository.findByIdAndDeletedAtIsNull(addressId)
                 .orElseThrow(() -> new BusinessException(ErrorCode.ADDRESS_NOT_FOUND));
 
         //master만 삭제된 데이터에 접근 가능
