@@ -8,6 +8,7 @@ import com.example.delivery.image.service.ImageService;
 import com.example.delivery.menu.dto.request.MenuRequestDto;
 import com.example.delivery.menu.dto.response.MenuResponseDto;
 import com.example.delivery.menu.entity.Menu;
+import com.example.delivery.menu.entity.MenuStatus;
 import com.example.delivery.menu.repository.AiHistoryRepository;
 import com.example.delivery.menu.repository.MenuRepository;
 import com.example.delivery.store.entity.Store;
@@ -41,7 +42,8 @@ public class MenuService {
         Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(menuRequestDto.getStoreId())
             .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-        validateMenuAccess(store, userDetails);
+        // 관리자가 접속할경우 소유자 검증 무시
+        if(userDetails.getUser().getRole() == Role.OWNER) validateMenuAccess(store, userDetails);
 
          Menu menu = new Menu(
             menuRequestDto.getStoreId(),        // UUID
@@ -102,7 +104,9 @@ public class MenuService {
 
         Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(menu.getStoreId())
                  .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
-        validateMenuAccess(store, userDetails);
+
+        // 관리자가 접속할경우 소유자 검증 무시
+        if(userDetails.getUser().getRole() == Role.OWNER) validateMenuAccess(store, userDetails);
 
         // 엔티티가 가진 도메인 메서드로 필드만 변경
         // JPA가 자동으로 변경감지 Dirty Checking
@@ -121,10 +125,12 @@ public class MenuService {
 
         // 2026-07-13
         // 코드리뷰 수정
-        if ("HIDDEN".equals(menuRequestDto.getMenuStatus().toString())) {
-            menu.hide();
-        } else if ("NORMAL".equals(menuRequestDto.getMenuStatus().toString())) {
-            menu.show();
+        if (menuRequestDto.getMenuStatus() != null) {
+            if (menuRequestDto.getMenuStatus() == MenuStatus.HIDDEN) {
+                menu.hide();
+            } else if (menuRequestDto.getMenuStatus() == MenuStatus.NORMAL) {
+                menu.show();
+            }
         }
 
     }
@@ -138,7 +144,8 @@ public class MenuService {
         Store store = storeRepository.findByStoreIdAndDeletedAtIsNull(menu.getStoreId())
                 .orElseThrow(() -> new BusinessException(ErrorCode.STORE_NOT_FOUND));
 
-        validateMenuAccess(store, userDetails);
+        // 관리자가 접속할경우 소유자 검증 무시
+        if(userDetails.getUser().getRole() == Role.OWNER) validateMenuAccess(store, userDetails);
 
         // 2026-07-13
         // 코드리뷰 수정
