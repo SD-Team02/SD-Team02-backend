@@ -71,7 +71,7 @@ public class AddressService {
         String address = reqUpdateAddressDto.getAddress();;
         String detailAddress = reqUpdateAddressDto.getDetailAddress();
 
-        Optional<Address> checkAddress = addressRepository.findById(addressId);
+        Optional<Address> checkAddress = addressRepository.findByIdAndDeletedAtIsNull(addressId);
         if (!checkAddress.isPresent()) {
             throw new BusinessException(ErrorCode.ADDRESS_NOT_FOUND);
         }
