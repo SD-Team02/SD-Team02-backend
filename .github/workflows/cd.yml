@@ -108,18 +108,39 @@ jobs:
           key: ${{ secrets.EC2_SSH_KEY }}
           envs: DB_URL,DB_USERNAME,DB_PASSWORD,JWT_SECRET,AI_API_KEY,MASTER_TOKEN,MANAGER_TOKEN,OWNER_TOKEN,AWS_ACCESS_KEY_ID,AWS_SECRET_ACCESS_KEY,AWS_S3_BUCKET,AWS_REGION
           script: |
+            set -e
             docker pull ${{ env.IMAGE_NAME }}:latest
 
-            docker stop delivery-app || true
-            docker rm delivery-app || true
+            # --- 블루-그린 무중단 배포 ---
+            # 기존 방식(같은 포트에 stop→run)은 새 컨테이너가 기동 실패해도 이미
+            # 기존 컨테이너를 지운 뒤라 사이트 전체가 죽는 문제가 있었다.
+            # 대신 blue(8080)/green(8081) 두 컨테이너를 번갈아 쓰고,
+            # nginx upstream(/etc/nginx/conf.d/upstream.conf)이 가리키는 포트만 전환한다.
+            # 새 컨테이너 헬스체크가 실패하면 nginx는 절대 건드리지 않아
+            # 기존 컨테이너가 계속 트래픽을 받는다 (배포 실패 = 무해).
+
+            CURRENT_PORT=$(grep -oP 'server 127\.0\.0\.1:\K[0-9]+' /etc/nginx/conf.d/upstream.conf)
+
+            if [ "$CURRENT_PORT" = "8080" ]; then
+              NEW_COLOR=green; NEW_PORT=8081
+              OLD_COLOR=blue;  OLD_PORT=8080
+            else
+              NEW_COLOR=blue;  NEW_PORT=8080
+              OLD_COLOR=green; OLD_PORT=8081
+            fi
+
+            echo "현재 서빙 중: $OLD_COLOR($OLD_PORT) → 새로 배포할 곳: $NEW_COLOR($NEW_PORT)"
+
+            docker stop delivery-app-$NEW_COLOR 2>/dev/null || true
+            docker rm delivery-app-$NEW_COLOR 2>/dev/null || true
 
             # 시크릿은 이미지가 아니라 여기서 컨테이너 실행 시점에만 주입된다.
             # JAVA_TOOL_OPTIONS: EC2가 RAM 1GB짜리라 -Xmx 명시 안 하면 JVM 기본 힙이
             # 너무 작게 잡혀서 RAG 임베딩 모델(ONNX) 로딩 중 OOM남. 스왑 1GB와 함께 사용.
             docker run -d \
-              --name delivery-app \
+              --name delivery-app-$NEW_COLOR \
               --restart unless-stopped \
-              -p 127.0.0.1:8080:8080 \
+              -p 127.0.0.1:$NEW_PORT:8080 \
               -e JAVA_TOOL_OPTIONS="-Xmx512m" \
               -e SPRING_PROFILES_ACTIVE=prod \
               -e DB_URL="$DB_URL" \
@@ -136,21 +157,49 @@ jobs:
               -e AWS_REGION="$AWS_REGION" \
               ${{ env.IMAGE_NAME }}:latest
 
-            # 헬스체크: 컨테이너가 뜨자마자 크래시해도 여기서 실패로 잡아낸다.
-            # actuator 등 별도 헬스 엔드포인트가 없어도, "포트가 응답하는지"만 봐도
-            # JVM이 죽었는지(연결 자체가 안 됨) vs 살아있는지(401/403이라도 응답함)는 구분 가능하다.
-            echo "헬스체크 시작..."
-            for i in $(seq 1 10); do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:8080 || echo "000")
+            # 헬스체크: 새 컨테이너 포트로만 확인 — 이 시점엔 아직 트래픽이 안 넘어간 상태라
+            # 실패해도 사용자에게 영향 없음. RAG 임베딩 로딩까지 포함해서 30초 내외 걸리므로
+            # 여유 있게 20회(최대 60초) 재시도한다.
+            echo "새 컨테이너($NEW_COLOR:$NEW_PORT) 헬스체크 시작..."
+            HEALTHY=0
+            for i in $(seq 1 20); do
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$NEW_PORT || echo "000")
               if [ "$STATUS" != "000" ]; then
-                echo "앱 정상 응답 확인 (HTTP $STATUS), 배포 성공"
-                docker image prune -f
-                exit 0
+                echo "새 컨테이너 정상 응답 확인 (HTTP $STATUS)"
+                HEALTHY=1
+                break
               fi
-              echo "응답 없음, 3초 후 재시도... ($i/10)"
+              echo "응답 없음, 3초 후 재시도... ($i/20)"
               sleep 3
             done
 
-            echo "10회 재시도 후에도 응답 없음 — 배포 실패로 처리, 워크플로우를 실패시킨다"
-            docker logs --tail 100 delivery-app || true
-            exit 1
+            if [ "$HEALTHY" != "1" ]; then
+              echo "헬스체크 실패 — nginx는 건드리지 않고 기존 $OLD_COLOR($OLD_PORT)가 계속 트래픽을 받는다"
+              docker logs --tail 100 delivery-app-$NEW_COLOR || true
+              docker rm -f delivery-app-$NEW_COLOR || true
+              exit 1
+            fi
+
+            # --- 트래픽 전환 ---
+            sudo sed -i "s/server 127.0.0.1:$OLD_PORT;/server 127.0.0.1:$NEW_PORT;/" /etc/nginx/conf.d/upstream.conf
+            sudo nginx -t
+            sudo systemctl reload nginx
+            echo "nginx upstream을 $NEW_COLOR($NEW_PORT)로 전환 완료"
+
+            # 전환 직후 실제 도메인 응답도 한 번 더 확인
+            sleep 2
+            FINAL_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$NEW_PORT || echo "000")
+            if [ "$FINAL_STATUS" = "000" ]; then
+              echo "전환 후 확인 실패 — 즉시 이전 $OLD_COLOR($OLD_PORT)로 롤백"
+              sudo sed -i "s/server 127.0.0.1:$NEW_PORT;/server 127.0.0.1:$OLD_PORT;/" /etc/nginx/conf.d/upstream.conf
+              sudo nginx -t
+              sudo systemctl reload nginx
+              docker logs --tail 100 delivery-app-$NEW_COLOR || true
+              exit 1
+            fi
+
+            # 기존 컨테이너 정리
+            docker stop delivery-app-$OLD_COLOR || true
+            docker rm delivery-app-$OLD_COLOR || true
+            docker image prune -f
+            echo "배포 완료: $NEW_COLOR($NEW_PORT)가 서빙 중"
