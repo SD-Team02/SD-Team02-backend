@@ -83,6 +83,7 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
+  # 2026-07-20 blue-green 무중단 배포 재검증
   deploy:
     needs: build-and-push
     runs-on: ubuntu-latest
