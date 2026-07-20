@@ -164,7 +164,7 @@ jobs:
             echo "새 컨테이너($NEW_COLOR:$NEW_PORT) 헬스체크 시작..."
             HEALTHY=0
             for i in $(seq 1 20); do
-              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$NEW_PORT || echo "000")
+              STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$NEW_PORT) || true
               if [ "$STATUS" != "000" ]; then
                 echo "새 컨테이너 정상 응답 확인 (HTTP $STATUS)"
                 HEALTHY=1
@@ -189,7 +189,7 @@ jobs:
 
             # 전환 직후 실제 도메인 응답도 한 번 더 확인
             sleep 2
-            FINAL_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$NEW_PORT || echo "000")
+            FINAL_STATUS=$(curl -s -o /dev/null -w "%{http_code}" http://127.0.0.1:$NEW_PORT) || true
             if [ "$FINAL_STATUS" = "000" ]; then
               echo "전환 후 확인 실패 — 즉시 이전 $OLD_COLOR($OLD_PORT)로 롤백"
               sudo sed -i "s/server 127.0.0.1:$NEW_PORT;/server 127.0.0.1:$OLD_PORT;/" /etc/nginx/conf.d/upstream.conf
