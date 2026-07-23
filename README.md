@@ -295,6 +295,12 @@ http://localhost:8080/swagger-ui.html
 
 ---
 
+## 📑 발표 자료
+
+[최종 발표 자료 PDF](./docs/먹자GO_배고픈개발자들_발표자료_최종.pdf)
+
+---
+
 ## 📝 참고사항
 
 - `User.userId`만 예외적으로 `Long` auto-increment이고, 그 외 모든 엔티티는 `UUID` PK를 사용합니다.
